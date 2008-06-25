@@ -2,6 +2,7 @@ Libyubikey-client NEWS -- History of user-visible changes.      -*- outline -*-
 
 * Version 1.1 (unreleased)
 
+** Install libykclient.h too.
 
 * Version 1.0 (released 2008-06-17)
 
