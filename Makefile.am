@@ -31,6 +31,8 @@ AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
 # The library.
 
 lib_LTLIBRARIES = libyubikey-client.la
+include_HEADERS = libykclient.h
+
 libyubikey_client_la_SOURCES = libykclient.h libykclient.c
 libyubikey_client_la_LIBADD = @LIBCURL@
 libyubikey_client_la_LDFLAGS = -no-undefined \

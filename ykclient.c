@@ -77,5 +77,8 @@ main (int argc, char *argv[])
 
   printf ("Verification output (%d): %s\n", ret, yubikey_client_strerror (ret));
 
-  return EXIT_FAILURE;
+  if (ret != YUBIKEY_CLIENT_OK)
+    return EXIT_FAILURE;
+
+  return EXIT_SUCCESS;
 }
