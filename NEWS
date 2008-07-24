@@ -1,6 +1,6 @@
 Libyubikey-client NEWS -- History of user-visible changes.      -*- outline -*-
 
-* Version 1.2 (unreleased)
+* Version 1.2 (released 2008-07-24)
 
 ** ykclient: Set exit code as per OTP verification result.
 Inspired by discussion in
