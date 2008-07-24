@@ -1,0 +1,17 @@
+Libyubikey-client NEWS -- History of user-visible changes.      -*- outline -*-
+
+* Version 1.2 (released 2008-07-24)
+
+** ykclient: Set exit code as per OTP verification result.
+Inspired by discussion in
+<http://forum.yubico.com/viewtopic.php?f=3&t=89>.
+
+** Install libykclient.h.
+
+* Version 1.1 (released 2008-06-25)
+
+** Install libykclient.h in $prefix.
+
+* Version 1.0 (released 2008-06-17)
+
+** Initial release, code from yubico-pam.
