@@ -1,5 +1,9 @@
 Libyubikey-client NEWS -- History of user-visible changes.      -*- outline -*-
 
+* Version 1.4 (unreleased)
+
+** Added include paths to make aclocal find libcurl.m4.
+
 * Version 1.3 (released 2008-09-15)
 
 ** ykclient: Add new API yubikey_client_set_url_template.
