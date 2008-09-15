@@ -51,6 +51,7 @@
 struct yubikey_client_st
 {
   CURL *curl;
+  const char *url_template;
   unsigned int client_id;
   size_t keylen;
   const char *key;
@@ -73,6 +74,8 @@ yubikey_client_init (void)
       return NULL;
     }
 
+  p->url_template = NULL;
+
   return p;
 }
 
@@ -85,6 +88,13 @@ yubikey_client_set_info (yubikey_client_t client,
   client->client_id = client_id;
   client->keylen = keylen;
   client->key = key;
+}
+
+void
+yubikey_client_set_url_template (yubikey_client_t client,
+				 const char *template)
+{
+  client->url_template = template;
 }
 
 void
@@ -201,11 +211,14 @@ yubikey_client_request (yubikey_client_t client,
 			const char *yubikey)
 {
   struct MemoryStruct chunk = { NULL, 0 };
-  const char *url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
+  const char *url_template = client->url_template;
   char *url;
   char *user_agent = NULL;
   char *status;
   int out;
+
+  if (!url_template)
+    url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
 
   asprintf (&url, url_template, client->client_id, yubikey);
   if (!url)

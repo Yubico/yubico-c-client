@@ -62,6 +62,10 @@ yubikey_client_set_info (yubikey_client_t client,
 			 size_t keylen,
 			 const char *key);
 
+void
+yubikey_client_set_url_template (yubikey_client_t client,
+				 const char *template);
+
 const char *yubikey_client_strerror (int ret);
 
 int yubikey_client_request (yubikey_client_t client, const char *yubikey);
