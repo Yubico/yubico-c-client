@@ -44,7 +44,14 @@ main (void)
   yubikey_client_set_info (c, 16, 6, "foobar");
 
   ret = yubikey_client_request (c, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("return code (%d): %s\n", ret, yubikey_client_strerror (ret));
 
+  /* Same URL used by library, somewhat silly but still verifies the
+     code path. */
+  yubikey_client_set_url_template
+    (c, "http://api.yubico.com/wsapi/verify?id=%d&otp=%s");
+
+  ret = yubikey_client_request (c, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("return code (%d): %s\n", ret, yubikey_client_strerror (ret));
 
   yubikey_client_done (&c);
