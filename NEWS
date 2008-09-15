@@ -1,6 +1,6 @@
 Libyubikey-client NEWS -- History of user-visible changes.      -*- outline -*-
 
-* Version 1.3 (unreleased)
+* Version 1.3 (released 2008-09-15)
 
 ** ykclient: Add new API yubikey_client_set_url_template.
 Allows setting a private server to query.
