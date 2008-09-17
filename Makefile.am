@@ -37,6 +37,7 @@ include_HEADERS = libykclient.h
 libyubikey_client_la_SOURCES = libykclient.h libykclient.c
 libyubikey_client_la_LIBADD = @LIBCURL@
 libyubikey_client_la_LDFLAGS = -no-undefined \
+	-export-symbols-regex '^yubikey_client_.*' \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 
 # The command line tools.

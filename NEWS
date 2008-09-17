@@ -1,5 +1,9 @@
 Libyubikey-client NEWS -- History of user-visible changes.      -*- outline -*-
 
+* Version 1.5 (unreleased)
+
+** Add libtool -export-symbols-regex to restrict exported symbols.
+
 * Version 1.4 (released 2008-09-15)
 
 ** Added include paths to make aclocal find libcurl.m4.
