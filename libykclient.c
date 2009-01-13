@@ -178,6 +178,10 @@ yubikey_client_strerror (int ret)
       p = "Internal parse error";
       break;
 
+    case YUBIKEY_CLIENT_FORMAT_ERROR:
+      p = "Internal printf format error";
+      break;
+
     default:
       p = "Unknown error";
       break;
