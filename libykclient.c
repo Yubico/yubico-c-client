@@ -52,6 +52,7 @@ struct yubikey_client_st
 {
   CURL *curl;
   const char *url_template;
+  char *url;
   unsigned int client_id;
   size_t keylen;
   const char *key;
@@ -77,6 +78,7 @@ yubikey_client_init (void)
     }
 
   p->url_template = NULL;
+  p->url = NULL;
 
   p->curl_chunk = NULL;
   p->curl_chunk_size = 0;
@@ -106,6 +108,7 @@ void
 yubikey_client_done (yubikey_client_t *client)
 {
   curl_easy_cleanup ((*client)->curl);
+  free ((*client)->url);
   free ((*client)->curl_chunk);
   free (*client);
   *client = NULL;
@@ -217,7 +220,6 @@ yubikey_client_request (yubikey_client_t client,
 			const char *yubikey)
 {
   const char *url_template = client->url_template;
-  char *url;
   char *user_agent = NULL;
   char *status;
   int out;
@@ -228,16 +230,16 @@ yubikey_client_request (yubikey_client_t client,
   {
     size_t len = strlen (url_template) + strlen (yubikey) + 20;
     size_t wrote;
-    url = malloc (len);
-    if (!url)
+    client->url = malloc (len);
+    if (!client->url)
       return YUBIKEY_CLIENT_OUT_OF_MEMORY;
-    wrote = snprintf (url, len, url_template, client->client_id, yubikey);
+    wrote = snprintf (client->url, len, url_template,
+		      client->client_id, yubikey);
     if (wrote < 0 || wrote > len)
       return YUBIKEY_CLIENT_FORMAT_ERROR;
   }
 
-  curl_easy_setopt (client->curl, CURLOPT_URL, url);
-  free (url);
+  curl_easy_setopt (client->curl, CURLOPT_URL, client->url);
   curl_easy_setopt (client->curl, CURLOPT_WRITEFUNCTION, curl_callback);
   curl_easy_setopt (client->curl, CURLOPT_WRITEDATA, (void *) client);
 
