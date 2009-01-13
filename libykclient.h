@@ -1,7 +1,7 @@
 /* libykclient.h --- Definitions and prototypes for Yubico client library.
  *
  * Written by Simon Josefsson <simon@josefsson.org>.
- * Copyright (c) 2006, 2007, 2008 Yubico AB
+ * Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,8 @@ typedef enum {
   YUBIKEY_CLIENT_BACKEND_ERROR,
   /* Other implementation specific errors. */
   YUBIKEY_CLIENT_OUT_OF_MEMORY = 100,
-  YUBIKEY_CLIENT_PARSE_ERROR
+  YUBIKEY_CLIENT_PARSE_ERROR,
+  YUBIKEY_CLIENT_FORMAT_ERROR
 } yubikey_client_rc;
 
 typedef struct yubikey_client_st *yubikey_client_t;
