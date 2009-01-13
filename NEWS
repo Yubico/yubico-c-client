@@ -1,6 +1,6 @@
 Libyubikey-client NEWS -- History of user-visible changes.      -*- outline -*-
 
-* Version 1.5 (unreleased)
+* Version 1.5 (released 2009-01-13)
 
 ** Add libtool -export-symbols-regex to restrict exported symbols.
 
