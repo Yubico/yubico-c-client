@@ -1,7 +1,7 @@
 /* libykclient.c --- Implementation of Yubikey client library.
  *
  * Written by Simon Josefsson <simon@josefsson.org>.
- * Copyright (c) 2006, 2007, 2008 Yubico AB
+ * Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,8 @@ struct yubikey_client_st
   unsigned int client_id;
   size_t keylen;
   const char *key;
+  char *curl_chunk;
+  size_t curl_chunk_size;
 };
 
 yubikey_client_t
@@ -75,6 +77,9 @@ yubikey_client_init (void)
     }
 
   p->url_template = NULL;
+
+  p->curl_chunk = NULL;
+  p->curl_chunk_size = 0;
 
   return p;
 }
@@ -101,6 +106,7 @@ void
 yubikey_client_done (yubikey_client_t *client)
 {
   curl_easy_cleanup ((*client)->curl);
+  free ((*client)->curl_chunk);
   free (*client);
   *client = NULL;
 }
@@ -180,27 +186,23 @@ yubikey_client_strerror (int ret)
   return p;
 }
 
-struct MemoryStruct {
-  char *memory;
-  size_t size;
-};
-
 static size_t
 curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
 {
+  yubikey_client_t client = (yubikey_client_t) data;
   size_t realsize = size * nmemb;
-  struct MemoryStruct *mem = (struct MemoryStruct *)data;
 
-  if (mem->memory)
-    mem->memory = realloc (mem->memory, mem->size + realsize + 1);
+  if (client->curl_chunk)
+    client->curl_chunk = realloc (client->curl_chunk,
+				  client->curl_chunk_size + realsize + 1);
   else
-    mem->memory = malloc (mem->size + realsize + 1);
+    client->curl_chunk = malloc (client->curl_chunk_size + realsize + 1);
 
-  if (mem->memory)
+  if (client->curl_chunk)
     {
-      memcpy(&(mem->memory[mem->size]), ptr, realsize);
-      mem->size += realsize;
-      mem->memory[mem->size] = 0;
+      memcpy(&(client->curl_chunk[client->curl_chunk_size]), ptr, realsize);
+      client->curl_chunk_size += realsize;
+      client->curl_chunk[client->curl_chunk_size] = 0;
     }
 
   return realsize;
@@ -210,7 +212,6 @@ int
 yubikey_client_request (yubikey_client_t client,
 			const char *yubikey)
 {
-  struct MemoryStruct chunk = { NULL, 0 };
   const char *url_template = client->url_template;
   char *url;
   char *user_agent = NULL;
@@ -220,29 +221,43 @@ yubikey_client_request (yubikey_client_t client,
   if (!url_template)
     url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
 
-  asprintf (&url, url_template, client->client_id, yubikey);
-  if (!url)
-    return YUBIKEY_CLIENT_OUT_OF_MEMORY;
+  {
+    size_t len = strlen (url_template) + strlen (yubikey) + 20;
+    size_t wrote;
+    url = malloc (len);
+    if (!url)
+      return YUBIKEY_CLIENT_OUT_OF_MEMORY;
+    wrote = snprintf (url, len, url_template, client->client_id, yubikey);
+    if (wrote < 0 || wrote > len)
+      return YUBIKEY_CLIENT_FORMAT_ERROR;
+  }
 
   curl_easy_setopt (client->curl, CURLOPT_URL, url);
+  free (url);
   curl_easy_setopt (client->curl, CURLOPT_WRITEFUNCTION, curl_callback);
-  curl_easy_setopt (client->curl, CURLOPT_WRITEDATA, (void *)&chunk);
+  curl_easy_setopt (client->curl, CURLOPT_WRITEDATA, (void *) client);
 
-  asprintf (&user_agent, "%s/%s", PACKAGE, PACKAGE_VERSION);
-  if (user_agent)
-    curl_easy_setopt(client->curl, CURLOPT_USERAGENT, user_agent);
+  {
+    size_t len = strlen (PACKAGE) + 1 + strlen (PACKAGE_VERSION) + 1;
+    user_agent = malloc (len);
+    if (!user_agent)
+      return YUBIKEY_CLIENT_OUT_OF_MEMORY;
+    if (snprintf (user_agent, len, "%s/%s", PACKAGE, PACKAGE_VERSION) > 0)
+      curl_easy_setopt(client->curl, CURLOPT_USERAGENT, user_agent);
+  }
 
   curl_easy_perform (client->curl);
 
-  if (chunk.size == 0 || chunk.memory == NULL)
+  if (client->curl_chunk_size == 0 || client->curl_chunk == NULL)
     {
       out = YUBIKEY_CLIENT_PARSE_ERROR;
       goto done;
     }
 
-  D (("server response (%d): %.*s", chunk.size, chunk.size, chunk.memory));
+  D (("server response (%d): %.*s", client->curl_chunk_size,
+      client->curl_chunk_size, client->curl_chunk));
 
-  status = strstr (chunk.memory, "status=");
+  status = strstr (client->curl_chunk, "status=");
   if (!status)
     {
       out = YUBIKEY_CLIENT_PARSE_ERROR;
