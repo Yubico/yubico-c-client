@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@josefsson.org>.
-# Copyright (c) 2008 Yubico AB
+# Copyright (c) 2008, 2009 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
-ACLOCAL_AMFLAGS = -I .
+ACLOCAL_AMFLAGS = -I m4
 
 # The library.
 
