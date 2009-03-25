@@ -1,6 +1,6 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
-* Version 2.1 (unreleased)
+* Version 2.1 (released 2009-03-25)
 
 ** Add new API ykclient_get_last_url, mostly for debugging purposes.
 
