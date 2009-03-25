@@ -1,7 +1,7 @@
 # Makefile --- Instructions for make to build Yubikey client library and tools. 
 #
 # Written by Simon Josefsson <simon@josefsson.org>.
-# Copyright (c) 2006, 2007, 2008 Yubico AB
+# Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-CFLAGS = -I. -Wall -g -DPACKAGE=\"yubikey-client\" -DPACKAGE_VERSION=\"0\"
+CFLAGS = -I. -Wall -g -DPACKAGE=\"ykclient\" -DPACKAGE_VERSION=\"0\"
 
 LDFLAGS = -lcurl
 
@@ -36,7 +36,9 @@ PROGRAMS = ykclient selftest
 
 all: $(PROGRAMS)
 
-$(PROGRAMS): libykclient.o
+$(PROGRAMS): ykclient.o
+
+ykclient: tool.c
 
 clean:
 	rm -f $(PROGRAMS) *~ *.o
