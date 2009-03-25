@@ -50,7 +50,8 @@ typedef enum {
   YKCLIENT_OUT_OF_MEMORY = 100,
   YKCLIENT_PARSE_ERROR,
   YKCLIENT_FORMAT_ERROR,
-  YKCLIENT_CURL_INIT_ERROR
+  YKCLIENT_CURL_INIT_ERROR,
+  YKCLIENT_HMAC_ERROR
 } ykclient_rc;
 
 typedef struct ykclient_st ykclient_t;
@@ -69,6 +70,8 @@ extern void ykclient_set_url_template (ykclient_t *ykc,
 				       const char *url_template);
 
 extern int ykclient_request (ykclient_t *ykc, const char *yubikey_otp);
+
+extern const char *ykclient_get_last_url (ykclient_t *ykc);
 
 /* One call interface. */
 extern int ykclient_verify_otp (const char *yubikey_otp,

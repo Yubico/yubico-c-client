@@ -83,6 +83,9 @@ ykclient_init (ykclient_t **ykc)
   p->curl_chunk = NULL;
   p->curl_chunk_size = 0;
 
+  p->key = NULL;
+  p->keylen = 0;
+
   *ykc = p;
 
   return YKCLIENT_OK;
@@ -205,6 +208,12 @@ ykclient_strerror (int ret)
   return p;
 }
 
+const char *
+ykclient_get_last_url (ykclient_t *ykc)
+{
+  return ykc->url;
+}
+
 static size_t
 curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
 {
@@ -229,6 +238,9 @@ curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
   return realsize;
 }
 
+#include "rfc4634/sha.h"
+#include "b64/cencode.h"
+
 int
 ykclient_request (ykclient_t *ykc,
 		  const char *yubikey)
@@ -244,6 +256,8 @@ ykclient_request (ykclient_t *ykc,
   {
     size_t len = strlen (url_template) + strlen (yubikey) + 20;
     size_t wrote;
+
+    free (ykc->url);
     ykc->url = malloc (len);
     if (!ykc->url)
       return YKCLIENT_OUT_OF_MEMORY;
@@ -252,6 +266,63 @@ ykclient_request (ykclient_t *ykc,
     if (wrote < 0 || wrote > len)
       return YKCLIENT_FORMAT_ERROR;
   }
+
+  if (ykc->key && ykc->keylen)
+    {
+      uint8_t digest[USHAMaxHashSize];
+      char b64dig[3*4*SHA1HashSize+1];
+      base64_encodestate b64;
+      char *text;
+      int res, res2;
+
+      /* Find parameters to sign. */
+      text = strchr (ykc->url, '?');
+      if (!text)
+	return YKCLIENT_PARSE_ERROR;
+      text++;
+
+      /* HMAC data. */
+      res = hmac (SHA1, (unsigned char*) text, strlen (text),
+		  (unsigned char*) ykc->key, ykc->keylen, digest);
+      if (res != shaSuccess)
+	return YKCLIENT_HMAC_ERROR;
+
+      /* Base64 signature. */
+      base64_init_encodestate(&b64);
+      res = base64_encode_block((char*)digest, SHA1HashSize, b64dig, &b64);
+      res2 = base64_encode_blockend(&b64dig[res], &b64);
+      b64dig[res+res2-1] = '\0';
+
+      /* Escape + into %2B. */
+      {
+	char *p;
+
+	while ((p = strchr (b64dig, '+')))
+	  {
+	    memmove (p+3, p+1, strlen (p));
+	    memcpy (p, "%2B", 3);
+	  }
+      }
+
+      /* Create new URL. */
+      {
+	char *url;
+	size_t len;
+	int wrote;
+
+#define ADD "&h="
+	len = strlen (ykc->url) + strlen (ADD) + strlen (b64dig) + 1;
+	url = malloc (len);
+	if (!url)
+	  return YKCLIENT_OUT_OF_MEMORY;
+
+	wrote = snprintf (url, len, "%s" ADD "%s", ykc->url, b64dig);
+	if (wrote + 1 != len)
+	  return YKCLIENT_FORMAT_ERROR;
+	free (ykc->url);
+	ykc->url = url;
+      }
+    }
 
   curl_easy_setopt (ykc->curl, CURLOPT_URL, ykc->url);
   curl_easy_setopt (ykc->curl, CURLOPT_WRITEFUNCTION, curl_callback);

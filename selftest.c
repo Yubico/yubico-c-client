@@ -36,6 +36,11 @@
 int
 main (void)
 {
+  int client_id = 1851;
+  char client_key[] = {
+    0xa0, 0x15, 0x5b, 0x36, 0xde, 0xc8, 0x65, 0xe8, 0x59, 0x19,
+    0x1f, 0x7d, 0xae, 0xfa, 0xbc, 0x77, 0xa4, 0x59, 0xd4, 0x33
+  };
   ykclient_t *ykc;
   int ret;
 
@@ -44,10 +49,19 @@ main (void)
   if (ret != YKCLIENT_OK)
     return 1;
 
-  ykclient_set_client (ykc, 16, 6, "foobar");
+  ykclient_set_client (ykc, client_id, 0, NULL);
 
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  if (ret != YKCLIENT_REPLAYED_OTP)
+    return 1;
+
+  ykclient_set_client (ykc, client_id, 20, client_key);
+
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
   if (ret != YKCLIENT_REPLAYED_OTP)
     return 1;
 
@@ -58,6 +72,7 @@ main (void)
 
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("yubikey_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
   if (ret != YKCLIENT_REPLAYED_OTP)
     return 1;
 
