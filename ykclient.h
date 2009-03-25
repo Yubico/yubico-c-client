@@ -1,4 +1,4 @@
-/* libykclient.h --- Definitions and prototypes for Yubico client library.
+/* ykclient.h --- Prototypes for Yubikey OTP validation client library.
  *
  * Written by Simon Josefsson <simon@josefsson.org>.
  * Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
@@ -30,52 +30,50 @@
  *
  */
 
-#ifndef YUBIKEY_CLIENT_H
-# define YUBIKEY_CLIENT_H
+#ifndef YKCLIENT_H
+# define YKCLIENT_H
 
 # include <stdint.h>
 # include <string.h>
 
 typedef enum {
   /* Official yubikey client API errors. */
-  YUBIKEY_CLIENT_OK = 0,
-  YUBIKEY_CLIENT_BAD_OTP,
-  YUBIKEY_CLIENT_REPLAYED_OTP,
-  YUBIKEY_CLIENT_BAD_SIGNATURE,
-  YUBIKEY_CLIENT_MISSING_PARAMETER,
-  YUBIKEY_CLIENT_NO_SUCH_CLIENT,
-  YUBIKEY_CLIENT_OPERATION_NOT_ALLOWED,
-  YUBIKEY_CLIENT_BACKEND_ERROR,
+  YKCLIENT_OK = 0,
+  YKCLIENT_BAD_OTP,
+  YKCLIENT_REPLAYED_OTP,
+  YKCLIENT_BAD_SIGNATURE,
+  YKCLIENT_MISSING_PARAMETER,
+  YKCLIENT_NO_SUCH_CLIENT,
+  YKCLIENT_OPERATION_NOT_ALLOWED,
+  YKCLIENT_BACKEND_ERROR,
   /* Other implementation specific errors. */
-  YUBIKEY_CLIENT_OUT_OF_MEMORY = 100,
-  YUBIKEY_CLIENT_PARSE_ERROR,
-  YUBIKEY_CLIENT_FORMAT_ERROR
-} yubikey_client_rc;
+  YKCLIENT_OUT_OF_MEMORY = 100,
+  YKCLIENT_PARSE_ERROR,
+  YKCLIENT_FORMAT_ERROR,
+  YKCLIENT_CURL_INIT_ERROR
+} ykclient_rc;
 
-typedef struct yubikey_client_st *yubikey_client_t;
+typedef struct ykclient_st ykclient_t;
 
-yubikey_client_t yubikey_client_init (void);
-void yubikey_client_done (yubikey_client_t *client);
+extern int ykclient_init (ykclient_t **ykc);
+extern void ykclient_done (ykclient_t **ykc);
 
-void
-yubikey_client_set_info (yubikey_client_t client,
-			 unsigned int client_id,
-			 size_t keylen,
-			 const char *key);
+extern const char *ykclient_strerror (int ret);
 
-void
-yubikey_client_set_url_template (yubikey_client_t client,
-				 const char *template);
+extern void ykclient_set_client (ykclient_t *ykc,
+				 unsigned int client_id,
+				 size_t keylen,
+				 const char *key);
 
-const char *yubikey_client_strerror (int ret);
+extern void ykclient_set_url_template (ykclient_t *ykc,
+				       const char *url_template);
 
-int yubikey_client_request (yubikey_client_t client, const char *yubikey);
+extern int ykclient_request (ykclient_t *ykc, const char *yubikey_otp);
 
 /* One call interface. */
-int
-yubikey_client_simple_request (const char *yubikey,
-			       unsigned int client_id,
-			       size_t keylen,
-			       const char *key);
+extern int ykclient_verify_otp (const char *yubikey_otp,
+				unsigned int client_id,
+				size_t keylen,
+				const char *key);
 
 #endif

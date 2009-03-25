@@ -1,6 +1,11 @@
-Libyubikey-client NEWS -- History of user-visible changes.      -*- outline -*-
+Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
-* Version 1.6 (unreleased)
+* Version 2.0 (unreleased)
+
+** Major rewrite of library.
+The library changed name from libyubikey-client.* to libykclient.* and
+the header file changed from libykclient.h to ykclient.h.  All
+interfaces were also renamed, see ykclient.h.
 
 * Version 1.5 (released 2009-01-13)
 

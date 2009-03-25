@@ -31,26 +31,26 @@ ACLOCAL_AMFLAGS = -I m4
 
 # The library.
 
-lib_LTLIBRARIES = libyubikey-client.la
-include_HEADERS = libykclient.h
+lib_LTLIBRARIES = libykclient.la
+include_HEADERS = ykclient.h
 
-libyubikey_client_la_SOURCES = libykclient.h libykclient.c
-libyubikey_client_la_LIBADD = @LIBCURL@
-libyubikey_client_la_LDFLAGS = -no-undefined \
-	-export-symbols-regex '^yubikey_client_.*' \
+libykclient_la_SOURCES = ykclient.h ykclient.c
+libykclient_la_LIBADD = @LIBCURL@
+libykclient_la_LDFLAGS = -no-undefined \
+	-export-symbols-regex '^ykclient_.*' \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 
 # The command line tools.
 
 bin_PROGRAMS = ykclient
 
-ykclient_SOURCES = ykclient.c
-ykclient_LDADD = ./libyubikey-client.la
+ykclient_SOURCES = tool.c
+ykclient_LDADD = ./libykclient.la
 
 # Self tests.
 
 AM_LDFLAGS = -no-install
-LDADD = libyubikey-client.la
+LDADD = libykclient.la
 
 check_PROGRAMS = selftest
 TESTS = $(check_PROGRAMS)
@@ -62,11 +62,17 @@ EXTRA_DIST = simple.mk
 ChangeLog:
 	svn2cl
 
+PROJECT=yubico-c-client
+
 release:
 	rm -f ChangeLog
 	make ChangeLog distcheck
-	svn copy https://yubico-c-client.googlecode.com/svn/trunk/ \
-	 https://yubico-c-client.googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
+	gpg -b $(PACKAGE)-$(VERSION).tar.gz
+	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
+	svn copy https://$(PROJECT).googlecode.com/svn/trunk/ \
+	 https://$(PROJECT).googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
 	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
-	googlecode_upload.py -s "Yubico C client library v$(VERSION)." \
-	 -p yubico-c-client -u simon75j $(PACKAGE)-$(VERSION).tar.gz 
+	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
+	 -p $(PROJECT) -u simon75j $(PACKAGE)-$(VERSION).tar.gz.sig
+	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
+	 -p $(PROJECT) -u simon75j $(PACKAGE)-$(VERSION).tar.gz 
