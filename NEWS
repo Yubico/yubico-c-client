@@ -1,5 +1,7 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
+* Version 2.1 (unreleased)
+
 * Version 2.0 (released 2009-03-25)
 
 ** Major rewrite of library.
