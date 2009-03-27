@@ -56,6 +56,7 @@ struct ykclient_st
   unsigned int client_id;
   size_t keylen;
   const char *key;
+  char *key_buf;
   char *curl_chunk;
   size_t curl_chunk_size;
 };
@@ -85,6 +86,7 @@ ykclient_init (ykclient_t **ykc)
 
   p->key = NULL;
   p->keylen = 0;
+  p->key_buf = NULL;
 
   *ykc = p;
 
@@ -99,6 +101,7 @@ ykclient_done (ykclient_t **ykc)
       curl_easy_cleanup ((*ykc)->curl);
       free ((*ykc)->url);
       free ((*ykc)->curl_chunk);
+      free ((*ykc)->key_buf);
       free (*ykc);
     }
   if (ykc)
@@ -114,6 +117,43 @@ ykclient_set_client (ykclient_t *ykc,
   ykc->client_id = client_id;
   ykc->keylen = keylen;
   ykc->key = key;
+}
+
+int
+ykclient_set_client_hex (ykclient_t *ykc,
+			 unsigned int client_id,
+			 const char *key)
+{
+  size_t i;
+  size_t key_len = strlen (key);
+  size_t bin_len = key_len / 2;
+
+  if (key_len % 2 != 0)
+    return YKCLIENT_HEX_DECODE_ERROR;
+
+  ykc->client_id = client_id;
+
+  ykc->key_buf = malloc (bin_len);
+  if (!ykc->key_buf)
+    return YKCLIENT_OUT_OF_MEMORY;
+
+  for (i = 0; i < bin_len; i++)
+    {
+      int tmp;
+
+      if (sscanf (&key[2*i], "%02x", &tmp) != 1)
+	{
+	  free (ykc->key_buf);
+	  return YKCLIENT_HEX_DECODE_ERROR;
+	}
+
+      ykc->key_buf[i] = tmp;
+    }
+
+  ykc->keylen = bin_len;
+  ykc->key = ykc->key_buf;
+
+  return YKCLIENT_OK;
 }
 
 void
@@ -198,6 +238,10 @@ ykclient_strerror (int ret)
 
     case YKCLIENT_CURL_INIT_ERROR:
       p = "Error initializing curl";
+      break;
+
+    case YKCLIENT_HEX_DECODE_ERROR:
+      p = "Error decoding hex string";
       break;
 
     default:
