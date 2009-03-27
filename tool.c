@@ -73,7 +73,7 @@ main (int argc, char *argv[])
   printf ("  client id: %d\n", atoi (client_id));
   printf ("  token: %s\n", token);
 
-  ret = ykclient_verify_otp (token, atoi (client_id), 0, NULL);
+  ret = ykclient_verify_otp (token, atoi (client_id), NULL);
 
   printf ("Verification output (%d): %s\n", ret, ykclient_strerror (ret));
 

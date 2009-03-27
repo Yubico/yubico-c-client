@@ -4,6 +4,8 @@ Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
 ** Add new API ykclient_set_client_hex to set client key in hex format.
 
+** Change API ykclient_verify_otp to take a hex key rather than a binary one.
+
 * Version 2.1 (released 2009-03-25)
 
 ** Add new API ykclient_get_last_url, mostly for debugging purposes.

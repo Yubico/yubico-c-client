@@ -125,13 +125,20 @@ ykclient_set_client_hex (ykclient_t *ykc,
 			 const char *key)
 {
   size_t i;
-  size_t key_len = strlen (key);
-  size_t bin_len = key_len / 2;
+  size_t key_len;
+  size_t bin_len;
+
+  ykc->client_id = client_id;
+
+  if (key == NULL)
+    return YKCLIENT_OK;
+
+  key_len = strlen (key);
 
   if (key_len % 2 != 0)
     return YKCLIENT_HEX_DECODE_ERROR;
 
-  ykc->client_id = client_id;
+  bin_len = key_len / 2;
 
   ykc->key_buf = malloc (bin_len);
   if (!ykc->key_buf)
@@ -166,8 +173,7 @@ ykclient_set_url_template (ykclient_t *ykc,
 int
 ykclient_verify_otp (const char *yubikey_otp,
 		     unsigned int client_id,
-		     size_t keylen,
-		     const char *key)
+		     const char *hexkey)
 {
   ykclient_t *ykc;
   int ret;
@@ -176,7 +182,7 @@ ykclient_verify_otp (const char *yubikey_otp,
   if (ret != YKCLIENT_OK)
     return ret;
 
-  ykclient_set_client (ykc, client_id, keylen, key);
+  ykclient_set_client_hex (ykc, client_id, hexkey);
 
   ret = ykclient_request (ykc, yubikey_otp);
 
