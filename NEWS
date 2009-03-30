@@ -6,6 +6,8 @@ Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
 ** Change API ykclient_verify_otp to take a hex key rather than a binary one.
 
+** Improved instructions in README on how to build the package.
+
 * Version 2.1 (released 2009-03-25)
 
 ** Add new API ykclient_get_last_url, mostly for debugging purposes.
