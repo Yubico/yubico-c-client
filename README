@@ -43,9 +43,15 @@ which is recommend for more advanced purposes especially for
 cross-compilation and shared library support, build it as follows.
 
 {{{
-$ autoreconf -fvi
 $ ./configure
 $ make check install
+}}}
+
+If you checked out ykclient from SVN you will need to bootstrap it
+before you can use ./configure:
+
+{{{
+$ autoreconf -fvi
 }}}
 
 = Command-line tools =
