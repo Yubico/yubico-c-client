@@ -45,7 +45,7 @@ cross-compilation and shared library support, build it as follows.
 {{{
 $ autoreconf -fvi
 $ ./configure
-$ make check
+$ make check install
 }}}
 
 = Command-line tools =
