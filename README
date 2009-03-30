@@ -18,11 +18,46 @@ Yubico online server.  Description of included files:
 
 * configure.ac, Makefile.am: Autoconf/Automake files.
 
+== Building from SVN ==
+
+Skip to the next section if you are using an official packaged
+version.
+
+You may check out the sources using SVN with the following command:
+
+{{{
+  svn checkout http://yubico-c-client.googlecode.com/svn/trunk/ yubico-c-client
+}}}
+
+This will create a directory 'yubico-c-client'.  Enter the directory:
+
+{{{
+  cd yubico-c-client
+}}}
+
+Autoconf, automake and libtool must be installed.
+
+Generate the build system using:
+
+{{{
+  autoreconf --install
+}}}
+
 = Building =
 
-The simple way to build the package is by running 'make -f simple.mk
-check'.  It will build each component, and also test them.  See below
-for sample session.
+To build using the Autoconf, automake and libtool infrastructure,
+which is recommend for more advanced purposes especially for
+cross-compilation and shared library support, build it as follows.
+
+{{{
+$ ./configure
+$ make check install
+}}}
+
+Another way to build the package is by running 'make -f simple.mk
+check'.  It will build each component, and also test it.  See below
+for sample session.  This is useful if you want to target a platform
+that doesn't support Autoconf/automake/libtool well.
 
 {{{
 jas@mocca:~/src/yubico-c-client$ make -f simple.mk  check
@@ -36,22 +71,6 @@ yubikey_request (2): Yubikey OTP was replayed (REPLAYED_OTP)
 strerror(0): Success
 strerror(BAD_OTP): Yubikey OTP was bad (BAD_OTP)
 jas@mocca:~/src/yubico-c-client$ 
-}}}
-
-To build using the Autoconf, automake and libtool infrastructure,
-which is recommend for more advanced purposes especially for
-cross-compilation and shared library support, build it as follows.
-
-{{{
-$ ./configure
-$ make check install
-}}}
-
-If you checked out ykclient from SVN you will need to bootstrap it
-before you can use ./configure:
-
-{{{
-$ autoreconf -fvi
 }}}
 
 = Command-line tools =
