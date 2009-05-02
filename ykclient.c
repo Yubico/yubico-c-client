@@ -41,11 +41,11 @@
 int
 main (int argc, char *argv[])
 {
-  char *client_id, *token;
+  char *client_id, *token, *user;
   int ret;
 
   /* Parse command line parameters. */
-  if (argc != 3)
+  if (argc < 3)
     {
       printf ("Usage: %s <client_id> <yubikey_output>\n", argv[0]);
       printf (" CLIENT_ID: your client id integer\n");
@@ -55,6 +55,11 @@ main (int argc, char *argv[])
 
   client_id = argv[1];
   token = argv[2];
+
+  if (argc > 3)
+    {
+      user = argv[3];
+    }
 
   if (atoi (client_id) <= 0)
     {
@@ -72,8 +77,16 @@ main (int argc, char *argv[])
   printf ("Input:\n");
   printf ("  client id: %d\n", atoi (client_id));
   printf ("  token: %s\n", token);
+  printf ("  user : %s\n", user);
 
-  ret = yubikey_client_simple_request (token, atoi (client_id), 0, NULL);
+  if (argc > 3)
+    {
+      ret = yubikey_client_simple_request (token, atoi (client_id), 0, NULL, user);
+    }
+  else
+    {  
+      ret = yubikey_client_simple_request (token, atoi (client_id), 0, NULL, NULL);
+    }
 
   printf ("Verification output (%d): %s\n", ret, yubikey_client_strerror (ret));
 

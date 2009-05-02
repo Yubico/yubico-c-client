@@ -46,10 +46,11 @@ typedef enum {
   YUBIKEY_CLIENT_NO_SUCH_CLIENT,
   YUBIKEY_CLIENT_OPERATION_NOT_ALLOWED,
   YUBIKEY_CLIENT_BACKEND_ERROR,
+  YUBIKEY_CLIENT_BAD_USER_TOKEN,
+  YUBIKEY_CLIENT_NO_USERKEY_MAP,
   /* Other implementation specific errors. */
   YUBIKEY_CLIENT_OUT_OF_MEMORY = 100,
-  YUBIKEY_CLIENT_PARSE_ERROR,
-  YUBIKEY_CLIENT_FORMAT_ERROR
+  YUBIKEY_CLIENT_PARSE_ERROR
 } yubikey_client_rc;
 
 typedef struct yubikey_client_st *yubikey_client_t;
@@ -69,13 +70,13 @@ yubikey_client_set_url_template (yubikey_client_t client,
 
 const char *yubikey_client_strerror (int ret);
 
-int yubikey_client_request (yubikey_client_t client, const char *yubikey);
-
+int yubikey_client_request (yubikey_client_t client, const char *yubikey, char *user, int addReq);
 /* One call interface. */
 int
 yubikey_client_simple_request (const char *yubikey,
 			       unsigned int client_id,
 			       size_t keylen,
-			       const char *key);
+			       const char *key,
+			       const char *user);
 
 #endif

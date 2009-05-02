@@ -52,12 +52,9 @@ struct yubikey_client_st
 {
   CURL *curl;
   const char *url_template;
-  char *url;
   unsigned int client_id;
   size_t keylen;
   const char *key;
-  char *curl_chunk;
-  size_t curl_chunk_size;
 };
 
 yubikey_client_t
@@ -78,10 +75,6 @@ yubikey_client_init (void)
     }
 
   p->url_template = NULL;
-  p->url = NULL;
-
-  p->curl_chunk = NULL;
-  p->curl_chunk_size = 0;
 
   return p;
 }
@@ -108,8 +101,6 @@ void
 yubikey_client_done (yubikey_client_t *client)
 {
   curl_easy_cleanup ((*client)->curl);
-  free ((*client)->url);
-  free ((*client)->curl_chunk);
   free (*client);
   *client = NULL;
 }
@@ -118,7 +109,8 @@ int
 yubikey_client_simple_request (const char *yubikey,
 			       unsigned int client_id,
 			       size_t keylen,
-			       const char *key)
+			       const char *key,
+			       const char *user)
 {
   yubikey_client_t p;
   int ret;
@@ -127,7 +119,7 @@ yubikey_client_simple_request (const char *yubikey,
 
   yubikey_client_set_info (p, client_id, keylen, key);
 
-  ret = yubikey_client_request (p, yubikey);
+  ret = yubikey_client_request (p, yubikey, user, 0);
 
   yubikey_client_done (&p);
 
@@ -173,16 +165,20 @@ yubikey_client_strerror (int ret)
       p = "BACKEND_ERROR";
       break;
 
+    case YUBIKEY_CLIENT_BAD_USER_TOKEN:
+      p = "Bad User Token";
+      break;
+
+    case YUBIKEY_CLIENT_NO_USERKEY_MAP:
+      p = "NO_USERKEY_MAP";
+      break;
+
     case YUBIKEY_CLIENT_OUT_OF_MEMORY:
       p = "Out of memory";
       break;
 
     case YUBIKEY_CLIENT_PARSE_ERROR:
       p = "Internal parse error";
-      break;
-
-    case YUBIKEY_CLIENT_FORMAT_ERROR:
-      p = "Internal printf format error";
       break;
 
     default:
@@ -193,23 +189,27 @@ yubikey_client_strerror (int ret)
   return p;
 }
 
+struct MemoryStruct {
+  char *memory;
+  size_t size;
+};
+
 static size_t
 curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
 {
-  yubikey_client_t client = (yubikey_client_t) data;
   size_t realsize = size * nmemb;
+  struct MemoryStruct *mem = (struct MemoryStruct *)data;
 
-  if (client->curl_chunk)
-    client->curl_chunk = realloc (client->curl_chunk,
-				  client->curl_chunk_size + realsize + 1);
+  if (mem->memory)
+    mem->memory = realloc (mem->memory, mem->size + realsize + 1);
   else
-    client->curl_chunk = malloc (client->curl_chunk_size + realsize + 1);
+    mem->memory = malloc (mem->size + realsize + 1);
 
-  if (client->curl_chunk)
+  if (mem->memory)
     {
-      memcpy(&(client->curl_chunk[client->curl_chunk_size]), ptr, realsize);
-      client->curl_chunk_size += realsize;
-      client->curl_chunk[client->curl_chunk_size] = 0;
+      memcpy(&(mem->memory[mem->size]), ptr, realsize);
+      mem->size += realsize;
+      mem->memory[mem->size] = 0;
     }
 
   return realsize;
@@ -217,53 +217,64 @@ curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
 
 int
 yubikey_client_request (yubikey_client_t client,
-			const char *yubikey)
+			const char *yubikey,
+			char *user, int addReq)
 {
+  struct MemoryStruct chunk = { NULL, 0 };
   const char *url_template = client->url_template;
+  char *url;
   char *user_agent = NULL;
   char *status;
   int out;
 
   if (!url_template)
-    url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
+    {
+      if(NULL != user) {
+        if(addReq)
+          url_template = "http://192.168.1.55/yubico/validation/verify.php?id=%d&otp=%s&un=%s&cmd=add";
+        else
+          url_template = "http://192.168.1.55/yubico/validation/verify.php?id=%d&otp=%s&un=%s";
+      } else {
+        url_template = "http://192.168.1.55/yubico/validation/verify.php?id=%d&otp=%s";
+      }
+    }
+/*
+  if (!url_template)
+    {
+      if(NULL != user)
+        url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s&un=%s";
+      else
+        url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
+    }
+*/
+  if(NULL != user)
+    asprintf (&url, url_template, client->client_id, yubikey, user);
+  else
+    asprintf (&url, url_template, client->client_id, yubikey);
 
-  {
-    size_t len = strlen (url_template) + strlen (yubikey) + 20;
-    size_t wrote;
-    client->url = malloc (len);
-    if (!client->url)
-      return YUBIKEY_CLIENT_OUT_OF_MEMORY;
-    wrote = snprintf (client->url, len, url_template,
-		      client->client_id, yubikey);
-    if (wrote < 0 || wrote > len)
-      return YUBIKEY_CLIENT_FORMAT_ERROR;
-  }
+  if (!url)
+    return YUBIKEY_CLIENT_OUT_OF_MEMORY;
 
-  curl_easy_setopt (client->curl, CURLOPT_URL, client->url);
+  curl_easy_setopt (client->curl, CURLOPT_URL, url);
   curl_easy_setopt (client->curl, CURLOPT_WRITEFUNCTION, curl_callback);
-  curl_easy_setopt (client->curl, CURLOPT_WRITEDATA, (void *) client);
+  curl_easy_setopt (client->curl, CURLOPT_WRITEDATA, (void *)&chunk);
 
-  {
-    size_t len = strlen (PACKAGE) + 1 + strlen (PACKAGE_VERSION) + 1;
-    user_agent = malloc (len);
-    if (!user_agent)
-      return YUBIKEY_CLIENT_OUT_OF_MEMORY;
-    if (snprintf (user_agent, len, "%s/%s", PACKAGE, PACKAGE_VERSION) > 0)
-      curl_easy_setopt(client->curl, CURLOPT_USERAGENT, user_agent);
-  }
+  asprintf (&user_agent, "%s/%s", PACKAGE, PACKAGE_VERSION);
+  if (user_agent)
+    curl_easy_setopt(client->curl, CURLOPT_USERAGENT, user_agent);
 
   curl_easy_perform (client->curl);
 
-  if (client->curl_chunk_size == 0 || client->curl_chunk == NULL)
+  if (chunk.size == 0 || chunk.memory == NULL)
     {
       out = YUBIKEY_CLIENT_PARSE_ERROR;
       goto done;
     }
 
-  D (("server response (%d): %.*s", client->curl_chunk_size,
-      client->curl_chunk_size, client->curl_chunk));
+  printf("\n server response (%d): %.*s", chunk.size, chunk.size, chunk.memory);
+  D (("server response (%d): %.*s", chunk.size, chunk.size, chunk.memory));
 
-  status = strstr (client->curl_chunk, "status=");
+  status = strstr (chunk.memory, "status=");
   if (!status)
     {
       out = YUBIKEY_CLIENT_PARSE_ERROR;
@@ -274,6 +285,7 @@ yubikey_client_request (yubikey_client_t client,
 	 || status[strlen (status) - 1] == '\n')
     status[strlen (status) - 1] = '\0';
 
+  printf("parsed status (%d): %s\n", strlen (status), status);
   D (("parsed status (%d): %s\n", strlen (status), status));
 
   if (strcmp (status, "status=OK") == 0)
@@ -314,6 +326,16 @@ yubikey_client_request (yubikey_client_t client,
   else if (strcmp (status, "status=BACKEND_ERROR") == 0)
     {
       out = YUBIKEY_CLIENT_BACKEND_ERROR;
+      goto done;
+    }
+  else if (strcmp (status, "status=BAD_USER_TOKEN") == 0)
+    {
+      out = YUBIKEY_CLIENT_BAD_USER_TOKEN;
+      goto done;
+    }
+  else if (strcmp (status, "status=NO_USERKEY_MAP") == 0)
+    {
+      out = YUBIKEY_CLIENT_NO_USERKEY_MAP;
       goto done;
     }
 
