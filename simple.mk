@@ -28,7 +28,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-CFLAGS = -I. -Wall -g -DPACKAGE=\"ykclient\" -DPACKAGE_VERSION=\"0\"
+MORE_CFLAGS ?=
+CFLAGS = $(MORE_CFLAGS) -I. -Wall -g -DPACKAGE=\"ykclient\" -DPACKAGE_VERSION=\"0\"
 
 LDFLAGS = -lcurl
 
@@ -36,12 +37,15 @@ PROGRAMS = ykclient selftest
 
 all: $(PROGRAMS)
 
-$(PROGRAMS): ykclient.o rfc4634/hmac.o rfc4634/sha1.o rfc4634/usha.o rfc4634/sha224-256.o rfc4634/sha384-512.o b64/cencode.o
+OBJECTS = ykclient.o rfc4634/hmac.o rfc4634/sha1.o rfc4634/usha.o	\
+	rfc4634/sha224-256.o rfc4634/sha384-512.o b64/cencode.o
+
+$(PROGRAMS): $(OBJECTS)
 
 ykclient: tool.c
 
 clean:
-	rm -f $(PROGRAMS) *~ *.o
+	rm -f $(PROGRAMS) $(OBJECTS) *~
 
 check: all
 	./selftest
