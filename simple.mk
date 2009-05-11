@@ -38,7 +38,8 @@ PROGRAMS = ykclient selftest
 all: $(PROGRAMS)
 
 OBJECTS = ykclient.o rfc4634/hmac.o rfc4634/sha1.o rfc4634/usha.o	\
-	rfc4634/sha224-256.o rfc4634/sha384-512.o b64/cencode.o
+	rfc4634/sha224-256.o rfc4634/sha384-512.o b64/cencode.o		\
+	b64/cdecode.o
 
 $(PROGRAMS): $(OBJECTS)
 

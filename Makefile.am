@@ -38,7 +38,8 @@ libykclient_la_SOURCES = ykclient.h ykclient.c
 libykclient_la_SOURCES += rfc4634/sha.h rfc4634/sha-private.h		\
 			rfc4634/hmac.c rfc4634/sha1.c rfc4634/usha.c	\
 			rfc4634/sha224-256.c rfc4634/sha384-512.c
-libykclient_la_SOURCES += b64/cencode.h b64/cencode.c
+libykclient_la_SOURCES += b64/cencode.h b64/cencode.c b64/cdecode.h	\
+			b64/cdecode.c
 libykclient_la_LIBADD = @LIBCURL@
 libykclient_la_LDFLAGS = -no-undefined \
 	-export-symbols-regex '^ykclient_.*' \

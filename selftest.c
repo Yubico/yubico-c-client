@@ -42,6 +42,7 @@ main (void)
     0x1f, 0x7d, 0xae, 0xfa, 0xbc, 0x77, 0xa4, 0x59, 0xd4, 0x33
   };
   char *client_hexkey = "a0155b36dec865e859191f7daefabc77a459d433";
+  char *client_b64key = "oBVbNt7IZehZGR99rvq8d6RZ1DM=";
   ykclient_t *ykc;
   int ret;
 
@@ -66,6 +67,14 @@ main (void)
   if (ret != YKCLIENT_REPLAYED_OTP)
     return 1;
 
+  ykclient_set_client (ykc, client_id, 10, client_key);
+
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  if (ret != YKCLIENT_BAD_SIGNATURE)
+    return 1;
+
   ret = ykclient_set_client_hex (ykc, client_id, "a");
   printf ("ykclient_set_client_hex (%d): %s\n", ret, ykclient_strerror (ret));
   if (ret != YKCLIENT_HEX_DECODE_ERROR)
@@ -78,6 +87,39 @@ main (void)
 
   ret = ykclient_set_client_hex (ykc, client_id, client_hexkey);
   printf ("ykclient_set_client_hex (%d): %s\n", ret, ykclient_strerror (ret));
+  if (ret != YKCLIENT_OK)
+    return 1;
+
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  if (ret != YKCLIENT_REPLAYED_OTP)
+    return 1;
+
+  ret = ykclient_set_client_hex (ykc, client_id, "deadbeef");
+  printf ("ykclient_set_client_hex (%d): %s\n", ret, ykclient_strerror (ret));
+  if (ret != YKCLIENT_OK)
+    return 1;
+
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  if (ret != YKCLIENT_BAD_SIGNATURE)
+    return 1;
+
+  ret = ykclient_set_client_b64 (ykc, client_id, "deadbeef");
+  printf ("ykclient_set_client_b64 (%d): %s\n", ret, ykclient_strerror (ret));
+  if (ret != YKCLIENT_OK)
+    return 1;
+
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  if (ret != YKCLIENT_BAD_SIGNATURE)
+    return 1;
+
+  ret = ykclient_set_client_b64 (ykc, client_id, client_b64key);
+  printf ("ykclient_set_client_b64 (%d): %s\n", ret, ykclient_strerror (ret));
   if (ret != YKCLIENT_OK)
     return 1;
 
@@ -102,6 +144,8 @@ main (void)
 
   printf ("strerror(0): %s\n", ykclient_strerror (0));
   printf ("strerror(BAD_OTP): %s\n", ykclient_strerror (YKCLIENT_BAD_OTP));
+
+  printf ("All tests passed\n");
 
   return 0;
 }

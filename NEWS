@@ -2,6 +2,12 @@ Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
 * Version 2.3 (unreleased)
 
+** Add new API ykclient_set_client_b64 to set client key in b64 format.
+
+** Fix memory leaks.
+
+** Fix usage when sending multiple requests.
+
 * Version 2.2 (released 2009-03-31)
 
 ** Add new API ykclient_set_client_hex to set client key in hex format.

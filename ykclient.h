@@ -71,6 +71,10 @@ extern int ykclient_set_client_hex (ykclient_t *ykc,
 				    unsigned int client_id,
 				    const char *key);
 
+extern int ykclient_set_client_b64 (ykclient_t *ykc,
+				    unsigned int client_id,
+				    const char *key);
+
 extern void ykclient_set_url_template (ykclient_t *ykc,
 				       const char *url_template);
 

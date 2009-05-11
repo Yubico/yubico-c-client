@@ -39,14 +39,9 @@
 
 #include <curl/curl.h>
 
-#ifdef DEBUG
-# define D(x) do {							\
-    printf ("debug: %s:%d (%s): ", __FILE__, __LINE__, __FUNCTION__);	\
-    printf x;								\
-  } while (0)
-#else
-# define D(x)			/* nothing */
-#endif
+#include "rfc4634/sha.h"
+#include "b64/cencode.h"
+#include "b64/cdecode.h"
 
 struct ykclient_st
 {
@@ -140,6 +135,7 @@ ykclient_set_client_hex (ykclient_t *ykc,
 
   bin_len = key_len / 2;
 
+  free (ykc->key_buf);
   ykc->key_buf = malloc (bin_len);
   if (!ykc->key_buf)
     return YKCLIENT_OUT_OF_MEMORY;
@@ -151,6 +147,7 @@ ykclient_set_client_hex (ykclient_t *ykc,
       if (sscanf (&key[2*i], "%02x", &tmp) != 1)
 	{
 	  free (ykc->key_buf);
+	  ykc->key_buf = NULL;
 	  return YKCLIENT_HEX_DECODE_ERROR;
 	}
 
@@ -158,6 +155,33 @@ ykclient_set_client_hex (ykclient_t *ykc,
     }
 
   ykc->keylen = bin_len;
+  ykc->key = ykc->key_buf;
+
+  return YKCLIENT_OK;
+}
+
+int
+ykclient_set_client_b64 (ykclient_t *ykc,
+			 unsigned int client_id,
+			 const char *key)
+{
+  size_t key_len;
+  base64_decodestate b64;
+
+  ykc->client_id = client_id;
+
+  if (key == NULL)
+    return YKCLIENT_OK;
+
+  key_len = strlen (key);
+
+  free (ykc->key_buf);
+  ykc->key_buf = malloc (key_len + 1);
+  if (!ykc->key_buf)
+    return YKCLIENT_OUT_OF_MEMORY;
+
+  base64_init_decodestate(&b64);
+  ykc->keylen = base64_decode_block(key, key_len, ykc->key_buf, &b64);
   ykc->key = ykc->key_buf;
 
   return YKCLIENT_OK;
@@ -288,9 +312,6 @@ curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
   return realsize;
 }
 
-#include "rfc4634/sha.h"
-#include "b64/cencode.h"
-
 int
 ykclient_request (ykclient_t *ykc,
 		  const char *yubikey)
@@ -302,6 +323,10 @@ ykclient_request (ykclient_t *ykc,
 
   if (!url_template)
     url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
+
+  free (ykc->curl_chunk);
+  ykc->curl_chunk_size = 0;
+  ykc->curl_chunk = NULL;
 
   {
     size_t len = strlen (url_template) + strlen (yubikey) + 20;
@@ -395,9 +420,6 @@ ykclient_request (ykclient_t *ykc,
       goto done;
     }
 
-  D (("server response (%d): %.*s", ykc->curl_chunk_size,
-      ykc->curl_chunk_size, ykc->curl_chunk));
-
   status = strstr (ykc->curl_chunk, "status=");
   if (!status)
     {
@@ -408,8 +430,6 @@ ykclient_request (ykclient_t *ykc,
   while (status[strlen (status) - 1] == '\r'
 	 || status[strlen (status) - 1] == '\n')
     status[strlen (status) - 1] = '\0';
-
-  D (("parsed status (%d): %s\n", strlen (status), status));
 
   if (strcmp (status, "status=OK") == 0)
     {
