@@ -1,6 +1,6 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
-* Version 2.3 (unreleased)
+* Version 2.3 (released 2009-05-11)
 
 ** Add new API ykclient_set_client_b64 to set client key in b64 format.
 
