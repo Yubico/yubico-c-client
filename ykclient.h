@@ -85,6 +85,7 @@ extern const char *ykclient_get_last_url (ykclient_t *ykc);
 /* One call interface. */
 extern int ykclient_verify_otp (const char *yubikey_otp,
 				unsigned int client_id,
-				const char *hexkey);
+				const char *hexkey,
+			        const char *url);
 
 #endif

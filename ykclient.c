@@ -43,15 +43,19 @@
 #include "b64/cencode.h"
 #include "b64/cdecode.h"
 
+#define NONCE_LEN 32
+
 struct ykclient_st
 {
   CURL *curl;
+  const char *ca_path;
   const char *url_template;
   char *url;
   unsigned int client_id;
   size_t keylen;
   const char *key;
   char *key_buf;
+  char *nonce;
   char *curl_chunk;
   size_t curl_chunk_size;
 };
@@ -73,6 +77,7 @@ ykclient_init (ykclient_t **ykc)
       return YKCLIENT_CURL_INIT_ERROR;
     }
 
+  p->ca_path = NULL;
   p->url_template = NULL;
   p->url = NULL;
 
@@ -82,6 +87,24 @@ ykclient_init (ykclient_t **ykc)
   p->key = NULL;
   p->keylen = 0;
   p->key_buf = NULL;
+
+  /* Generate a random 'nonce' value */
+  {
+    int i = 0;
+
+    p->nonce = malloc (NONCE_LEN + 1);
+    if (!p->nonce)
+      return YKCLIENT_OUT_OF_MEMORY;\
+  
+    srandom (time (NULL));
+  
+    for (i = 0; i < NONCE_LEN; ++i)
+      {
+        p->nonce[i] = (random () % 26) + 'a';
+      }
+
+    p->nonce[NONCE_LEN] = 0;
+  }
 
   *ykc = p;
 
@@ -94,6 +117,7 @@ ykclient_done (ykclient_t **ykc)
   if (ykc && *ykc)
     {
       curl_easy_cleanup ((*ykc)->curl);
+      free ((*ykc)->nonce);
       free ((*ykc)->url);
       free ((*ykc)->curl_chunk);
       free ((*ykc)->key_buf);
@@ -188,6 +212,13 @@ ykclient_set_client_b64 (ykclient_t *ykc,
 }
 
 void
+ykclient_set_ca_path (ykclient_t *ykc,
+			   const char *ca_path)
+{
+  ykc->ca_path = ca_path;
+}
+
+void
 ykclient_set_url_template (ykclient_t *ykc,
 			   const char *url_template)
 {
@@ -197,7 +228,8 @@ ykclient_set_url_template (ykclient_t *ykc,
 int
 ykclient_verify_otp (const char *yubikey_otp,
 		     unsigned int client_id,
-		     const char *hexkey)
+		     const char *hexkey,
+		     const char *url)
 {
   ykclient_t *ykc;
   int ret;
@@ -207,6 +239,11 @@ ykclient_verify_otp (const char *yubikey_otp,
     return ret;
 
   ykclient_set_client_hex (ykc, client_id, hexkey);
+
+  if (url)
+    {
+      ykclient_set_url_template (ykc, url);
+    }
 
   ret = ykclient_request (ykc, yubikey_otp);
 
@@ -385,18 +422,43 @@ ykclient_request (ykclient_t *ykc,
 	size_t len;
 	int wrote;
 
-#define ADD "&h="
-	len = strlen (ykc->url) + strlen (ADD) + strlen (b64dig) + 1;
+#define ADD_HASH "&h="
+	len = strlen (ykc->url) + strlen (ADD_HASH) + strlen (b64dig) + 1;
 	url = malloc (len);
 	if (!url)
 	  return YKCLIENT_OUT_OF_MEMORY;
 
-	wrote = snprintf (url, len, "%s" ADD "%s", ykc->url, b64dig);
+	wrote = snprintf (url, len, "%s" ADD_HASH "%s", ykc->url, b64dig);
 	if (wrote + 1 != len)
 	  return YKCLIENT_FORMAT_ERROR;
 	free (ykc->url);
 	ykc->url = url;
       }
+    }
+
+  if (ykc->nonce)
+    {
+      /* Create new URL. */
+      char *url;
+      size_t len;
+      int wrote;
+
+#define ADD_NONCE "&nonce="
+      len = strlen (ykc->url) + strlen (ADD_NONCE) + strlen (ykc->nonce) + 1;
+      url = malloc (len);
+      if (!url)
+        return YKCLIENT_OUT_OF_MEMORY;
+
+      wrote = snprintf (url, len, "%s" ADD_NONCE "%s", ykc->url, ykc->nonce);
+      if (wrote + 1 != len)
+        return YKCLIENT_FORMAT_ERROR;
+      free (ykc->url);
+      ykc->url = url;
+    }
+
+  if(ykc->ca_path)
+    {
+      curl_easy_setopt (ykc->curl, CURLOPT_CAPATH, ykc->ca_path);
     }
 
   curl_easy_setopt (ykc->curl, CURLOPT_URL, ykc->url);
