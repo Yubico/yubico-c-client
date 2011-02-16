@@ -62,27 +62,38 @@ TESTS = $(check_PROGRAMS)
 
 # Release
 
-EXTRA_DIST = simple.mk
+# Dist docs from wiki.
+EXTRA_DIST = doc/ReadMe.asciidoc
+
+EXTRA_DIST += simple.mk
 
 ChangeLog:
-	svn2cl
+	cd $(srcdir) && git2cl > ChangeLog
 
 PROJECT = yubico-c-client
 USER ?= simon75j
 KEYID ?= B9156397
 
+check-doc-dist:
+	cd $(srcdir) && git submodule update
+	cd $(srcdir)/doc && git pull
+	perl -pe "s,^EXTRA_DIST = .*,EXTRA_DIST = `cd $(srcdir) && ls doc/*.asciidoc | grep -v Todo.ascii | xargs echo`," \
+		< $(srcdir)/Makefile.am > check-doc-dist.tmp
+	diff -ur $(srcdir)/Makefile.am check-doc-dist.tmp || \
+		(rm -f check-doc-dist.tmp; echo 'error: please update $(srcdir)/Makefile.am to include all docs'; exit 1)
+	rm -f check-doc-dist.tmp
+	diff -ur $(srcdir)/README $(srcdir)/doc/ReadMe.asciidoc || \
+		(echo 'error: README and doc/ReadMe.asciidoc does not match!'; exit 1)
+
 release:
 	rm -f ChangeLog
-	make ChangeLog distcheck
+	make check-doc-dist ChangeLog distcheck
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
 	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
-	svn copy https://$(PROJECT).googlecode.com/svn/trunk/ \
-	 https://$(PROJECT).googlecode.com/svn/tags/$(PACKAGE)-$(VERSION) \
-	 -m "Tagging the $(VERSION) release of the $(PACKAGE) project."
+	cd $(srcdir) && git push
+	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) v$(VERSION)
+	cd $(srcdir) && git push --tags
 	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
 	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz.sig
 	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
-	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz 
-	cp README ../wiki-$(PROJECT)/ReadMe.wiki && \
-		cd ../wiki-$(PROJECT) && \
-		svn commit -m Sync. ReadMe.wiki
+	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz
