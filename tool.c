@@ -42,7 +42,7 @@ int
 main (int argc, char *argv[])
 {
   char *client_id, *token, *url;
-  int ret;
+  int ret, optind;
 
   /* Parse command line parameters. */
   if (argc < 3 || argc > 4)
@@ -56,24 +56,23 @@ main (int argc, char *argv[])
 
   url = NULL;
 
-  if (argc == 4)
-    {
-      if (strncmp ("http://", argv[1], 7) != 0 && strncmp ("https://", argv[1], 8) != 0)
-        {
-          /* Invalid URL...*/
-          printf ("error: validation url must be http or https.\n");
-          return EXIT_FAILURE;
-        }
+  optind = 1;
 
-      url = argv[1];
-      client_id = argv[2];
-      token = argv[3];
-    }
-  else
-    {
-      client_id = argv[1];
-      token = argv[2];
-    }
+  /* Look for optional validation_url */
+  if (atoi (argv[optind]) <= 0) {
+    /* not numeric - ie. not client_id */
+    if (strncmp ("http://", argv[optind], 7) != 0 && strncmp ("https://", argv[optind], 8) != 0)
+      {
+	/* Invalid URL...*/
+	printf ("error: validation url must be http or https.\n");
+	return EXIT_FAILURE;
+      }
+
+      url = argv[optind++];
+  }
+
+  /* Now get mandatory numeric client_id */
+  client_id = argv[optind++];
 
   if (atoi (client_id) <= 0)
     {
@@ -81,6 +80,8 @@ main (int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
+  /* Likewise mandatory OTP token */
+  token = argv[optind++];
   if (strlen (token) < 32)
     {
       printf ("error: ModHex encoded token must be at least 32 characters.\n");
@@ -89,6 +90,8 @@ main (int argc, char *argv[])
 
   /* Debug. */
   printf ("Input:\n");
+  if (url)
+    printf ("  validation URL: %s\n", url);
   printf ("  client id: %d\n", atoi (client_id));
   printf ("  token: %s\n", token);
 
