@@ -1,4 +1,4 @@
-# Makefile --- Instructions for make to build Yubikey client library and tools. 
+# Makefile --- Instructions for make to build Yubikey client library and tools.
 #
 # Written by Simon Josefsson <simon@josefsson.org>.
 # Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
@@ -37,9 +37,9 @@ PROGRAMS = ykclient selftest
 
 all: $(PROGRAMS)
 
-OBJECTS = ykclient.o rfc4634/hmac.o rfc4634/sha1.o rfc4634/usha.o	\
-	rfc4634/sha224-256.o rfc4634/sha384-512.o b64/cencode.o		\
-	b64/cdecode.o
+OBJECTS = ykclient_server_response.o ykclient.o rfc4634/hmac.o rfc4634/sha1.o	\
+	rfc4634/usha.o rfc4634/sha224-256.o rfc4634/sha384-512.o 		\
+	b64/cencode.o b64/cdecode.o
 
 $(PROGRAMS): $(OBJECTS)
 

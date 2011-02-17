@@ -32,6 +32,8 @@
 
 #include "ykclient.h"
 
+#include "ykclient_server_response.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -58,6 +60,7 @@ struct ykclient_st
   char *nonce;
   char *curl_chunk;
   size_t curl_chunk_size;
+  int verify_signature;
 };
 
 int
@@ -95,9 +98,9 @@ ykclient_init (ykclient_t **ykc)
     p->nonce = malloc (NONCE_LEN + 1);
     if (!p->nonce)
       return YKCLIENT_OUT_OF_MEMORY;\
-  
+
     srandom (time (NULL));
-  
+
     for (i = 0; i < NONCE_LEN; ++i)
       {
         p->nonce[i] = (random () % 26) + 'a';
@@ -105,6 +108,11 @@ ykclient_init (ykclient_t **ykc)
 
     p->nonce[NONCE_LEN] = 0;
   }
+
+  /* Verification of server signature can only be done if there is
+   * an API key provided
+   */
+  p->verify_signature = 0;
 
   *ykc = p;
 
@@ -125,6 +133,15 @@ ykclient_done (ykclient_t **ykc)
     }
   if (ykc)
     *ykc = NULL;
+}
+
+void
+ykclient_set_verify_signature (ykclient_t *ykc,
+                               int value)
+{
+  if (ykc == NULL)
+    return;
+  ykc->verify_signature = value;
 }
 
 void
@@ -263,10 +280,6 @@ ykclient_verify_otp_v2 (ykclient_t *ykc_in,
   ykclient_t *ykc;
   int ret;
 
-  /* api_key is currently not used (placeholder argument) */
-  if (api_key)
-    return YKCLIENT_NOT_IMPLEMENTED;
-
   /* We currently only support 0 (for default YubiCloud URL) or 1 URL argument,
    * but this function is prepared to support all of Validation protocol 2.0,
    * which supports multiple parallell querys to multiple validation URLs.
@@ -289,6 +302,12 @@ ykclient_verify_otp_v2 (ykclient_t *ykc_in,
 
   if (urlcount == 1)
     ykclient_set_url_template (ykc, urls[0]);
+
+  if (api_key)
+    {
+      ykclient_set_verify_signature(ykc, 1);
+      ykclient_set_client_b64 (ykc, client_id, api_key);
+    }
 
   ret = ykclient_request (ykc, yubikey_otp);
 
@@ -323,6 +342,10 @@ ykclient_strerror (int ret)
 
     case YKCLIENT_BAD_SIGNATURE:
       p = "Request signature was invalid (BAD_SIGNATURE)";
+      break;
+
+    case YKCLIENT_BAD_SERVER_SIGNATURE:
+      p = "Server response signature was invalid (BAD_SERVER_SIGNATURE)";
       break;
 
     case YKCLIENT_MISSING_PARAMETER:
@@ -536,58 +559,77 @@ ykclient_request (ykclient_t *ykc,
       goto done;
     }
 
-  status = strstr (ykc->curl_chunk, "status=");
+  ykclient_server_response_t *serv_response = ykclient_server_response_init();
+  if (serv_response == NULL)
+    {
+      out = YKCLIENT_PARSE_ERROR;
+      goto done;
+    }
+
+  int parse_ret = ykclient_server_response_parse(ykc->curl_chunk,
+                                                 serv_response);
+  if (parse_ret)
+    {
+      out = parse_ret;
+      goto done;
+    }
+
+  if (ykc->verify_signature != 0 &&
+      ykclient_server_response_verify_signature(serv_response,
+                                                ykc->key, ykc->keylen))
+    {
+      out = YKCLIENT_BAD_SERVER_SIGNATURE;
+      goto done;
+    }
+
+  status = ykclient_server_response_get(serv_response, "status");
   if (!status)
     {
       out = YKCLIENT_PARSE_ERROR;
       goto done;
     }
 
-  while (status[strlen (status) - 1] == '\r'
-	 || status[strlen (status) - 1] == '\n')
-    status[strlen (status) - 1] = '\0';
-
-  if (strcmp (status, "status=OK") == 0)
+  if (strcmp (status, "OK") == 0)
     {
       out = YKCLIENT_OK;
       goto done;
     }
-  else if (strcmp (status, "status=BAD_OTP") == 0)
+  else if (strcmp (status, "BAD_OTP") == 0)
     {
       out = YKCLIENT_BAD_OTP;
       goto done;
     }
-  else if (strcmp (status, "status=REPLAYED_OTP") == 0)
+  else if (strcmp (status, "REPLAYED_OTP") == 0)
     {
       out = YKCLIENT_REPLAYED_OTP;
       goto done;
     }
-  else if (strcmp (status, "status=REPLAYED_REQUEST") == 0)
+  else if (strcmp (status, "REPLAYED_REQUEST") == 0)
     {
       out = YKCLIENT_REPLAYED_REQUEST;
       goto done;
     }
-  else if (strcmp (status, "status=BAD_SIGNATURE") == 0)
+  else if (strcmp (status, "BAD_SIGNATURE") == 0)
     {
       out = YKCLIENT_BAD_SIGNATURE;
       goto done;
     }
-  else if (strcmp (status, "status=MISSING_PARAMETER") == 0)
+  else if (strcmp (status, "MISSING_PARAMETER") == 0)
     {
       out = YKCLIENT_MISSING_PARAMETER;
       goto done;
     }
-  else if (strcmp (status, "status=NO_SUCH_CLIENT") == 0)
+  else if (strcmp (status, "NO_SUCH_CLIENT") == 0)
     {
       out = YKCLIENT_NO_SUCH_CLIENT;
       goto done;
     }
-  else if (strcmp (status, "status=OPERATION_NOT_ALLOWED") == 0)
+  else if (strcmp (status, "OPERATION_NOT_ALLOWED") == 0)
     {
       out = YKCLIENT_OPERATION_NOT_ALLOWED;
       goto done;
     }
-  else if (strcmp (status, "status=BACKEND_ERROR") == 0)
+  else if (strcmp (status, "BACKEND_ERROR") == 0)
     {
       out = YKCLIENT_BACKEND_ERROR;
       goto done;
@@ -598,6 +640,8 @@ ykclient_request (ykclient_t *ykc,
  done:
   if (user_agent)
     free (user_agent);
+
+  ykclient_server_response_free(serv_response);
 
   return out;
 }

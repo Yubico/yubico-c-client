@@ -46,11 +46,13 @@ const char *usage =
   "\n"
   "  Options :\n"
   "    --url URL		Validation service URL (eg: \"http://api.yubico.com/wsapi/verify?id=%%d&otp=%%s\")\n"
+  "    --apikey Key		API key for HMAC validation of request/response\n"
   ;
 
 static struct option long_options[] = {
-  {"url", 1, 0, 'u'},
-  {0, 0, 0, 0}
+  {"url",	1, 0, 'u'},
+  {"apikey",	1, 0, 'a'},
+  {0,		0, 0, 0}
 };
 
 /* Parse command line parameters. */
@@ -73,6 +75,11 @@ parse_args(int argc, char *argv[],
 
       switch (c)
 	{
+	case 'a':
+	  if (strlen (optarg) < 16)
+	      errx (EXIT_FAILURE, "error: API key must be at least 16 characters.");
+	  *api_key = optarg;
+	  break;
 	case 'u':
 	  if (strncmp ("http://", optarg, 7) != 0 && strncmp ("https://", optarg, 8) != 0)
 	    errx (EXIT_FAILURE, "error: validation url must be http or https.");
@@ -120,6 +127,8 @@ main (int argc, char *argv[])
     fprintf (stderr, "  validation URL: %s\n", url);
   fprintf (stderr, "  client id: %d\n", client_id);
   fprintf (stderr, "  token: %s\n", token);
+  if (api_key != NULL)
+    fprintf (stderr, "  api key: %s\n", api_key);
 
   ret = ykclient_verify_otp_v2 (NULL, token, client_id, NULL, 1, (const char **) &url, api_key);
 

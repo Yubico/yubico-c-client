@@ -50,6 +50,7 @@ main (void)
   printf ("ykclient_init (%d): %s\n", ret, ykclient_strerror (ret));
   if (ret != YKCLIENT_OK)
     return 1;
+  ykclient_set_verify_signature(ykc, 0);
 
   ykclient_set_client (ykc, client_id, 0, NULL);
 
@@ -138,6 +139,24 @@ main (void)
   printf ("yubikey_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   if (ret != YKCLIENT_REPLAYED_OTP)
+    return 1;
+
+  ykclient_set_verify_signature(ykc, 1);
+
+  // Check a genuine signature.
+  ykclient_set_client (ykc, client_id, 20, client_key);
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  if (ret != YKCLIENT_REPLAYED_OTP)
+    return 1;
+
+  // Check a genuine signature with a truncated key.
+  ykclient_set_client (ykc, client_id, 10, client_key);
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  if (ret != YKCLIENT_BAD_SERVER_SIGNATURE)
     return 1;
 
   ykclient_done (&ykc);
