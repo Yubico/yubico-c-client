@@ -1,7 +1,7 @@
 /* ykclient.c --- Implementation of Yubikey OTP validation client library.
  *
  * Written by Simon Josefsson <simon@josefsson.org>.
- * Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
+ * Copyright (c) 2006, 2007, 2008, 2009, 2011 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -228,11 +228,30 @@ ykclient_set_url_template (ykclient_t *ykc,
 int
 ykclient_verify_otp (const char *yubikey_otp,
 		     unsigned int client_id,
-		     const char *hexkey,
-		     const char *url)
+		     const char *hexkey)
+{
+  ykclient_verify_otp_v2 (yubikey_otp,
+			  client_id,
+			  hexkey,
+			  NULL,
+			  NULL);
+}
+
+int
+ykclient_verify_otp_v2 (const char *yubikey_otp,
+			unsigned int client_id,
+			const char *hexkey,
+			const char *url,
+			const char *api_key)
 {
   ykclient_t *ykc;
   int ret;
+
+  /* api_key is currently not used (placeholder argument) */
+  if (api_key)
+    {
+      return YKCLIENT_NOT_IMPLEMENTED;
+    }
 
   ret = ykclient_init (&ykc);
   if (ret != YKCLIENT_OK)
@@ -309,6 +328,10 @@ ykclient_strerror (int ret)
 
     case YKCLIENT_HEX_DECODE_ERROR:
       p = "Error decoding hex string";
+      break;
+
+    case YKCLIENT_NOT_IMPLEMENTED:
+      p = "Not implemented";
       break;
 
     default:
