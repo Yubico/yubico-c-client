@@ -230,11 +230,11 @@ ykclient_verify_otp (const char *yubikey_otp,
 		     unsigned int client_id,
 		     const char *hexkey)
 {
-  ykclient_verify_otp_v2 (yubikey_otp,
-			  client_id,
-			  hexkey,
-			  NULL,
-			  NULL);
+  return ykclient_verify_otp_v2 (yubikey_otp,
+				 client_id,
+				 hexkey,
+				 NULL,
+				 NULL);
 }
 
 int
