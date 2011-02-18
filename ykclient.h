@@ -89,10 +89,12 @@ extern int ykclient_verify_otp (const char *yubikey_otp,
 				const char *hexkey);
 
 /* One call interface for validation protocol 2.0 and non-default URL. */
-extern int ykclient_verify_otp_v2 (const char *yubikey_otp,
+extern int ykclient_verify_otp_v2 (ykclient_t *ykc_in,
+				   const char *yubikey_otp,
 				   unsigned int client_id,
 				   const char *hexkey,
-				   const char *url,
+				   const unsigned int urlcount,
+				   const char **urls,
 				   const char *api_key);
 
 #endif

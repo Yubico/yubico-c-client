@@ -225,23 +225,39 @@ ykclient_set_url_template (ykclient_t *ykc,
   ykc->url_template = url_template;
 }
 
+/*
+ * Simple API to validate an OTP (hexkey) using the YubiCloud validation
+ * service.
+ */
 int
 ykclient_verify_otp (const char *yubikey_otp,
 		     unsigned int client_id,
 		     const char *hexkey)
 {
-  return ykclient_verify_otp_v2 (yubikey_otp,
+  return ykclient_verify_otp_v2 (NULL,
+				 yubikey_otp,
 				 client_id,
 				 hexkey,
+				 0,
 				 NULL,
 				 NULL);
 }
 
+/*
+ * Extended API to validate an OTP (hexkey) using either the YubiCloud
+ * validation service, or any other validation service.
+ *
+ * Special CURL settings can be achieved by passing a non-null ykc_in.
+ *
+ * Prepared to support HMAC validation of server responses using api_key.
+ */
 int
-ykclient_verify_otp_v2 (const char *yubikey_otp,
+ykclient_verify_otp_v2 (ykclient_t *ykc_in,
+			const char *yubikey_otp,
 			unsigned int client_id,
 			const char *hexkey,
-			const char *url,
+			const unsigned int urlcount,
+			const char **urls,
 			const char *api_key)
 {
   ykclient_t *ykc;
@@ -249,24 +265,35 @@ ykclient_verify_otp_v2 (const char *yubikey_otp,
 
   /* api_key is currently not used (placeholder argument) */
   if (api_key)
-    {
-      return YKCLIENT_NOT_IMPLEMENTED;
-    }
+    return YKCLIENT_NOT_IMPLEMENTED;
 
-  ret = ykclient_init (&ykc);
-  if (ret != YKCLIENT_OK)
-    return ret;
+  /* We currently only support 0 (for default YubiCloud URL) or 1 URL argument,
+   * but this function is prepared to support all of Validation protocol 2.0,
+   * which supports multiple parallell querys to multiple validation URLs.
+   */
+  if (urlcount > 1)
+    return YKCLIENT_NOT_IMPLEMENTED;
+
+  if (ykc_in == NULL)
+    {
+      ret = ykclient_init (&ykc);
+      if (ret != YKCLIENT_OK)
+	return ret;
+    }
+  else
+    {
+      ykc = ykc_in;
+    }
 
   ykclient_set_client_hex (ykc, client_id, hexkey);
 
-  if (url)
-    {
-      ykclient_set_url_template (ykc, url);
-    }
+  if (urlcount == 1)
+    ykclient_set_url_template (ykc, urls[0]);
 
   ret = ykclient_request (ykc, yubikey_otp);
 
-  ykclient_done (&ykc);
+  if (ykc_in == NULL)
+    ykclient_done (&ykc);
 
   return ret;
 }
