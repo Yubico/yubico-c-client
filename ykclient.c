@@ -328,6 +328,10 @@ ykclient_strerror (int ret)
       p = "Success";
       break;
 
+    case YKCLIENT_CURL_PERFORM_ERROR:
+      p = "Error performing curl";
+      break;
+
     case YKCLIENT_BAD_OTP:
       p = "Yubikey OTP was bad (BAD_OTP)";
       break;
@@ -551,7 +555,13 @@ ykclient_request (ykclient_t *ykc,
       curl_easy_setopt(ykc->curl, CURLOPT_USERAGENT, user_agent);
   }
 
-  curl_easy_perform (ykc->curl);
+  CURLcode curl_ret = curl_easy_perform (ykc->curl);
+
+  if (curl_ret != CURLE_OK)
+    {
+      out = YKCLIENT_CURL_PERFORM_ERROR;
+      goto done;
+    }
 
   if (ykc->curl_chunk_size == 0 || ykc->curl_chunk == NULL)
     {
@@ -641,7 +651,8 @@ ykclient_request (ykclient_t *ykc,
   if (user_agent)
     free (user_agent);
 
-  ykclient_server_response_free(serv_response);
+  if (serv_response)
+    ykclient_server_response_free(serv_response);
 
   return out;
 }
