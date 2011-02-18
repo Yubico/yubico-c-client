@@ -317,6 +317,10 @@ ykclient_strerror (int ret)
       p = "Yubikey OTP was replayed (REPLAYED_OTP)";
       break;
 
+    case YKCLIENT_REPLAYED_REQUEST:
+      p = "Yubikey request was replayed (REPLAYED_REQUEST)";
+      break;
+
     case YKCLIENT_BAD_SIGNATURE:
       p = "Request signature was invalid (BAD_SIGNATURE)";
       break;
@@ -556,6 +560,11 @@ ykclient_request (ykclient_t *ykc,
   else if (strcmp (status, "status=REPLAYED_OTP") == 0)
     {
       out = YKCLIENT_REPLAYED_OTP;
+      goto done;
+    }
+  else if (strcmp (status, "status=REPLAYED_REQUEST") == 0)
+    {
+      out = YKCLIENT_REPLAYED_REQUEST;
       goto done;
     }
   else if (strcmp (status, "status=BAD_SIGNATURE") == 0)
