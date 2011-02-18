@@ -61,6 +61,8 @@ static void parameter_free(ykclient_parameter_t* param) {
     free(param->key);
   if (param->value)
     free(param->value);
+
+  free(param);
 }
 
 // Calls func on each parameter of params.
@@ -211,7 +213,6 @@ static int parse_next_parameter(char** s, ykclient_parameter_t* param) {
 
   param->key = malloc(index + 1);
   if (param->key == NULL) {
-    free(param);
     return YKCLIENT_OUT_OF_MEMORY;
   }
   strncpy(param->key, pos, index);
@@ -223,13 +224,13 @@ static int parse_next_parameter(char** s, ykclient_parameter_t* param) {
   while (*(pos + index) != '\0' && !is_ws_or_lb(*(pos + index)))
     ++index;
   if (*(pos + index) == '\0') {
-    free(param);
+    parameter_free(param);
     return YKCLIENT_PARSE_ERROR;
   }
 
   param->value = malloc(index + 1);
   if (param->value == NULL) {
-    free(param);
+    parameter_free(param);
     return YKCLIENT_OUT_OF_MEMORY;
   }
   strncpy(param->value, pos, index);
