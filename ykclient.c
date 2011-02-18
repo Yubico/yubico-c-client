@@ -341,6 +341,10 @@ ykclient_strerror (int ret)
       p = "Internal server error (BACKEND_ERROR)";
       break;
 
+    case YKCLIENT_NOT_ENOUGH_ANSWERS:
+      p = "Too few validation servers available (NOT_ENOUGH_ANSWERS)";
+      break;
+
     case YKCLIENT_OUT_OF_MEMORY:
       p = "Out of memory";
       break;
@@ -590,6 +594,11 @@ ykclient_request (ykclient_t *ykc,
   else if (strcmp (status, "status=BACKEND_ERROR") == 0)
     {
       out = YKCLIENT_BACKEND_ERROR;
+      goto done;
+    }
+  else if (strcmp (status, "status=NOT_ENOUGH_ANSWERS") == 0)
+    {
+      out = YKCLIENT_NOT_ENOUGH_ANSWERS;
       goto done;
     }
 
