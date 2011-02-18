@@ -438,6 +438,7 @@ ykclient_request (ykclient_t *ykc,
   char *user_agent = NULL;
   char *status;
   int out;
+  char *server_nonce = NULL;
 
   if (!url_template)
     url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
@@ -590,6 +591,16 @@ ykclient_request (ykclient_t *ykc,
     {
       out = YKCLIENT_BAD_SERVER_SIGNATURE;
       goto done;
+    }
+
+  if (ykc->nonce)
+    {
+      server_nonce = ykclient_server_response_get(serv_response, "nonce");
+      if(strcmp(ykc->nonce, server_nonce))
+	{
+	  out = YKCLIENT_HMAC_ERROR;
+	  goto done;
+	}
     }
 
   status = ykclient_server_response_get(serv_response, "status");
