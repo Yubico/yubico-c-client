@@ -91,12 +91,14 @@ ykclient_init (ykclient_t **ykc)
   /* Generate a random 'nonce' value */
   {
     int i = 0;
+    struct timeval tv;
 
     p->nonce = malloc (NONCE_LEN + 1);
     if (!p->nonce)
       return YKCLIENT_OUT_OF_MEMORY;\
   
-    srandom (time (NULL));
+    gettimeofday(&tv, 0);
+    srandom (tv.tv_sec * tv.tv_usec);
   
     for (i = 0; i < NONCE_LEN; ++i)
       {
@@ -256,7 +258,7 @@ ykclient_verify_otp_v2 (ykclient_t *ykc_in,
 			const char *yubikey_otp,
 			unsigned int client_id,
 			const char *hexkey,
-			const unsigned int urlcount,
+			size_t urlcount,
 			const char **urls,
 			const char *api_key)
 {
