@@ -81,21 +81,24 @@ extern int ykclient_set_client_b64 (ykclient_t *ykc,
 extern void ykclient_set_url_template (ykclient_t *ykc,
 				       const char *url_template);
 
+extern void ykclient_set_ca_path (ykclient_t *ykc,
+				  const char *ca_path);
+
 extern int ykclient_request (ykclient_t *ykc, const char *yubikey_otp);
 
 extern const char *ykclient_get_last_url (ykclient_t *ykc);
 
-/* One call interface. */
+/* One call interface for validation protocol 1.x, with default URL. */
 extern int ykclient_verify_otp (const char *yubikey_otp,
 				unsigned int client_id,
 				const char *hexkey);
 
-/* One call interface for validation protocol 2.0 and non-default URL. */
+/* One call interface for validation protocol 2.0 and/or non-default URL. */
 extern int ykclient_verify_otp_v2 (ykclient_t *ykc_in,
 				   const char *yubikey_otp,
 				   unsigned int client_id,
 				   const char *hexkey,
-				   const unsigned int urlcount,
+				   size_t urlcount,
 				   const char **urls,
 				   const char *api_key);
 
