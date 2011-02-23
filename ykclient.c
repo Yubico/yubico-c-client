@@ -96,10 +96,10 @@ ykclient_init (ykclient_t **ykc)
     p->nonce = malloc (NONCE_LEN + 1);
     if (!p->nonce)
       return YKCLIENT_OUT_OF_MEMORY;\
-  
+
     gettimeofday(&tv, 0);
     srandom (tv.tv_sec * tv.tv_usec);
-  
+
     for (i = 0; i < NONCE_LEN; ++i)
       {
         p->nonce[i] = (random () % 26) + 'a';
