@@ -46,6 +46,7 @@ typedef enum {
   YKCLIENT_NO_SUCH_CLIENT,
   YKCLIENT_OPERATION_NOT_ALLOWED,
   YKCLIENT_BACKEND_ERROR,
+  YKCLIENT_NOT_ENOUGH_ANSWERS,
   YKCLIENT_REPLAYED_REQUEST,
   /* Other implementation specific errors. */
   YKCLIENT_OUT_OF_MEMORY = 100,
@@ -90,21 +91,24 @@ extern void ykclient_set_url_template (ykclient_t *ykc,
 
 // By default the signature returned by the server is verified (modify
 // this choice by calling ykclient_set_verify_signature()).
+extern void ykclient_set_ca_path (ykclient_t *ykc,
+				  const char *ca_path);
+
 extern int ykclient_request (ykclient_t *ykc, const char *yubikey_otp);
 
 extern const char *ykclient_get_last_url (ykclient_t *ykc);
 
-/* One call interface. */
+/* One call interface for validation protocol 1.x, with default URL. */
 extern int ykclient_verify_otp (const char *yubikey_otp,
 				unsigned int client_id,
 				const char *hexkey);
 
-/* One call interface for validation protocol 2.0 and non-default URL. */
+/* One call interface for validation protocol 2.0 and/or non-default URL. */
 extern int ykclient_verify_otp_v2 (ykclient_t *ykc_in,
 				   const char *yubikey_otp,
 				   unsigned int client_id,
 				   const char *hexkey,
-				   const unsigned int urlcount,
+				   size_t urlcount,
 				   const char **urls,
 				   const char *api_key);
 
