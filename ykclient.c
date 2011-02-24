@@ -267,8 +267,6 @@ ykclient_verify_otp (const char *yubikey_otp,
  * validation service, or any other validation service.
  *
  * Special CURL settings can be achieved by passing a non-null ykc_in.
- *
- * Prepared to support HMAC validation of server responses using api_key.
  */
 int
 ykclient_verify_otp_v2 (ykclient_t *ykc_in,
@@ -307,7 +305,7 @@ ykclient_verify_otp_v2 (ykclient_t *ykc_in,
 
   if (api_key)
     {
-      ykclient_set_verify_signature(ykc, 1);
+      ykclient_set_verify_signature (ykc, 1);
       ykclient_set_client_b64 (ykc, client_id, api_key);
     }
 
@@ -467,6 +465,43 @@ ykclient_request (ykclient_t *ykc,
       return YKCLIENT_FORMAT_ERROR;
   }
 
+  if (ykc->nonce)
+    {
+      /* Create new URL with nonce in it. */
+      char *url, *otp_offset;
+      size_t len;
+      int wrote;
+
+#define ADD_NONCE "&nonce="
+      len = strlen (ykc->url) + strlen (ADD_NONCE) + strlen (ykc->nonce) + 1;
+      url = malloc (len);
+      if (!url)
+	return YKCLIENT_OUT_OF_MEMORY;
+
+      /* Find the &otp= in ykc->url and insert ?nonce= before otp. Must get
+       *  sorted headers since we calculate HMAC on the result.
+       *
+       * XXX this will break if the validation protocol gets a parameter that
+       * sorts in between "nonce" and "otp", because the headers we sign won't
+       * be alphabetically sorted if we insert the nonce between "nz" and "otp".
+       * Also, we assume that everyone will have at least one parameter ("id=")
+       * before "otp" so there is no need to search for "?otp=".
+       */
+      otp_offset = strstr (ykc->url, "&otp=");
+      if (otp_offset == NULL)
+	otp_offset = ykc->url + len;  // point at \0 at end of url in case there is no otp
+
+      /* break up ykc->url where we want to insert nonce */
+      *otp_offset = 0;
+
+      wrote = snprintf (url, len, "%s" ADD_NONCE "%s&%s", ykc->url, ykc->nonce, otp_offset + 1);
+      if (wrote + 1 != len)
+	return YKCLIENT_FORMAT_ERROR;
+
+      free (ykc->url);
+      ykc->url = url;
+    }
+
   if (ykc->key && ykc->keylen)
     {
       uint8_t digest[USHAMaxHashSize];
@@ -504,7 +539,7 @@ ykclient_request (ykclient_t *ykc,
 	  }
       }
 
-      /* Create new URL. */
+      /* Create new URL with signature ( h= ) appended to it . */
       {
 	char *url;
 	size_t len;
@@ -522,26 +557,6 @@ ykclient_request (ykclient_t *ykc,
 	free (ykc->url);
 	ykc->url = url;
       }
-    }
-
-  if (ykc->nonce)
-    {
-      /* Create new URL. */
-      char *url;
-      size_t len;
-      int wrote;
-
-#define ADD_NONCE "&nonce="
-      len = strlen (ykc->url) + strlen (ADD_NONCE) + strlen (ykc->nonce) + 1;
-      url = malloc (len);
-      if (!url)
-        return YKCLIENT_OUT_OF_MEMORY;
-
-      wrote = snprintf (url, len, "%s" ADD_NONCE "%s", ykc->url, ykc->nonce);
-      if (wrote + 1 != len)
-        return YKCLIENT_FORMAT_ERROR;
-      free (ykc->url);
-      ykc->url = url;
     }
 
   if(ykc->ca_path)
