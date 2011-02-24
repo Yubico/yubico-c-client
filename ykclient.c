@@ -442,7 +442,6 @@ ykclient_request (ykclient_t *ykc,
   char *user_agent = NULL;
   char *status;
   int out;
-  char *server_nonce = NULL;
 
   if (!url_template)
     url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
@@ -614,10 +613,29 @@ ykclient_request (ykclient_t *ykc,
       goto done;
     }
 
+  /* Verify that the nonce we put in our request is echoed in the response.
+   *
+   * This is to protect us from a man in the middle sending us a previously
+   * seen genuine response again (such as an status=OK response even though
+   * the real server will respond status=REPLAYED_OTP in a few milliseconds.
+   */
   if (ykc->nonce)
     {
-      server_nonce = ykclient_server_response_get(serv_response, "nonce");
+      char *server_nonce = ykclient_server_response_get(serv_response, "nonce");
       if(strcmp(ykc->nonce, server_nonce))
+	{
+	  out = YKCLIENT_HMAC_ERROR;
+	  goto done;
+	}
+    }
+
+  /* Verify that the OTP we put in our request is echoed in the response.
+   *
+   * Same reason as ykc->nonce above.
+   */
+    {
+      char *server_otp = ykclient_server_response_get(serv_response, "otp");
+      if(strcmp(yubikey, server_otp))
 	{
 	  out = YKCLIENT_HMAC_ERROR;
 	  goto done;
