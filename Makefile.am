@@ -26,6 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+SUBDIRS=tests
+
 AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
 ACLOCAL_AMFLAGS = -I m4
 
@@ -51,14 +53,6 @@ bin_PROGRAMS = ykclient
 
 ykclient_SOURCES = tool.c
 ykclient_LDADD = ./libykclient.la
-
-# Self tests.
-
-AM_LDFLAGS = -no-install
-LDADD = libykclient.la
-
-check_PROGRAMS = selftest
-TESTS = $(check_PROGRAMS)
 
 # Release
 
