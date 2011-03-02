@@ -85,7 +85,7 @@ release:
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
 	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
 	cd $(srcdir) && git push
-	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) v$(VERSION)
+	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) $(PACKAGE)-$(VERSION)
 	cd $(srcdir) && git push --tags
 	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
 	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz.sig
