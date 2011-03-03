@@ -388,6 +388,10 @@ ykclient_strerror (int ret)
       p = "Error initializing curl";
       break;
 
+    case YKCLIENT_HMAC_ERROR:
+      p = "HMAC signature validation/generation error";
+      break;
+
     case YKCLIENT_HEX_DECODE_ERROR:
       p = "Error decoding hex string";
       break;
@@ -622,7 +626,7 @@ ykclient_request (ykclient_t *ykc,
   if (ykc->nonce)
     {
       char *server_nonce = ykclient_server_response_get(serv_response, "nonce");
-      if(strcmp(ykc->nonce, server_nonce))
+      if(server_nonce == NULL || strcmp(ykc->nonce, server_nonce))
 	{
 	  out = YKCLIENT_HMAC_ERROR;
 	  goto done;
@@ -635,7 +639,7 @@ ykclient_request (ykclient_t *ykc,
    */
     {
       char *server_otp = ykclient_server_response_get(serv_response, "otp");
-      if(strcmp(yubikey, server_otp))
+      if(server_otp == NULL || strcmp(yubikey, server_otp))
 	{
 	  out = YKCLIENT_HMAC_ERROR;
 	  goto done;
