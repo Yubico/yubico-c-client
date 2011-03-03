@@ -448,7 +448,7 @@ ykclient_request (ykclient_t *ykc,
   int out;
 
   if (!url_template)
-    url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
+    url_template = "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s";
 
   free (ykc->curl_chunk);
   ykc->curl_chunk_size = 0;
