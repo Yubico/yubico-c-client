@@ -56,6 +56,9 @@ main (void)
   printf ("ykclient_init (%d): %s\n", ret, ykclient_strerror (ret));
   assert(ret == YKCLIENT_OK);
 
+  ykclient_set_url_template
+    (ykc, "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s");
+
   TEST(("null client_id, expect REPLAYED_OTP"));
   ykclient_set_verify_signature(ykc, 0);
   ykclient_set_client (ykc, client_id, 0, NULL);
@@ -135,7 +138,7 @@ main (void)
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
 
-  TEST(("set URL template"));
+  TEST(("set v1 URL template"));
   ykclient_set_url_template
     (ykc, "http://api.yubico.com/wsapi/verify?id=%d&otp=%s");
 
