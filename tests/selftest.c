@@ -140,7 +140,7 @@ main (void)
   /* Same URL used by library, somewhat silly but still verifies the
      code path. */
   ykclient_set_url_template
-    (ykc, "http://api.yubico.com/wsapi/verify?id=%d&otp=%s");
+    (ykc, "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s");
 
   TEST(("validation request, expect REPLAYED_OTP"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
