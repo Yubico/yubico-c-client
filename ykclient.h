@@ -94,6 +94,15 @@ extern void ykclient_set_url_template (ykclient_t *ykc,
 extern void ykclient_set_ca_path (ykclient_t *ykc,
 				  const char *ca_path);
 
+/*
+ * Set the nonce. A default nonce is generated in ykclient_init(), but
+ * if you either want to specify your own nonce, or want to remove the
+ * nonce (needed to send signed requests to v1 validation servers),
+ * you must call this function. Set nonce to NULL to disable it.
+ */
+extern void ykclient_set_nonce (ykclient_t *ykc,
+				char *nonce);
+
 extern int ykclient_request (ykclient_t *ykc, const char *yubikey_otp);
 
 extern const char *ykclient_get_last_url (ykclient_t *ykc);

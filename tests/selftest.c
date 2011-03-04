@@ -38,6 +38,45 @@
   printf xX; \
   printf ("\n")
 
+void
+test_v1_validation(int client_id, char *client_b64key)
+{
+  ykclient_t *ykc;
+  int ret;
+
+  TEST(("init self"));
+  ret = ykclient_init (&ykc);
+  printf ("ykclient_init (%d): %s\n", ret, ykclient_strerror (ret));
+  assert(ret == YKCLIENT_OK);
+
+  ykclient_set_url_template
+    (ykc, "http://api.yubico.com/wsapi/verify?id=%d&otp=%s");
+
+  TEST(("null client_id, expect REPLAYED_OTP"));
+  ykclient_set_verify_signature(ykc, 0);
+  ykclient_set_client (ykc, client_id, 0, NULL);
+
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert(ret == YKCLIENT_REPLAYED_OTP);
+
+
+  /* Test signed request. When signing requests to a v1 service, we must clear the nonce first. */
+
+  TEST(("signed request, expect REPLAYED_OTP"));
+  ykclient_set_verify_signature(ykc, 1);
+  ykclient_set_client_b64 (ykc, client_id, client_b64key);
+  ykclient_set_nonce(ykc, NULL);
+
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert(ret == YKCLIENT_REPLAYED_OTP);
+
+  ykclient_done (&ykc);
+}
+
 int
 main (void)
 {
@@ -138,17 +177,6 @@ main (void)
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
 
-  TEST(("set v1 URL template"));
-  ykclient_set_url_template
-    (ykc, "http://api.yubico.com/wsapi/verify?id=%d&otp=%s");
-
-  TEST(("validation request, expect REPLAYED_OTP"));
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
-  printf ("yubikey_request (%d): %s\n", ret, ykclient_strerror (ret));
-  printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  assert (ret == YKCLIENT_REPLAYED_OTP);
-
-
   TEST(("set WS 2.0 URL template"));
   /* Same URL used by library, somewhat silly but still verifies the
      code path. */
@@ -190,6 +218,8 @@ main (void)
   TEST(("strerror BAD_OTP"));
   printf ("strerror(BAD_OTP): %s\n", ykclient_strerror (YKCLIENT_BAD_OTP));
   ret = strcmp(ykclient_strerror (YKCLIENT_BAD_OTP), "Yubikey OTP was bad (BAD_OTP)"); assert (ret == 0);
+
+  test_v1_validation(client_id, client_b64key);
 
   printf ("All tests passed\n");
 

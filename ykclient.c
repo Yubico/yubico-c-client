@@ -58,6 +58,7 @@ struct ykclient_st
   const char *key;
   char *key_buf;
   char *nonce;
+  char mallocd_nonce;
   char *curl_chunk;
   size_t curl_chunk_size;
   int verify_signature;
@@ -99,6 +100,7 @@ ykclient_init (ykclient_t **ykc)
     p->nonce = malloc (NONCE_LEN + 1);
     if (!p->nonce)
       return YKCLIENT_OUT_OF_MEMORY;\
+    p->mallocd_nonce = 1;
 
     gettimeofday(&tv, 0);
     srandom (tv.tv_sec * tv.tv_usec);
@@ -127,7 +129,8 @@ ykclient_done (ykclient_t **ykc)
   if (ykc && *ykc)
     {
       curl_easy_cleanup ((*ykc)->curl);
-      free ((*ykc)->nonce);
+      if ((*ykc)->mallocd_nonce)
+	free ((*ykc)->nonce);
       free ((*ykc)->url);
       free ((*ykc)->curl_chunk);
       free ((*ykc)->key_buf);
@@ -242,6 +245,23 @@ ykclient_set_url_template (ykclient_t *ykc,
 			   const char *url_template)
 {
   ykc->url_template = url_template;
+}
+
+/*
+ * Set the nonce. A default nonce is generated in ykclient_init(), but
+ * if you either want to specify your own nonce, or want to remove the
+ * nonce (needed to send signed requests to v1 validation servers),
+ * you must call this function. Set nonce to NULL to disable it.
+ */
+void
+ykclient_set_nonce (ykclient_t *ykc,
+		    char *nonce)
+{
+  if (ykc->mallocd_nonce)
+    free(ykc->nonce);
+  ykc->mallocd_nonce = 0;
+
+  ykc->nonce = nonce;
 }
 
 /*
@@ -644,7 +664,7 @@ ykclient_request (ykclient_t *ykc,
 	    }
 	}
 
-      *server_otp = ykclient_server_response_get(serv_response, "otp");
+      server_otp = ykclient_server_response_get(serv_response, "otp");
       if(server_otp == NULL || strcmp(yubikey, server_otp))
 	{
 	  out = YKCLIENT_HMAC_ERROR;
