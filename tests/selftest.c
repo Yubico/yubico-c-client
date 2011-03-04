@@ -135,8 +135,18 @@ main (void)
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
 
-
   TEST(("set URL template"));
+  ykclient_set_url_template
+    (ykc, "http://api.yubico.com/wsapi/verify?id=%d&otp=%s");
+
+  TEST(("validation request, expect REPLAYED_OTP"));
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("yubikey_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert (ret == YKCLIENT_REPLAYED_OTP);
+
+
+  TEST(("set WS 2.0 URL template"));
   /* Same URL used by library, somewhat silly but still verifies the
      code path. */
   ykclient_set_url_template
@@ -150,6 +160,7 @@ main (void)
 
   ykclient_set_verify_signature(ykc, 1);
 
+  TEST(("validation request with valid signature, expect REPLAYED_OTP"));
   // Check a genuine signature.
   ykclient_set_client (ykc, client_id, 20, client_key);
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
@@ -158,6 +169,7 @@ main (void)
   if (ret != YKCLIENT_REPLAYED_OTP)
     return 1;
 
+  TEST(("validation request with bad key, expect YKCLIENT_BAD_SERVER_SIGNATURE"));
   // Check a genuine signature with a truncated key.
   ykclient_set_client (ykc, client_id, 10, client_key);
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
