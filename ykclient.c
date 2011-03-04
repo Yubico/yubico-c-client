@@ -617,35 +617,6 @@ ykclient_request (ykclient_t *ykc,
       goto done;
     }
 
-  /* Verify that the nonce we put in our request is echoed in the response.
-   *
-   * This is to protect us from a man in the middle sending us a previously
-   * seen genuine response again (such as an status=OK response even though
-   * the real server will respond status=REPLAYED_OTP in a few milliseconds.
-   */
-  if (ykc->nonce)
-    {
-      char *server_nonce = ykclient_server_response_get(serv_response, "nonce");
-      if(server_nonce == NULL || strcmp(ykc->nonce, server_nonce))
-	{
-	  out = YKCLIENT_HMAC_ERROR;
-	  goto done;
-	}
-    }
-
-  /* Verify that the OTP we put in our request is echoed in the response.
-   *
-   * Same reason as ykc->nonce above.
-   */
-    {
-      char *server_otp = ykclient_server_response_get(serv_response, "otp");
-      if(server_otp == NULL || strcmp(yubikey, server_otp))
-	{
-	  out = YKCLIENT_HMAC_ERROR;
-	  goto done;
-	}
-    }
-
   status = ykclient_server_response_get(serv_response, "status");
   if (!status)
     {
@@ -655,6 +626,31 @@ ykclient_request (ykclient_t *ykc,
 
   if (strcmp (status, "OK") == 0)
     {
+      char *server_otp;
+
+      /* Verify that the OTP and nonce we put in our request is echoed in the response.
+       *
+       * This is to protect us from a man in the middle sending us a previously
+       * seen genuine response again (such as an status=OK response even though
+       * the real server will respond status=REPLAYED_OTP in a few milliseconds.
+       */
+      if (ykc->nonce)
+	{
+	  char *server_nonce = ykclient_server_response_get(serv_response, "nonce");
+	  if(server_nonce == NULL || strcmp(ykc->nonce, server_nonce))
+	    {
+	      out = YKCLIENT_HMAC_ERROR;
+	      goto done;
+	    }
+	}
+
+      *server_otp = ykclient_server_response_get(serv_response, "otp");
+      if(server_otp == NULL || strcmp(yubikey, server_otp))
+	{
+	  out = YKCLIENT_HMAC_ERROR;
+	  goto done;
+	}
+
       out = YKCLIENT_OK;
       goto done;
     }
