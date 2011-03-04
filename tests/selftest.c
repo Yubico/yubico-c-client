@@ -32,6 +32,11 @@
 
 #include <ykclient.h>
 #include <stdio.h>
+#include <assert.h>
+
+#define TEST(xX) printf ("\nTest %s:%d (%s): ", __FILE__, __LINE__, __FUNCTION__); \
+  printf xX; \
+  printf ("\n")
 
 int
 main (void)
@@ -46,100 +51,102 @@ main (void)
   ykclient_t *ykc;
   int ret;
 
+  TEST(("init self"));
   ret = ykclient_init (&ykc);
   printf ("ykclient_init (%d): %s\n", ret, ykclient_strerror (ret));
-  if (ret != YKCLIENT_OK)
-    return 1;
-  ykclient_set_verify_signature(ykc, 0);
+  assert(ret == YKCLIENT_OK);
 
+  TEST(("null client_id, expect REPLAYED_OTP"));
+  ykclient_set_verify_signature(ykc, 0);
   ykclient_set_client (ykc, client_id, 0, NULL);
 
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  if (ret != YKCLIENT_REPLAYED_OTP)
-    return 1;
+  assert(ret == YKCLIENT_REPLAYED_OTP);
 
+  TEST(("client_id set(20), correct client_key, expect REPLAYED_OTP"));
   ykclient_set_client (ykc, client_id, 20, client_key);
 
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  if (ret != YKCLIENT_REPLAYED_OTP)
-    return 1;
+  assert (ret == YKCLIENT_REPLAYED_OTP);
 
+  TEST(("wrong client_id set(10), correct client_key, expect BAD_SIGNATURE"));
   ykclient_set_client (ykc, client_id, 10, client_key);
 
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  if (ret != YKCLIENT_BAD_SIGNATURE)
-    return 1;
+  assert (ret == YKCLIENT_BAD_SIGNATURE);
 
+  TEST(("invalid client_id set(a), correct client_key, expect HEX_DECODE_ERROR"));
   ret = ykclient_set_client_hex (ykc, client_id, "a");
   printf ("ykclient_set_client_hex (%d): %s\n", ret, ykclient_strerror (ret));
-  if (ret != YKCLIENT_HEX_DECODE_ERROR)
-    return 1;
+  assert (ret == YKCLIENT_HEX_DECODE_ERROR);
 
+  TEST(("invalid client_id set(xx), correct client_key, expect HEX_DECODE_ERROR"));
   ret = ykclient_set_client_hex (ykc, client_id, "xx");
   printf ("ykclient_set_client_hex (%d): %s\n", ret, ykclient_strerror (ret));
-  if (ret != YKCLIENT_HEX_DECODE_ERROR)
-    return 1;
+  assert (ret == YKCLIENT_HEX_DECODE_ERROR);
 
+  TEST(("hex client_id set, correct client_key, expect OK"));
   ret = ykclient_set_client_hex (ykc, client_id, client_hexkey);
   printf ("ykclient_set_client_hex (%d): %s\n", ret, ykclient_strerror (ret));
-  if (ret != YKCLIENT_OK)
-    return 1;
+  assert (ret == YKCLIENT_OK);
 
+  TEST(("validation request, expect REPLAYED_OTP"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  if (ret != YKCLIENT_REPLAYED_OTP)
-    return 1;
+  assert (ret == YKCLIENT_REPLAYED_OTP);
 
+  TEST(("set deadbeef client_id, expect OK"));
   ret = ykclient_set_client_hex (ykc, client_id, "deadbeef");
   printf ("ykclient_set_client_hex (%d): %s\n", ret, ykclient_strerror (ret));
-  if (ret != YKCLIENT_OK)
-    return 1;
+  assert (ret == YKCLIENT_OK);
 
+  TEST(("validation request, expect BAD_SIGNATURE"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  if (ret != YKCLIENT_BAD_SIGNATURE)
-    return 1;
+  assert (ret == YKCLIENT_BAD_SIGNATURE);
 
+  TEST(("b64 set deadbeef client_id, expect OK"));
   ret = ykclient_set_client_b64 (ykc, client_id, "deadbeef");
   printf ("ykclient_set_client_b64 (%d): %s\n", ret, ykclient_strerror (ret));
-  if (ret != YKCLIENT_OK)
-    return 1;
+  assert (ret == YKCLIENT_OK);
 
+  TEST(("validation request, expect BAD_SIGNATURE"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  if (ret != YKCLIENT_BAD_SIGNATURE)
-    return 1;
+  assert (ret == YKCLIENT_BAD_SIGNATURE);
 
+  TEST(("b64 set client_b64key, expect OK"));
   ret = ykclient_set_client_b64 (ykc, client_id, client_b64key);
   printf ("ykclient_set_client_b64 (%d): %s\n", ret, ykclient_strerror (ret));
-  if (ret != YKCLIENT_OK)
-    return 1;
+  assert (ret == YKCLIENT_OK);
 
+  TEST(("validation request, expect REPLAYED_OTP"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  if (ret != YKCLIENT_REPLAYED_OTP)
-    return 1;
+  assert (ret == YKCLIENT_REPLAYED_OTP);
 
+
+  TEST(("set URL template"));
   /* Same URL used by library, somewhat silly but still verifies the
      code path. */
   ykclient_set_url_template
     (ykc, "http://api.yubico.com/wsapi/verify?id=%d&otp=%s");
 
+  TEST(("validation request, expect REPLAYED_OTP"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("yubikey_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  if (ret != YKCLIENT_REPLAYED_OTP)
-    return 1;
+  assert (ret == YKCLIENT_REPLAYED_OTP);
 
   ykclient_set_verify_signature(ykc, 1);
 
@@ -161,8 +168,13 @@ main (void)
 
   ykclient_done (&ykc);
 
+  TEST(("strerror 0"));
   printf ("strerror(0): %s\n", ykclient_strerror (0));
+  ret = strcmp(ykclient_strerror (0), "Success"); assert (ret == 0);
+
+  TEST(("strerror BAD_OTP"));
   printf ("strerror(BAD_OTP): %s\n", ykclient_strerror (YKCLIENT_BAD_OTP));
+  ret = strcmp(ykclient_strerror (YKCLIENT_BAD_OTP), "Yubikey OTP was bad (BAD_OTP)"); assert (ret == 0);
 
   printf ("All tests passed\n");
 

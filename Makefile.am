@@ -26,6 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+SUBDIRS=tests
+
 AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
 ACLOCAL_AMFLAGS = -I m4
 
@@ -52,14 +54,6 @@ bin_PROGRAMS = ykclient
 
 ykclient_SOURCES = tool.c
 ykclient_LDADD = ./libykclient.la
-
-# Self tests.
-
-AM_LDFLAGS = -no-install
-LDADD = libykclient.la
-
-check_PROGRAMS = selftest
-TESTS = $(check_PROGRAMS)
 
 # Release
 
@@ -92,7 +86,7 @@ release:
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
 	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
 	cd $(srcdir) && git push
-	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) v$(VERSION)
+	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) $(PACKAGE)-$(VERSION)
 	cd $(srcdir) && git push --tags
 	mkdir -p ../releases/$(PACKAGE)/ && \
 		cp -v $(PACKAGE)-$(VERSION).tar.gz* ../releases/$(PACKAGE)/

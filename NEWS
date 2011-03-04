@@ -1,5 +1,20 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
+* Version 2.4 (released 2010-03-02)
+
+** Add possibility to supply validation service URL.
+Patch by Remi Mollon <remi.mollon@cern.ch>.
+
+** Make Validation protocol 2.0 servers not reject our requests.
+They would reject our requests because they did not have a nonce
+parameter. Patch by Remi Mollon <remi.mollon@cern.ch>.
+
+** Add new API ykclient_set_ca_path to set a trusted CA certificates path.
+
+** Fix issue with insecure rpath in the ykclient executable.
+
+** Documentation converted to asciidoc after move to Github.
+
 * Version 2.3 (released 2009-05-11)
 
 ** Add new API ykclient_set_client_b64 to set client key in b64 format.
