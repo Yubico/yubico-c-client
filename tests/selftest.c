@@ -30,7 +30,7 @@
  *
  */
 
-#include <ykclient.h>
+#include "ykclient.h"
 #include <stdio.h>
 #include <assert.h>
 
