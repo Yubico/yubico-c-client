@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@josefsson.org>.
-# Copyright (c) 2008, 2009 Yubico AB
+# Copyright (c) 2008, 2009, 2011 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,16 +26,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([ykclient], [2.4], [simon@yubico.com])
+AC_INIT([ykclient], [2.5], [simon@yubico.com])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Library code modified:                              REVISION++
 # Interfaces changed/added/removed:   CURRENT++       REVISION=0
 # Interfaces added:                             AGE++
 # Interfaces removed:                           AGE=0
-AC_SUBST(LT_CURRENT, 5)
+AC_SUBST(LT_CURRENT, 6)
 AC_SUBST(LT_REVISION, 0)
-AC_SUBST(LT_AGE, 2)
+AC_SUBST(LT_AGE, 3)
 
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_PROG_CC
