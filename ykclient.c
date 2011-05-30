@@ -32,6 +32,8 @@
 
 #include "ykclient.h"
 
+#include "ykclient_server_response.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -56,8 +58,10 @@ struct ykclient_st
   const char *key;
   char *key_buf;
   char *nonce;
+  char mallocd_nonce;
   char *curl_chunk;
   size_t curl_chunk_size;
+  int verify_signature;
 };
 
 int
@@ -96,6 +100,7 @@ ykclient_init (ykclient_t **ykc)
     p->nonce = malloc (NONCE_LEN + 1);
     if (!p->nonce)
       return YKCLIENT_OUT_OF_MEMORY;\
+    p->mallocd_nonce = 1;
 
     gettimeofday(&tv, 0);
     srandom (tv.tv_sec * tv.tv_usec);
@@ -108,6 +113,11 @@ ykclient_init (ykclient_t **ykc)
     p->nonce[NONCE_LEN] = 0;
   }
 
+  /* Verification of server signature can only be done if there is
+   * an API key provided
+   */
+  p->verify_signature = 0;
+
   *ykc = p;
 
   return YKCLIENT_OK;
@@ -119,7 +129,8 @@ ykclient_done (ykclient_t **ykc)
   if (ykc && *ykc)
     {
       curl_easy_cleanup ((*ykc)->curl);
-      free ((*ykc)->nonce);
+      if ((*ykc)->mallocd_nonce)
+	free ((*ykc)->nonce);
       free ((*ykc)->url);
       free ((*ykc)->curl_chunk);
       free ((*ykc)->key_buf);
@@ -127,6 +138,15 @@ ykclient_done (ykclient_t **ykc)
     }
   if (ykc)
     *ykc = NULL;
+}
+
+void
+ykclient_set_verify_signature (ykclient_t *ykc,
+                               int value)
+{
+  if (ykc == NULL)
+    return;
+  ykc->verify_signature = value;
 }
 
 void
@@ -228,6 +248,23 @@ ykclient_set_url_template (ykclient_t *ykc,
 }
 
 /*
+ * Set the nonce. A default nonce is generated in ykclient_init(), but
+ * if you either want to specify your own nonce, or want to remove the
+ * nonce (needed to send signed requests to v1 validation servers),
+ * you must call this function. Set nonce to NULL to disable it.
+ */
+void
+ykclient_set_nonce (ykclient_t *ykc,
+		    char *nonce)
+{
+  if (ykc->mallocd_nonce)
+    free(ykc->nonce);
+  ykc->mallocd_nonce = 0;
+
+  ykc->nonce = nonce;
+}
+
+/*
  * Simple API to validate an OTP (hexkey) using the YubiCloud validation
  * service.
  */
@@ -250,8 +287,6 @@ ykclient_verify_otp (const char *yubikey_otp,
  * validation service, or any other validation service.
  *
  * Special CURL settings can be achieved by passing a non-null ykc_in.
- *
- * Prepared to support HMAC validation of server responses using api_key.
  */
 int
 ykclient_verify_otp_v2 (ykclient_t *ykc_in,
@@ -264,10 +299,6 @@ ykclient_verify_otp_v2 (ykclient_t *ykc_in,
 {
   ykclient_t *ykc;
   int ret;
-
-  /* api_key is currently not used (placeholder argument) */
-  if (api_key)
-    return YKCLIENT_NOT_IMPLEMENTED;
 
   /* We currently only support 0 (for default YubiCloud URL) or 1 URL argument,
    * but this function is prepared to support all of Validation protocol 2.0,
@@ -292,6 +323,12 @@ ykclient_verify_otp_v2 (ykclient_t *ykc_in,
   if (urlcount == 1)
     ykclient_set_url_template (ykc, urls[0]);
 
+  if (api_key)
+    {
+      ykclient_set_verify_signature (ykc, 1);
+      ykclient_set_client_b64 (ykc, client_id, api_key);
+    }
+
   ret = ykclient_request (ykc, yubikey_otp);
 
   if (ykc_in == NULL)
@@ -311,6 +348,10 @@ ykclient_strerror (int ret)
       p = "Success";
       break;
 
+    case YKCLIENT_CURL_PERFORM_ERROR:
+      p = "Error performing curl";
+      break;
+
     case YKCLIENT_BAD_OTP:
       p = "Yubikey OTP was bad (BAD_OTP)";
       break;
@@ -325,6 +366,10 @@ ykclient_strerror (int ret)
 
     case YKCLIENT_BAD_SIGNATURE:
       p = "Request signature was invalid (BAD_SIGNATURE)";
+      break;
+
+    case YKCLIENT_BAD_SERVER_SIGNATURE:
+      p = "Server response signature was invalid (BAD_SERVER_SIGNATURE)";
       break;
 
     case YKCLIENT_MISSING_PARAMETER:
@@ -361,6 +406,10 @@ ykclient_strerror (int ret)
 
     case YKCLIENT_CURL_INIT_ERROR:
       p = "Error initializing curl";
+      break;
+
+    case YKCLIENT_HMAC_ERROR:
+      p = "HMAC signature validation/generation error";
       break;
 
     case YKCLIENT_HEX_DECODE_ERROR:
@@ -419,7 +468,7 @@ ykclient_request (ykclient_t *ykc,
   int out;
 
   if (!url_template)
-    url_template = "http://api.yubico.com/wsapi/verify?id=%d&otp=%s";
+    url_template = "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s";
 
   free (ykc->curl_chunk);
   ykc->curl_chunk_size = 0;
@@ -438,6 +487,43 @@ ykclient_request (ykclient_t *ykc,
     if (wrote < 0 || wrote > len)
       return YKCLIENT_FORMAT_ERROR;
   }
+
+  if (ykc->nonce)
+    {
+      /* Create new URL with nonce in it. */
+      char *url, *otp_offset;
+      size_t len;
+      int wrote;
+
+#define ADD_NONCE "&nonce="
+      len = strlen (ykc->url) + strlen (ADD_NONCE) + strlen (ykc->nonce) + 1;
+      url = malloc (len);
+      if (!url)
+	return YKCLIENT_OUT_OF_MEMORY;
+
+      /* Find the &otp= in ykc->url and insert ?nonce= before otp. Must get
+       *  sorted headers since we calculate HMAC on the result.
+       *
+       * XXX this will break if the validation protocol gets a parameter that
+       * sorts in between "nonce" and "otp", because the headers we sign won't
+       * be alphabetically sorted if we insert the nonce between "nz" and "otp".
+       * Also, we assume that everyone will have at least one parameter ("id=")
+       * before "otp" so there is no need to search for "?otp=".
+       */
+      otp_offset = strstr (ykc->url, "&otp=");
+      if (otp_offset == NULL)
+	otp_offset = ykc->url + len;  // point at \0 at end of url in case there is no otp
+
+      /* break up ykc->url where we want to insert nonce */
+      *otp_offset = 0;
+
+      wrote = snprintf (url, len, "%s" ADD_NONCE "%s&%s", ykc->url, ykc->nonce, otp_offset + 1);
+      if (wrote + 1 != len)
+	return YKCLIENT_FORMAT_ERROR;
+
+      free (ykc->url);
+      ykc->url = url;
+    }
 
   if (ykc->key && ykc->keylen)
     {
@@ -476,7 +562,7 @@ ykclient_request (ykclient_t *ykc,
 	  }
       }
 
-      /* Create new URL. */
+      /* Create new URL with signature ( h= ) appended to it . */
       {
 	char *url;
 	size_t len;
@@ -494,26 +580,6 @@ ykclient_request (ykclient_t *ykc,
 	free (ykc->url);
 	ykc->url = url;
       }
-    }
-
-  if (ykc->nonce)
-    {
-      /* Create new URL. */
-      char *url;
-      size_t len;
-      int wrote;
-
-#define ADD_NONCE "&nonce="
-      len = strlen (ykc->url) + strlen (ADD_NONCE) + strlen (ykc->nonce) + 1;
-      url = malloc (len);
-      if (!url)
-        return YKCLIENT_OUT_OF_MEMORY;
-
-      wrote = snprintf (url, len, "%s" ADD_NONCE "%s", ykc->url, ykc->nonce);
-      if (wrote + 1 != len)
-        return YKCLIENT_FORMAT_ERROR;
-      free (ykc->url);
-      ykc->url = url;
     }
 
   if(ykc->ca_path)
@@ -534,7 +600,13 @@ ykclient_request (ykclient_t *ykc,
       curl_easy_setopt(ykc->curl, CURLOPT_USERAGENT, user_agent);
   }
 
-  curl_easy_perform (ykc->curl);
+  CURLcode curl_ret = curl_easy_perform (ykc->curl);
+
+  if (curl_ret != CURLE_OK)
+    {
+      out = YKCLIENT_CURL_PERFORM_ERROR;
+      goto done;
+    }
 
   if (ykc->curl_chunk_size == 0 || ykc->curl_chunk == NULL)
     {
@@ -542,63 +614,107 @@ ykclient_request (ykclient_t *ykc,
       goto done;
     }
 
-  status = strstr (ykc->curl_chunk, "status=");
+  ykclient_server_response_t *serv_response = ykclient_server_response_init();
+  if (serv_response == NULL)
+    {
+      out = YKCLIENT_PARSE_ERROR;
+      goto done;
+    }
+
+  int parse_ret = ykclient_server_response_parse(ykc->curl_chunk,
+                                                 serv_response);
+  if (parse_ret)
+    {
+      out = parse_ret;
+      goto done;
+    }
+
+  if (ykc->verify_signature != 0 &&
+      ykclient_server_response_verify_signature(serv_response,
+                                                ykc->key, ykc->keylen))
+    {
+      out = YKCLIENT_BAD_SERVER_SIGNATURE;
+      goto done;
+    }
+
+  status = ykclient_server_response_get(serv_response, "status");
   if (!status)
     {
       out = YKCLIENT_PARSE_ERROR;
       goto done;
     }
 
-  while (status[strlen (status) - 1] == '\r'
-	 || status[strlen (status) - 1] == '\n')
-    status[strlen (status) - 1] = '\0';
-
-  if (strcmp (status, "status=OK") == 0)
+  if (strcmp (status, "OK") == 0)
     {
+      char *server_otp;
+
+      /* Verify that the OTP and nonce we put in our request is echoed in the response.
+       *
+       * This is to protect us from a man in the middle sending us a previously
+       * seen genuine response again (such as an status=OK response even though
+       * the real server will respond status=REPLAYED_OTP in a few milliseconds.
+       */
+      if (ykc->nonce)
+	{
+	  char *server_nonce = ykclient_server_response_get(serv_response, "nonce");
+	  if(server_nonce == NULL || strcmp(ykc->nonce, server_nonce))
+	    {
+	      out = YKCLIENT_HMAC_ERROR;
+	      goto done;
+	    }
+	}
+
+      server_otp = ykclient_server_response_get(serv_response, "otp");
+      if(server_otp == NULL || strcmp(yubikey, server_otp))
+	{
+	  out = YKCLIENT_HMAC_ERROR;
+	  goto done;
+	}
+
       out = YKCLIENT_OK;
       goto done;
     }
-  else if (strcmp (status, "status=BAD_OTP") == 0)
+  else if (strcmp (status, "BAD_OTP") == 0)
     {
       out = YKCLIENT_BAD_OTP;
       goto done;
     }
-  else if (strcmp (status, "status=REPLAYED_OTP") == 0)
+  else if (strcmp (status, "REPLAYED_OTP") == 0)
     {
       out = YKCLIENT_REPLAYED_OTP;
       goto done;
     }
-  else if (strcmp (status, "status=REPLAYED_REQUEST") == 0)
+  else if (strcmp (status, "REPLAYED_REQUEST") == 0)
     {
       out = YKCLIENT_REPLAYED_REQUEST;
       goto done;
     }
-  else if (strcmp (status, "status=BAD_SIGNATURE") == 0)
+  else if (strcmp (status, "BAD_SIGNATURE") == 0)
     {
       out = YKCLIENT_BAD_SIGNATURE;
       goto done;
     }
-  else if (strcmp (status, "status=MISSING_PARAMETER") == 0)
+  else if (strcmp (status, "MISSING_PARAMETER") == 0)
     {
       out = YKCLIENT_MISSING_PARAMETER;
       goto done;
     }
-  else if (strcmp (status, "status=NO_SUCH_CLIENT") == 0)
+  else if (strcmp (status, "NO_SUCH_CLIENT") == 0)
     {
       out = YKCLIENT_NO_SUCH_CLIENT;
       goto done;
     }
-  else if (strcmp (status, "status=OPERATION_NOT_ALLOWED") == 0)
+  else if (strcmp (status, "OPERATION_NOT_ALLOWED") == 0)
     {
       out = YKCLIENT_OPERATION_NOT_ALLOWED;
       goto done;
     }
-  else if (strcmp (status, "status=BACKEND_ERROR") == 0)
+  else if (strcmp (status, "BACKEND_ERROR") == 0)
     {
       out = YKCLIENT_BACKEND_ERROR;
       goto done;
     }
-  else if (strcmp (status, "status=NOT_ENOUGH_ANSWERS") == 0)
+  else if (strcmp (status, "NOT_ENOUGH_ANSWERS") == 0)
     {
       out = YKCLIENT_NOT_ENOUGH_ANSWERS;
       goto done;
@@ -609,6 +725,9 @@ ykclient_request (ykclient_t *ykc,
  done:
   if (user_agent)
     free (user_agent);
+
+  if (serv_response)
+    ykclient_server_response_free(serv_response);
 
   return out;
 }

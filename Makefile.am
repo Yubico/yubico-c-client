@@ -26,7 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-SUBDIRS=tests
+SUBDIRS = . tests
 
 AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
 ACLOCAL_AMFLAGS = -I m4
@@ -34,9 +34,10 @@ ACLOCAL_AMFLAGS = -I m4
 # The library.
 
 lib_LTLIBRARIES = libykclient.la
-include_HEADERS = ykclient.h
+include_HEADERS = ykclient_server_response.h ykclient.h
 
-libykclient_la_SOURCES = ykclient.h ykclient.c
+libykclient_la_SOURCES = ykclient_server_response.h ykclient_server_response.c	\
+			ykclient.h ykclient.c
 libykclient_la_SOURCES += rfc4634/sha.h rfc4634/sha-private.h		\
 			rfc4634/hmac.c rfc4634/sha1.c rfc4634/usha.c	\
 			rfc4634/sha224-256.c rfc4634/sha384-512.c
@@ -87,6 +88,8 @@ release:
 	cd $(srcdir) && git push
 	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) $(PACKAGE)-$(VERSION)
 	cd $(srcdir) && git push --tags
+	mkdir -p ../releases/$(PACKAGE)/ && \
+		cp -v $(PACKAGE)-$(VERSION).tar.gz* ../releases/$(PACKAGE)/
 	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
 	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz.sig
 	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \

@@ -1,7 +1,7 @@
 /* selftest.c --- Self-tests for Yubico client library.
  *
  * Written by Simon Josefsson <simon@josefsson.org>.
- * Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
+ * Copyright (c) 2006, 2007, 2008, 2009, 2011 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,52 @@
   printf xX; \
   printf ("\n")
 
+void
+test_v1_validation(int client_id, char *client_b64key)
+{
+  ykclient_t *ykc;
+  int ret;
+
+  TEST(("init self"));
+  ret = ykclient_init (&ykc);
+  printf ("ykclient_init (%d): %s\n", ret, ykclient_strerror (ret));
+  assert(ret == YKCLIENT_OK);
+
+  ykclient_set_url_template
+    (ykc, "http://api.yubico.com/wsapi/verify?id=%d&otp=%s");
+
+  TEST(("null client_id, expect REPLAYED_OTP"));
+  ykclient_set_verify_signature(ykc, 0);
+  ykclient_set_client (ykc, client_id, 0, NULL);
+
+#ifndef TEST_WITHOUT_INTERNET
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert(ret == YKCLIENT_REPLAYED_OTP);
+#else
+  printf ("Test SKIPPED\n");
+#endif
+
+  /* Test signed request. When signing requests to a v1 service, we must clear the nonce first. */
+
+  TEST(("signed request, expect REPLAYED_OTP"));
+  ykclient_set_verify_signature(ykc, 1);
+  ykclient_set_client_b64 (ykc, client_id, client_b64key);
+  ykclient_set_nonce(ykc, NULL);
+
+#ifndef TEST_WITHOUT_INTERNET
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert(ret == YKCLIENT_REPLAYED_OTP);
+#else
+  printf ("Test SKIPPED\n");
+#endif
+
+  ykclient_done (&ykc);
+}
+
 int
 main (void)
 {
@@ -56,29 +102,45 @@ main (void)
   printf ("ykclient_init (%d): %s\n", ret, ykclient_strerror (ret));
   assert(ret == YKCLIENT_OK);
 
+  ykclient_set_url_template
+    (ykc, "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s");
+
   TEST(("null client_id, expect REPLAYED_OTP"));
+  ykclient_set_verify_signature(ykc, 0);
   ykclient_set_client (ykc, client_id, 0, NULL);
 
+#ifndef TEST_WITHOUT_INTERNET
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert(ret == YKCLIENT_REPLAYED_OTP);
+#else
+  printf ("Test SKIPPED\n");
+#endif
 
   TEST(("client_id set(20), correct client_key, expect REPLAYED_OTP"));
   ykclient_set_client (ykc, client_id, 20, client_key);
 
+#ifndef TEST_WITHOUT_INTERNET
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
+#else
+  printf ("Test SKIPPED\n");
+#endif
 
   TEST(("wrong client_id set(10), correct client_key, expect BAD_SIGNATURE"));
   ykclient_set_client (ykc, client_id, 10, client_key);
 
+#ifndef TEST_WITHOUT_INTERNET
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_BAD_SIGNATURE);
+#else
+  printf ("Test SKIPPED\n");
+#endif
 
   TEST(("invalid client_id set(a), correct client_key, expect HEX_DECODE_ERROR"));
   ret = ykclient_set_client_hex (ykc, client_id, "a");
@@ -95,57 +157,102 @@ main (void)
   printf ("ykclient_set_client_hex (%d): %s\n", ret, ykclient_strerror (ret));
   assert (ret == YKCLIENT_OK);
 
+#ifndef TEST_WITHOUT_INTERNET
   TEST(("validation request, expect REPLAYED_OTP"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
+#else
+  printf ("Test SKIPPED\n");
+#endif
 
   TEST(("set deadbeef client_id, expect OK"));
   ret = ykclient_set_client_hex (ykc, client_id, "deadbeef");
   printf ("ykclient_set_client_hex (%d): %s\n", ret, ykclient_strerror (ret));
   assert (ret == YKCLIENT_OK);
 
+#ifndef TEST_WITHOUT_INTERNET
   TEST(("validation request, expect BAD_SIGNATURE"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_BAD_SIGNATURE);
+#else
+  printf ("Test SKIPPED\n");
+#endif
 
   TEST(("b64 set deadbeef client_id, expect OK"));
   ret = ykclient_set_client_b64 (ykc, client_id, "deadbeef");
   printf ("ykclient_set_client_b64 (%d): %s\n", ret, ykclient_strerror (ret));
   assert (ret == YKCLIENT_OK);
 
+#ifndef TEST_WITHOUT_INTERNET
   TEST(("validation request, expect BAD_SIGNATURE"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_BAD_SIGNATURE);
+#else
+  printf ("Test SKIPPED\n");
+#endif
 
   TEST(("b64 set client_b64key, expect OK"));
   ret = ykclient_set_client_b64 (ykc, client_id, client_b64key);
   printf ("ykclient_set_client_b64 (%d): %s\n", ret, ykclient_strerror (ret));
   assert (ret == YKCLIENT_OK);
 
+#ifndef TEST_WITHOUT_INTERNET
   TEST(("validation request, expect REPLAYED_OTP"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
+#else
+  printf ("Test SKIPPED\n");
+#endif
 
-
-  TEST(("set URL template"));
+  TEST(("set WS 2.0 URL template"));
   /* Same URL used by library, somewhat silly but still verifies the
      code path. */
   ykclient_set_url_template
-    (ykc, "http://api.yubico.com/wsapi/verify?id=%d&otp=%s");
+    (ykc, "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s");
 
+#ifndef TEST_WITHOUT_INTERNET
   TEST(("validation request, expect REPLAYED_OTP"));
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("yubikey_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
+#else
+  printf ("Test SKIPPED\n");
+#endif
+
+  ykclient_set_verify_signature(ykc, 1);
+
+  TEST(("validation request with valid signature, expect REPLAYED_OTP"));
+  // Check a genuine signature.
+  ykclient_set_client (ykc, client_id, 20, client_key);
+#ifndef TEST_WITHOUT_INTERNET
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert (ret == YKCLIENT_REPLAYED_OTP);
+#else
+  printf ("Test SKIPPED\n");
+#endif
+
+  TEST(("validation request with bad key, expect YKCLIENT_BAD_SERVER_SIGNATURE"));
+  // Check a genuine signature with a truncated key.
+  ykclient_set_client (ykc, client_id, 10, client_key);
+#ifndef TEST_WITHOUT_INTERNET
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert (ret == YKCLIENT_BAD_SERVER_SIGNATURE);
+#else
+  printf ("Test SKIPPED\n");
+#endif
 
   ykclient_done (&ykc);
 
@@ -156,6 +263,8 @@ main (void)
   TEST(("strerror BAD_OTP"));
   printf ("strerror(BAD_OTP): %s\n", ykclient_strerror (YKCLIENT_BAD_OTP));
   ret = strcmp(ykclient_strerror (YKCLIENT_BAD_OTP), "Yubikey OTP was bad (BAD_OTP)"); assert (ret == 0);
+
+  test_v1_validation(client_id, client_b64key);
 
   printf ("All tests passed\n");
 

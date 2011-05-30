@@ -55,13 +55,21 @@ typedef enum {
   YKCLIENT_CURL_INIT_ERROR,
   YKCLIENT_HMAC_ERROR,
   YKCLIENT_HEX_DECODE_ERROR,
-  YKCLIENT_NOT_IMPLEMENTED
+  YKCLIENT_BAD_SERVER_SIGNATURE,
+  YKCLIENT_NOT_IMPLEMENTED,
+  YKCLIENT_CURL_PERFORM_ERROR
 } ykclient_rc;
 
 typedef struct ykclient_st ykclient_t;
 
 extern int ykclient_init (ykclient_t **ykc);
+
 extern void ykclient_done (ykclient_t **ykc);
+
+// If value is 0 the authenticity of the signature returned by the
+// server in response to the request won't be verified.
+extern void ykclient_set_verify_signature (ykclient_t *ykc,
+                                           int value);
 
 extern const char *ykclient_strerror (int ret);
 
@@ -81,8 +89,19 @@ extern int ykclient_set_client_b64 (ykclient_t *ykc,
 extern void ykclient_set_url_template (ykclient_t *ykc,
 				       const char *url_template);
 
+// By default the signature returned by the server is verified (modify
+// this choice by calling ykclient_set_verify_signature()).
 extern void ykclient_set_ca_path (ykclient_t *ykc,
 				  const char *ca_path);
+
+/*
+ * Set the nonce. A default nonce is generated in ykclient_init(), but
+ * if you either want to specify your own nonce, or want to remove the
+ * nonce (needed to send signed requests to v1 validation servers),
+ * you must call this function. Set nonce to NULL to disable it.
+ */
+extern void ykclient_set_nonce (ykclient_t *ykc,
+				char *nonce);
 
 extern int ykclient_request (ykclient_t *ykc, const char *yubikey_otp);
 
