@@ -1,5 +1,12 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
+* Version 2.5 (released 2010-05-31)
+
+** Implement almost all of Validation protocol 2.0.
+The part still known to be missing is parallell querys to all validation
+servers using curl-multi. Includes significant patches by
+Sebastien Martini <seb@dbzteam.org> and qistoph@gmail.com.
+
 * Version 2.4 (released 2010-03-02)
 
 ** Add possibility to supply validation service URL.
