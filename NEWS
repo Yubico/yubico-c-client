@@ -1,6 +1,6 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
-* Version 2.6 (unreleased)
+* Version 2.6 (released 2011-06-06)
 
 ** Use fprintf+exit instead of glibc-ism errx.
 Reported by Jussi Sallinen <jussi@jus.si>.
