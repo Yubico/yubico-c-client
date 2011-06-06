@@ -35,44 +35,50 @@
 // Example:
 //   key:   status
 //   value: OK
-typedef struct ykclient_parameter_st {
-  char* key;
-  char* value;
+typedef struct ykclient_parameter_st
+{
+  char *key;
+  char *value;
 } ykclient_parameter_t;
 
-typedef struct ykclient_parameters_st {
-  ykclient_parameter_t* parameter;
-  struct ykclient_parameters_st* next;
+typedef struct ykclient_parameters_st
+{
+  ykclient_parameter_t *parameter;
+  struct ykclient_parameters_st *next;
 } ykclient_parameters_t;
 
-typedef struct ykclient_server_response_st {
-  ykclient_parameter_t* signature;
-  ykclient_parameters_t* parameters;
+typedef struct ykclient_server_response_st
+{
+  ykclient_parameter_t *signature;
+  ykclient_parameters_t *parameters;
 } ykclient_server_response_t;
 
 
 // Returns NULL if it fails.
-extern ykclient_server_response_t* ykclient_server_response_init();
+extern ykclient_server_response_t *ykclient_server_response_init ();
 
 // Frees allocated data structures.
-extern void ykclient_server_response_free(ykclient_server_response_t* response);
+extern void ykclient_server_response_free (ykclient_server_response_t *
+					   response);
 
 // Parses server's response and builds a list of parameters and isolates
 // the corresponding signature parameter. Returns 0 if it succeeds.
-extern int ykclient_server_response_parse(
-    char* response,
-    ykclient_server_response_t* serv_response);
+extern int ykclient_server_response_parse (char *response,
+					   ykclient_server_response_t *
+					   serv_response);
 
 // Iterates the parameters buils a HMAC-SHA1 and checks it matches the
 // signature returned by the server. This function returns 0 if the signature
 // is valid, 1 otherwise.
-extern int ykclient_server_response_verify_signature(
-    const ykclient_server_response_t* serv_response, const char* key,
-    int key_length);
+extern int ykclient_server_response_verify_signature (const
+						      ykclient_server_response_t
+						      * serv_response,
+						      const char *key,
+						      int key_length);
 
 // Returns value associated to key or NULL if unmatched. The caller doesn't
 // take ownership of the returned value.
-extern char* ykclient_server_response_get(
-    const ykclient_server_response_t* serv_response, const char* key);
+extern char *ykclient_server_response_get (const ykclient_server_response_t *
+					   serv_response, const char *key);
 
-#endif  // YKCLIENT_SERVER_RESPONSE_H
+#endif // YKCLIENT_SERVER_RESPONSE_H

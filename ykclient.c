@@ -65,7 +65,7 @@ struct ykclient_st
 };
 
 int
-ykclient_init (ykclient_t **ykc)
+ykclient_init (ykclient_t ** ykc)
 {
   ykclient_t *p;
 
@@ -99,15 +99,15 @@ ykclient_init (ykclient_t **ykc)
 
     p->nonce = malloc (NONCE_LEN + 1);
     if (!p->nonce)
-      return YKCLIENT_OUT_OF_MEMORY;\
+      return YKCLIENT_OUT_OF_MEMORY;
     p->mallocd_nonce = 1;
 
-    gettimeofday(&tv, 0);
+    gettimeofday (&tv, 0);
     srandom (tv.tv_sec * tv.tv_usec);
 
     for (i = 0; i < NONCE_LEN; ++i)
       {
-        p->nonce[i] = (random () % 26) + 'a';
+	p->nonce[i] = (random () % 26) + 'a';
       }
 
     p->nonce[NONCE_LEN] = 0;
@@ -124,7 +124,7 @@ ykclient_init (ykclient_t **ykc)
 }
 
 void
-ykclient_done (ykclient_t **ykc)
+ykclient_done (ykclient_t ** ykc)
 {
   if (ykc && *ykc)
     {
@@ -141,8 +141,7 @@ ykclient_done (ykclient_t **ykc)
 }
 
 void
-ykclient_set_verify_signature (ykclient_t *ykc,
-                               int value)
+ykclient_set_verify_signature (ykclient_t * ykc, int value)
 {
   if (ykc == NULL)
     return;
@@ -150,10 +149,8 @@ ykclient_set_verify_signature (ykclient_t *ykc,
 }
 
 void
-ykclient_set_client (ykclient_t *ykc,
-		     unsigned int client_id,
-		     size_t keylen,
-		     const char *key)
+ykclient_set_client (ykclient_t * ykc,
+		     unsigned int client_id, size_t keylen, const char *key)
 {
   ykc->client_id = client_id;
   ykc->keylen = keylen;
@@ -161,9 +158,8 @@ ykclient_set_client (ykclient_t *ykc,
 }
 
 int
-ykclient_set_client_hex (ykclient_t *ykc,
-			 unsigned int client_id,
-			 const char *key)
+ykclient_set_client_hex (ykclient_t * ykc,
+			 unsigned int client_id, const char *key)
 {
   size_t i;
   size_t key_len;
@@ -190,7 +186,7 @@ ykclient_set_client_hex (ykclient_t *ykc,
     {
       int tmp;
 
-      if (sscanf (&key[2*i], "%02x", &tmp) != 1)
+      if (sscanf (&key[2 * i], "%02x", &tmp) != 1)
 	{
 	  free (ykc->key_buf);
 	  ykc->key_buf = NULL;
@@ -207,9 +203,8 @@ ykclient_set_client_hex (ykclient_t *ykc,
 }
 
 int
-ykclient_set_client_b64 (ykclient_t *ykc,
-			 unsigned int client_id,
-			 const char *key)
+ykclient_set_client_b64 (ykclient_t * ykc,
+			 unsigned int client_id, const char *key)
 {
   size_t key_len;
   base64_decodestate b64;
@@ -226,23 +221,21 @@ ykclient_set_client_b64 (ykclient_t *ykc,
   if (!ykc->key_buf)
     return YKCLIENT_OUT_OF_MEMORY;
 
-  base64_init_decodestate(&b64);
-  ykc->keylen = base64_decode_block(key, key_len, ykc->key_buf, &b64);
+  base64_init_decodestate (&b64);
+  ykc->keylen = base64_decode_block (key, key_len, ykc->key_buf, &b64);
   ykc->key = ykc->key_buf;
 
   return YKCLIENT_OK;
 }
 
 void
-ykclient_set_ca_path (ykclient_t *ykc,
-			   const char *ca_path)
+ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path)
 {
   ykc->ca_path = ca_path;
 }
 
 void
-ykclient_set_url_template (ykclient_t *ykc,
-			   const char *url_template)
+ykclient_set_url_template (ykclient_t * ykc, const char *url_template)
 {
   ykc->url_template = url_template;
 }
@@ -254,11 +247,10 @@ ykclient_set_url_template (ykclient_t *ykc,
  * you must call this function. Set nonce to NULL to disable it.
  */
 void
-ykclient_set_nonce (ykclient_t *ykc,
-		    char *nonce)
+ykclient_set_nonce (ykclient_t * ykc, char *nonce)
 {
   if (ykc->mallocd_nonce)
-    free(ykc->nonce);
+    free (ykc->nonce);
   ykc->mallocd_nonce = 0;
 
   ykc->nonce = nonce;
@@ -270,16 +262,11 @@ ykclient_set_nonce (ykclient_t *ykc,
  */
 int
 ykclient_verify_otp (const char *yubikey_otp,
-		     unsigned int client_id,
-		     const char *hexkey)
+		     unsigned int client_id, const char *hexkey)
 {
   return ykclient_verify_otp_v2 (NULL,
 				 yubikey_otp,
-				 client_id,
-				 hexkey,
-				 0,
-				 NULL,
-				 NULL);
+				 client_id, hexkey, 0, NULL, NULL);
 }
 
 /*
@@ -289,13 +276,12 @@ ykclient_verify_otp (const char *yubikey_otp,
  * Special CURL settings can be achieved by passing a non-null ykc_in.
  */
 int
-ykclient_verify_otp_v2 (ykclient_t *ykc_in,
+ykclient_verify_otp_v2 (ykclient_t * ykc_in,
 			const char *yubikey_otp,
 			unsigned int client_id,
 			const char *hexkey,
 			size_t urlcount,
-			const char **urls,
-			const char *api_key)
+			const char **urls, const char *api_key)
 {
   ykclient_t *ykc;
   int ret;
@@ -429,7 +415,7 @@ ykclient_strerror (int ret)
 }
 
 const char *
-ykclient_get_last_url (ykclient_t *ykc)
+ykclient_get_last_url (ykclient_t * ykc)
 {
   return ykc->url;
 }
@@ -437,7 +423,7 @@ ykclient_get_last_url (ykclient_t *ykc)
 static size_t
 curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
 {
-  ykclient_t *ykc = (ykclient_t*) data;
+  ykclient_t *ykc = (ykclient_t *) data;
   size_t realsize = size * nmemb;
   char *p;
 
@@ -451,7 +437,7 @@ curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
 
   ykc->curl_chunk = p;
 
-  memcpy(&(ykc->curl_chunk[ykc->curl_chunk_size]), ptr, realsize);
+  memcpy (&(ykc->curl_chunk[ykc->curl_chunk_size]), ptr, realsize);
   ykc->curl_chunk_size += realsize;
   ykc->curl_chunk[ykc->curl_chunk_size] = 0;
 
@@ -459,8 +445,7 @@ curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
 }
 
 int
-ykclient_request (ykclient_t *ykc,
-		  const char *yubikey)
+ykclient_request (ykclient_t * ykc, const char *yubikey)
 {
   const char *url_template = ykc->url_template;
   char *user_agent = NULL;
@@ -482,8 +467,7 @@ ykclient_request (ykclient_t *ykc,
     ykc->url = malloc (len);
     if (!ykc->url)
       return YKCLIENT_OUT_OF_MEMORY;
-    wrote = snprintf (ykc->url, len, url_template,
-		      ykc->client_id, yubikey);
+    wrote = snprintf (ykc->url, len, url_template, ykc->client_id, yubikey);
     if (wrote < 0 || wrote > len)
       return YKCLIENT_FORMAT_ERROR;
   }
@@ -512,12 +496,14 @@ ykclient_request (ykclient_t *ykc,
        */
       otp_offset = strstr (ykc->url, "&otp=");
       if (otp_offset == NULL)
-	otp_offset = ykc->url + len;  // point at \0 at end of url in case there is no otp
+	otp_offset = ykc->url + len;	// point at \0 at end of url in case there is no otp
 
       /* break up ykc->url where we want to insert nonce */
       *otp_offset = 0;
 
-      wrote = snprintf (url, len, "%s" ADD_NONCE "%s&%s", ykc->url, ykc->nonce, otp_offset + 1);
+      wrote =
+	snprintf (url, len, "%s" ADD_NONCE "%s&%s", ykc->url, ykc->nonce,
+		  otp_offset + 1);
       if (wrote + 1 != len)
 	return YKCLIENT_FORMAT_ERROR;
 
@@ -528,7 +514,7 @@ ykclient_request (ykclient_t *ykc,
   if (ykc->key && ykc->keylen)
     {
       uint8_t digest[USHAMaxHashSize];
-      char b64dig[3*4*SHA1HashSize+1];
+      char b64dig[3 * 4 * SHA1HashSize + 1];
       base64_encodestate b64;
       char *text;
       int res, res2;
@@ -540,16 +526,16 @@ ykclient_request (ykclient_t *ykc,
       text++;
 
       /* HMAC data. */
-      res = hmac (SHA1, (unsigned char*) text, strlen (text),
-		  (unsigned char*) ykc->key, ykc->keylen, digest);
+      res = hmac (SHA1, (unsigned char *) text, strlen (text),
+		  (unsigned char *) ykc->key, ykc->keylen, digest);
       if (res != shaSuccess)
 	return YKCLIENT_HMAC_ERROR;
 
       /* Base64 signature. */
-      base64_init_encodestate(&b64);
-      res = base64_encode_block((char*)digest, SHA1HashSize, b64dig, &b64);
-      res2 = base64_encode_blockend(&b64dig[res], &b64);
-      b64dig[res+res2-1] = '\0';
+      base64_init_encodestate (&b64);
+      res = base64_encode_block ((char *) digest, SHA1HashSize, b64dig, &b64);
+      res2 = base64_encode_blockend (&b64dig[res], &b64);
+      b64dig[res + res2 - 1] = '\0';
 
       /* Escape + into %2B. */
       {
@@ -557,7 +543,7 @@ ykclient_request (ykclient_t *ykc,
 
 	while ((p = strchr (b64dig, '+')))
 	  {
-	    memmove (p+3, p+1, strlen (p));
+	    memmove (p + 3, p + 1, strlen (p));
 	    memcpy (p, "%2B", 3);
 	  }
       }
@@ -582,7 +568,7 @@ ykclient_request (ykclient_t *ykc,
       }
     }
 
-  if(ykc->ca_path)
+  if (ykc->ca_path)
     {
       curl_easy_setopt (ykc->curl, CURLOPT_CAPATH, ykc->ca_path);
     }
@@ -597,7 +583,7 @@ ykclient_request (ykclient_t *ykc,
     if (!user_agent)
       return YKCLIENT_OUT_OF_MEMORY;
     if (snprintf (user_agent, len, "%s/%s", PACKAGE, PACKAGE_VERSION) > 0)
-      curl_easy_setopt(ykc->curl, CURLOPT_USERAGENT, user_agent);
+      curl_easy_setopt (ykc->curl, CURLOPT_USERAGENT, user_agent);
   }
 
   CURLcode curl_ret = curl_easy_perform (ykc->curl);
@@ -614,15 +600,16 @@ ykclient_request (ykclient_t *ykc,
       goto done;
     }
 
-  ykclient_server_response_t *serv_response = ykclient_server_response_init();
+  ykclient_server_response_t *serv_response =
+    ykclient_server_response_init ();
   if (serv_response == NULL)
     {
       out = YKCLIENT_PARSE_ERROR;
       goto done;
     }
 
-  int parse_ret = ykclient_server_response_parse(ykc->curl_chunk,
-                                                 serv_response);
+  int parse_ret = ykclient_server_response_parse (ykc->curl_chunk,
+						  serv_response);
   if (parse_ret)
     {
       out = parse_ret;
@@ -630,14 +617,14 @@ ykclient_request (ykclient_t *ykc,
     }
 
   if (ykc->verify_signature != 0 &&
-      ykclient_server_response_verify_signature(serv_response,
-                                                ykc->key, ykc->keylen))
+      ykclient_server_response_verify_signature (serv_response,
+						 ykc->key, ykc->keylen))
     {
       out = YKCLIENT_BAD_SERVER_SIGNATURE;
       goto done;
     }
 
-  status = ykclient_server_response_get(serv_response, "status");
+  status = ykclient_server_response_get (serv_response, "status");
   if (!status)
     {
       out = YKCLIENT_PARSE_ERROR;
@@ -656,16 +643,17 @@ ykclient_request (ykclient_t *ykc,
        */
       if (ykc->nonce)
 	{
-	  char *server_nonce = ykclient_server_response_get(serv_response, "nonce");
-	  if(server_nonce == NULL || strcmp(ykc->nonce, server_nonce))
+	  char *server_nonce =
+	    ykclient_server_response_get (serv_response, "nonce");
+	  if (server_nonce == NULL || strcmp (ykc->nonce, server_nonce))
 	    {
 	      out = YKCLIENT_HMAC_ERROR;
 	      goto done;
 	    }
 	}
 
-      server_otp = ykclient_server_response_get(serv_response, "otp");
-      if(server_otp == NULL || strcmp(yubikey, server_otp))
+      server_otp = ykclient_server_response_get (serv_response, "otp");
+      if (server_otp == NULL || strcmp (yubikey, server_otp))
 	{
 	  out = YKCLIENT_HMAC_ERROR;
 	  goto done;
@@ -722,12 +710,12 @@ ykclient_request (ykclient_t *ykc,
 
   out = YKCLIENT_PARSE_ERROR;
 
- done:
+done:
   if (user_agent)
     free (user_agent);
 
   if (serv_response)
-    ykclient_server_response_free(serv_response);
+    ykclient_server_response_free (serv_response);
 
   return out;
 }

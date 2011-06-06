@@ -31,7 +31,7 @@
  */
 #include "ykclient_server_response.h"
 
-#include "ykclient.h"  // Needed for errors codes
+#include "ykclient.h"		// Needed for errors codes
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,51 +44,60 @@
 /* Parameters' manipulation functions */
 
 // Debug function.
-static void parameter_print(ykclient_parameter_t* p) {
+static void
+parameter_print (ykclient_parameter_t * p)
+{
   if (p == NULL)
     return;
   if (p->key)
-    printf("Key: %s\n", p->key);
+    printf ("Key: %s\n", p->key);
   if (p->value)
-    printf("Value: %s\n", p->value);
+    printf ("Value: %s\n", p->value);
 }
 
-static void parameter_free(ykclient_parameter_t* param) {
+static void
+parameter_free (ykclient_parameter_t * param)
+{
   if (param == NULL)
     return;
 
   if (param->key)
-    free(param->key);
+    free (param->key);
   if (param->value)
-    free(param->value);
+    free (param->value);
 
-  free(param);
+  free (param);
 }
 
 // Calls func on each parameter of params.
-static void for_each_parameter(ykclient_parameters_t* params,
-                               void (*func)(ykclient_parameter_t* p)) {
-  ykclient_parameters_t* iter = params;
+static void
+for_each_parameter (ykclient_parameters_t * params,
+		    void (*func) (ykclient_parameter_t * p))
+{
+  ykclient_parameters_t *iter = params;
   for (; iter != NULL; iter = iter->next)
-    func(iter->parameter);
+    func (iter->parameter);
 }
 
 // Inserts elem in front of params.
-static void list_parameter_insert_front(ykclient_parameters_t** params,
-                                        ykclient_parameter_t* elem) {
+static void
+list_parameter_insert_front (ykclient_parameters_t ** params,
+			     ykclient_parameter_t * elem)
+{
   if (params == NULL || elem == NULL)
     return;
 
-  ykclient_parameters_t* new_node = malloc(sizeof(ykclient_parameters_t));
+  ykclient_parameters_t *new_node = malloc (sizeof (ykclient_parameters_t));
   if (new_node == NULL)
     return;
   new_node->parameter = elem;
   new_node->next = NULL;
 
-  if (*params == NULL) {
-    *params = new_node;
-    return;
-  }
+  if (*params == NULL)
+    {
+      *params = new_node;
+      return;
+    }
 
   new_node->next = *params;
   *params = new_node;
@@ -96,12 +105,14 @@ static void list_parameter_insert_front(ykclient_parameters_t** params,
 
 // Keys comparison function. It compares two keys, and returns 1 if
 // the first precedes the second.
-static int alphanum_less_than(const ykclient_parameter_t* rhs,
-                              const ykclient_parameter_t* lhs) {
+static int
+alphanum_less_than (const ykclient_parameter_t * rhs,
+		    const ykclient_parameter_t * lhs)
+{
   if (rhs == NULL || lhs == NULL)
     return -1;
 
-  if (strcmp(rhs->key, lhs->key) < 0)
+  if (strcmp (rhs->key, lhs->key) < 0)
     return 1;
   return 0;
 }
@@ -109,49 +120,56 @@ static int alphanum_less_than(const ykclient_parameter_t* rhs,
 // Inserts elem into params. The position where elem must inserted is
 // determined by cmp_func. cmp_func must be a strict weak ordering binary
 // predicate.
-static void list_parameter_insert_ord(
-    ykclient_parameters_t** params,
-    ykclient_parameter_t* elem,
-    int (*cmp_func)(const ykclient_parameter_t* rhs,
-                    const ykclient_parameter_t* lhs)) {
+static void
+list_parameter_insert_ord (ykclient_parameters_t ** params,
+			   ykclient_parameter_t * elem,
+			   int (*cmp_func) (const ykclient_parameter_t * rhs,
+					    const ykclient_parameter_t * lhs))
+{
   if (elem == NULL)
     return;
 
-  ykclient_parameters_t* iter = *params;
-  ykclient_parameters_t* prev = NULL;
+  ykclient_parameters_t *iter = *params;
+  ykclient_parameters_t *prev = NULL;
 
-  for (; iter != NULL; iter = iter->next) {
-    const int result = cmp_func(elem, iter->parameter);
-    if (result == -1)
-      return;  // error
-    if (result == 1)
-      break;
-    prev = iter;
-  }
+  for (; iter != NULL; iter = iter->next)
+    {
+      const int result = cmp_func (elem, iter->parameter);
+      if (result == -1)
+	return;			// error
+      if (result == 1)
+	break;
+      prev = iter;
+    }
 
-  list_parameter_insert_front(&iter, elem);
+  list_parameter_insert_front (&iter, elem);
   if (prev != NULL)
     prev->next = iter;
   else
     *params = iter;
 }
 
-static void list_parameter_free(ykclient_parameters_t* params) {
-  ykclient_parameters_t* iter = params;
-  while (iter != NULL) {
-    parameter_free(iter->parameter);
-    ykclient_parameters_t* current = iter;
-    iter = iter->next;
-    free(current);
-  }
+static void
+list_parameter_free (ykclient_parameters_t * params)
+{
+  ykclient_parameters_t *iter = params;
+  while (iter != NULL)
+    {
+      parameter_free (iter->parameter);
+      ykclient_parameters_t *current = iter;
+      iter = iter->next;
+      free (current);
+    }
 }
 
 
 /* Server's response functions */
 
-ykclient_server_response_t* ykclient_server_response_init() {
-  ykclient_server_response_t* serv_response =
-      malloc(sizeof(ykclient_server_response_t));
+ykclient_server_response_t *
+ykclient_server_response_init ()
+{
+  ykclient_server_response_t *serv_response =
+    malloc (sizeof (ykclient_server_response_t));
   if (serv_response == NULL)
     return NULL;
   serv_response->signature = NULL;
@@ -159,50 +177,59 @@ ykclient_server_response_t* ykclient_server_response_init() {
   return serv_response;
 }
 
-void ykclient_server_response_free(ykclient_server_response_t* response) {
+void
+ykclient_server_response_free (ykclient_server_response_t * response)
+{
   if (response == NULL)
     return;
-  list_parameter_free(response->parameters);
-  parameter_free(response->signature);
-  free(response);
+  list_parameter_free (response->parameters);
+  parameter_free (response->signature);
+  free (response);
 }
 
 
 /* Server's response parsing functions */
 
 // Returns 1 if c is a whitespace or a line break character, 0 otherwise.
-static int is_ws_or_lb(char c) {
-  switch (c) {
-    // Line breaks
+static int
+is_ws_or_lb (char c)
+{
+  switch (c)
+    {
+      // Line breaks
     case '\n':
     case '\r':
-    // Spaces
+      // Spaces
     case ' ':
     case '\t':
       return 1;
     default:
       return 0;
-  }
+    }
   return 0;
 }
 
 // Trims leading whitespaces and line breaks.
-static void trim_ws_and_lb(char** s) {
+static void
+trim_ws_and_lb (char **s)
+{
   if (s == NULL || *s == NULL)
     return;
 
-  char* pos = *s;
-  while (*pos != '\0' && is_ws_or_lb(*pos))
+  char *pos = *s;
+  while (*pos != '\0' && is_ws_or_lb (*pos))
     ++pos;
   *s = pos;
 }
 
 // Parses and builds the next parameter param from s, moves response's pointer
 // to the immediate right character. Returns 0 if it succeeds.
-static int parse_next_parameter(char** s, ykclient_parameter_t* param) {
+static int
+parse_next_parameter (char **s, ykclient_parameter_t * param)
+{
   if (s == NULL || *s == NULL || param == NULL)
     return YKCLIENT_PARSE_ERROR;
-  char* pos = *s;
+  char *pos = *s;
   int index = 0;
 
   // key parsing
@@ -211,29 +238,32 @@ static int parse_next_parameter(char** s, ykclient_parameter_t* param) {
   if (*(pos + index) == '\0')
     return YKCLIENT_PARSE_ERROR;
 
-  param->key = malloc(index + 1);
-  if (param->key == NULL) {
-    return YKCLIENT_OUT_OF_MEMORY;
-  }
-  strncpy(param->key, pos, index);
+  param->key = malloc (index + 1);
+  if (param->key == NULL)
+    {
+      return YKCLIENT_OUT_OF_MEMORY;
+    }
+  strncpy (param->key, pos, index);
   param->key[index] = '\0';
 
   // value parsing
   pos += index + 1;
   index = 0;
-  while (*(pos + index) != '\0' && !is_ws_or_lb(*(pos + index)))
+  while (*(pos + index) != '\0' && !is_ws_or_lb (*(pos + index)))
     ++index;
-  if (*(pos + index) == '\0') {
-    parameter_free(param);
-    return YKCLIENT_PARSE_ERROR;
-  }
+  if (*(pos + index) == '\0')
+    {
+      parameter_free (param);
+      return YKCLIENT_PARSE_ERROR;
+    }
 
-  param->value = malloc(index + 1);
-  if (param->value == NULL) {
-    parameter_free(param);
-    return YKCLIENT_OUT_OF_MEMORY;
-  }
-  strncpy(param->value, pos, index);
+  param->value = malloc (index + 1);
+  if (param->value == NULL)
+    {
+      parameter_free (param);
+      return YKCLIENT_OUT_OF_MEMORY;
+    }
+  strncpy (param->value, pos, index);
   param->value[index] = '\0';
 
   pos += index;
@@ -241,28 +271,31 @@ static int parse_next_parameter(char** s, ykclient_parameter_t* param) {
   return 0;
 }
 
-int ykclient_server_response_parse(char* response,
-                                   ykclient_server_response_t* serv_response) {
+int
+ykclient_server_response_parse (char *response,
+				ykclient_server_response_t * serv_response)
+{
   if (response == NULL || serv_response == NULL)
     return;
 
-  trim_ws_and_lb(&response);
-  while (*response != '\0') {
-    ykclient_parameter_t* param = malloc(sizeof(ykclient_parameter_t));
-    if (param == NULL)
-      return YKCLIENT_OUT_OF_MEMORY;
-    int ret = parse_next_parameter(&response, param);
-    if (ret)
-      return ret;
+  trim_ws_and_lb (&response);
+  while (*response != '\0')
+    {
+      ykclient_parameter_t *param = malloc (sizeof (ykclient_parameter_t));
+      if (param == NULL)
+	return YKCLIENT_OUT_OF_MEMORY;
+      int ret = parse_next_parameter (&response, param);
+      if (ret)
+	return ret;
 
-    if (!strcmp(param->key, "h"))
-      serv_response->signature = param;
-    else
-      // Parameters are alphanumerically ordered.
-      list_parameter_insert_ord(&serv_response->parameters, param,
-                                alphanum_less_than);
-    trim_ws_and_lb(&response);
-  }
+      if (!strcmp (param->key, "h"))
+	serv_response->signature = param;
+      else
+	// Parameters are alphanumerically ordered.
+	list_parameter_insert_ord (&serv_response->parameters, param,
+				   alphanum_less_than);
+      trim_ws_and_lb (&response);
+    }
 
   // We expect at least one parameter along its mandatory signature.
   if (serv_response->signature == NULL || serv_response->parameters == NULL)
@@ -270,33 +303,36 @@ int ykclient_server_response_parse(char* response,
   return 0;
 }
 
-int ykclient_server_response_verify_signature(
-    const ykclient_server_response_t* serv_response,
-    const char* key, int key_length) {
+int
+ykclient_server_response_verify_signature (const ykclient_server_response_t *
+					   serv_response, const char *key,
+					   int key_length)
+{
   if (serv_response == NULL || key == NULL || key_length < 0)
     return 1;
 
   HMACContext ctx;
-  if (hmacReset(&ctx, SHA1, key, key_length))
+  if (hmacReset (&ctx, SHA1, key, key_length))
     return 1;
 
   // Iterate over parameters and feed the hmac.
-  ykclient_parameters_t* iter = serv_response->parameters;
-  for (; iter != NULL; iter = iter->next) {
-    if (hmacInput(&ctx, (unsigned char*) iter->parameter->key,
-                  strlen(iter->parameter->key)))
-      return 1;
-    if (hmacInput(&ctx, "=", 1))
-      return 1;
-    if (hmacInput(&ctx, (unsigned char*) iter->parameter->value,
-                  strlen(iter->parameter->value)))
-      return 1;
-    if (iter->next != NULL && hmacInput(&ctx, "&", 1))
-      return 1;
-  }
+  ykclient_parameters_t *iter = serv_response->parameters;
+  for (; iter != NULL; iter = iter->next)
+    {
+      if (hmacInput (&ctx, (unsigned char *) iter->parameter->key,
+		     strlen (iter->parameter->key)))
+	return 1;
+      if (hmacInput (&ctx, "=", 1))
+	return 1;
+      if (hmacInput (&ctx, (unsigned char *) iter->parameter->value,
+		     strlen (iter->parameter->value)))
+	return 1;
+      if (iter->next != NULL && hmacInput (&ctx, "&", 1))
+	return 1;
+    }
 
   uint8_t digest[SHA1HashSize + 1];
-  if (hmacResult(&ctx, digest))
+  if (hmacResult (&ctx, digest))
     return 1;
 
   if (serv_response->signature == NULL ||
@@ -305,25 +341,27 @@ int ykclient_server_response_verify_signature(
 
   char server_digest[SHA1HashSize + 1];
   base64_decodestate b64;
-  base64_init_decodestate(&b64);
-  if (base64_decode_block(serv_response->signature->value,
-                          strlen(serv_response->signature->value),
-                          server_digest, &b64) != SHA1HashSize)
+  base64_init_decodestate (&b64);
+  if (base64_decode_block (serv_response->signature->value,
+			   strlen (serv_response->signature->value),
+			   server_digest, &b64) != SHA1HashSize)
     return 1;
 
-  if (memcmp(server_digest, digest, SHA1HashSize) != 0)
+  if (memcmp (server_digest, digest, SHA1HashSize) != 0)
     return 1;
   return 0;
 }
 
-char* ykclient_server_response_get(
-    const ykclient_server_response_t* serv_response, const char* key) {
+char *
+ykclient_server_response_get (const ykclient_server_response_t *
+			      serv_response, const char *key)
+{
   if (serv_response == NULL || key == NULL)
     return NULL;
 
-  ykclient_parameters_t* iter = serv_response->parameters;
+  ykclient_parameters_t *iter = serv_response->parameters;
   for (; iter != NULL; iter = iter->next)
-    if (!strcmp(iter->parameter->key, key))
+    if (!strcmp (iter->parameter->key, key))
       return iter->parameter->value;
   return NULL;
 }

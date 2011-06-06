@@ -45,30 +45,25 @@ const char *usage =
   "\n"
   "  Options :\n"
   "    --url URL		Validation service URL (eg: \"http://api.yubico.com/wsapi/verify?id=%%d&otp=%%s\")\n"
-  "    --apikey Key		API key for HMAC validation of request/response\n"
-  ;
+  "    --apikey Key		API key for HMAC validation of request/response\n";
 
 static struct option long_options[] = {
-  {"url",	1, 0, 'u'},
-  {"apikey",	1, 0, 'a'},
-  {0,		0, 0, 0}
+  {"url", 1, 0, 'u'},
+  {"apikey", 1, 0, 'a'},
+  {0, 0, 0, 0}
 };
 
 /* Parse command line parameters. */
 void
-parse_args(int argc, char *argv[],
-	   int *client_id,
-	   char **token,
-	   char **url,
-	   char **api_key
-	   )
+parse_args (int argc, char *argv[],
+	    int *client_id, char **token, char **url, char **api_key)
 {
   while (1)
     {
       int option_index = 0;
 
-      int c = getopt_long(argc, argv, "",
-			  long_options, &option_index);
+      int c = getopt_long (argc, argv, "",
+			   long_options, &option_index);
       if (c == -1)
 	break;
 
@@ -77,7 +72,8 @@ parse_args(int argc, char *argv[],
 	case 'a':
 	  if (strlen (optarg) < 16)
 	    {
-	      fprintf (stderr, "error: API key must be at least 16 characters");
+	      fprintf (stderr,
+		       "error: API key must be at least 16 characters");
 	      exit (EXIT_FAILURE);
 	    }
 	  *api_key = optarg;
@@ -126,12 +122,7 @@ main (int argc, char *argv[])
   char *token, *url = NULL, *api_key = NULL;
   int ret, optind;
 
-  parse_args (argc, argv,
-	      &client_id,
-	      &token,
-	      &url,
-	      &api_key
-	      );
+  parse_args (argc, argv, &client_id, &token, &url, &api_key);
 
   /* Debug. */
   fprintf (stderr, "Input:\n");
@@ -142,7 +133,9 @@ main (int argc, char *argv[])
   if (api_key != NULL)
     fprintf (stderr, "  api key: %s\n", api_key);
 
-  ret = ykclient_verify_otp_v2 (NULL, token, client_id, NULL, 1, (const char **) &url, api_key);
+  ret =
+    ykclient_verify_otp_v2 (NULL, token, client_id, NULL, 1,
+			    (const char **) &url, api_key);
 
   printf ("Verification output (%d): %s\n", ret, ykclient_strerror (ret));
 

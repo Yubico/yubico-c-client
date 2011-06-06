@@ -31,12 +31,13 @@
  */
 
 #ifndef YKCLIENT_H
-# define YKCLIENT_H
+#define YKCLIENT_H
 
-# include <stdint.h>
-# include <string.h>
+#include <stdint.h>
+#include <string.h>
 
-typedef enum {
+typedef enum
+{
   /* Official yubikey client API errors. */
   YKCLIENT_OK = 0,
   YKCLIENT_BAD_OTP,
@@ -62,37 +63,32 @@ typedef enum {
 
 typedef struct ykclient_st ykclient_t;
 
-extern int ykclient_init (ykclient_t **ykc);
+extern int ykclient_init (ykclient_t ** ykc);
 
-extern void ykclient_done (ykclient_t **ykc);
+extern void ykclient_done (ykclient_t ** ykc);
 
 // If value is 0 the authenticity of the signature returned by the
 // server in response to the request won't be verified.
-extern void ykclient_set_verify_signature (ykclient_t *ykc,
-                                           int value);
+extern void ykclient_set_verify_signature (ykclient_t * ykc, int value);
 
 extern const char *ykclient_strerror (int ret);
 
-extern void ykclient_set_client (ykclient_t *ykc,
+extern void ykclient_set_client (ykclient_t * ykc,
 				 unsigned int client_id,
-				 size_t keylen,
-				 const char *key);
+				 size_t keylen, const char *key);
 
-extern int ykclient_set_client_hex (ykclient_t *ykc,
-				    unsigned int client_id,
-				    const char *key);
+extern int ykclient_set_client_hex (ykclient_t * ykc,
+				    unsigned int client_id, const char *key);
 
-extern int ykclient_set_client_b64 (ykclient_t *ykc,
-				    unsigned int client_id,
-				    const char *key);
+extern int ykclient_set_client_b64 (ykclient_t * ykc,
+				    unsigned int client_id, const char *key);
 
-extern void ykclient_set_url_template (ykclient_t *ykc,
+extern void ykclient_set_url_template (ykclient_t * ykc,
 				       const char *url_template);
 
 // By default the signature returned by the server is verified (modify
 // this choice by calling ykclient_set_verify_signature()).
-extern void ykclient_set_ca_path (ykclient_t *ykc,
-				  const char *ca_path);
+extern void ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path);
 
 /*
  * Set the nonce. A default nonce is generated in ykclient_init(), but
@@ -100,25 +96,22 @@ extern void ykclient_set_ca_path (ykclient_t *ykc,
  * nonce (needed to send signed requests to v1 validation servers),
  * you must call this function. Set nonce to NULL to disable it.
  */
-extern void ykclient_set_nonce (ykclient_t *ykc,
-				char *nonce);
+extern void ykclient_set_nonce (ykclient_t * ykc, char *nonce);
 
-extern int ykclient_request (ykclient_t *ykc, const char *yubikey_otp);
+extern int ykclient_request (ykclient_t * ykc, const char *yubikey_otp);
 
-extern const char *ykclient_get_last_url (ykclient_t *ykc);
+extern const char *ykclient_get_last_url (ykclient_t * ykc);
 
 /* One call interface for validation protocol 1.x, with default URL. */
 extern int ykclient_verify_otp (const char *yubikey_otp,
-				unsigned int client_id,
-				const char *hexkey);
+				unsigned int client_id, const char *hexkey);
 
 /* One call interface for validation protocol 2.0 and/or non-default URL. */
-extern int ykclient_verify_otp_v2 (ykclient_t *ykc_in,
+extern int ykclient_verify_otp_v2 (ykclient_t * ykc_in,
 				   const char *yubikey_otp,
 				   unsigned int client_id,
 				   const char *hexkey,
 				   size_t urlcount,
-				   const char **urls,
-				   const char *api_key);
+				   const char **urls, const char *api_key);
 
 #endif
