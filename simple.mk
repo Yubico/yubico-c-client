@@ -1,7 +1,7 @@
 # Makefile --- Instructions for make to build Yubikey client library and tools.
 #
 # Written by Simon Josefsson <simon@josefsson.org>.
-# Copyright (c) 2006, 2007, 2008, 2009 Yubico AB
+# Copyright (c) 2006, 2007, 2008, 2009, 2011 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,8 +28,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-MORE_CFLAGS ?=
-CFLAGS = $(MORE_CFLAGS) -I. -Wall -g -DPACKAGE=\"ykclient\" -DPACKAGE_VERSION=\"0\"
+MORE_CFLAGS ?= -Wall -g
+CFLAGS = $(MORE_CFLAGS) \
+	-I. \
+	-DPACKAGE=\"ykclient\"	\
+	-DPACKAGE_VERSION=\"0\"
 
 LDFLAGS = -lcurl
 
@@ -37,13 +40,16 @@ PROGRAMS = ykclient selftest
 
 all: $(PROGRAMS)
 
-OBJECTS = ykclient_server_response.o ykclient.o rfc4634/hmac.o rfc4634/sha1.o	\
-	rfc4634/usha.o rfc4634/sha224-256.o rfc4634/sha384-512.o 		\
-	b64/cencode.o b64/cdecode.o
+OBJECTS = ykclient_server_response.o ykclient.o rfc4634/hmac.o	\
+	rfc4634/sha1.o rfc4634/usha.o rfc4634/sha224-256.o	\
+	rfc4634/sha384-512.o b64/cencode.o b64/cdecode.o
 
 $(PROGRAMS): $(OBJECTS)
 
 ykclient: tool.c
+
+selftest.c:
+	cp tests/selftest.c .
 
 clean:
 	rm -f $(PROGRAMS) $(OBJECTS) *~

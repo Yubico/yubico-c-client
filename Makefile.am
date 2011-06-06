@@ -74,6 +74,7 @@ release:
 	fi
 	@head -3 $(srcdir)/NEWS | grep -q "Version $(VERSION) .released `date -I`" || \
 		(echo 'error: Update date/version in $(srcdir)/NEWS.'; exit 1)
+	make -f simple.mk check
 	rm -f ChangeLog
 	make ChangeLog distcheck
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
