@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@josefsson.org>.
-# Copyright (c) 2008, 2009 Yubico AB
+# Copyright (c) 2008, 2009, 2011 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -57,32 +57,25 @@ ykclient_LDADD = ./libykclient.la
 
 # Release
 
-# Dist docs from wiki.
-EXTRA_DIST = doc/ReadMe.asciidoc
-
-EXTRA_DIST += simple.mk
+EXTRA_DIST = simple.mk
 
 ChangeLog:
 	cd $(srcdir) && git2cl > ChangeLog
 
 PROJECT = yubico-c-client
-USER ?= simon75j
-KEYID ?= B9156397
-
-check-doc-dist:
-	cd $(srcdir) && git submodule update
-	cd $(srcdir)/doc && git pull
-	perl -pe "s,^EXTRA_DIST = .*,EXTRA_DIST = `cd $(srcdir) && ls doc/*.asciidoc | grep -v Todo.ascii | xargs echo`," \
-		< $(srcdir)/Makefile.am > check-doc-dist.tmp
-	diff -ur $(srcdir)/Makefile.am check-doc-dist.tmp || \
-		(rm -f check-doc-dist.tmp; echo 'error: please update $(srcdir)/Makefile.am to include all docs'; exit 1)
-	rm -f check-doc-dist.tmp
-	diff -ur $(srcdir)/README $(srcdir)/doc/ReadMe.asciidoc || \
-		(echo 'error: README and doc/ReadMe.asciidoc does not match!'; exit 1)
 
 release:
+	@if test -z "$(USER)" || test -z "$(KEYID)"; then \
+		echo "Try this instead:"; \
+		echo "  make release USER=[GOOGLEUSERNAME] KEYID=[PGPKEYID]"; \
+		echo "For example:"; \
+		echo "  make release USER=simon@yubico.com KEYID=2117364A"; \
+		exit 1; \
+	fi
+	@head -3 $(srcdir)/NEWS | grep -q "Version $(VERSION) .released `date -I`" || \
+		(echo 'error: Update date/version in $(srcdir)/NEWS.'; exit 1)
 	rm -f ChangeLog
-	make check-doc-dist ChangeLog distcheck
+	make ChangeLog distcheck
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
 	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
 	cd $(srcdir) && git push
