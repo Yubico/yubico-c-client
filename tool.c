@@ -120,7 +120,7 @@ main (int argc, char *argv[])
 {
   int client_id;
   char *token, *url = NULL, *api_key = NULL;
-  int ret, optind;
+  int ret;
 
   parse_args (argc, argv, &client_id, &token, &url, &api_key);
 
