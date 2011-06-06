@@ -29,9 +29,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
 #include "ykclient_server_response.h"
 
-#include "ykclient.h"		// Needed for errors codes
+#include "ykclient.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +44,7 @@
 
 /* Parameters' manipulation functions */
 
-// Debug function.
+/* Debug function. */
 static void
 parameter_print (ykclient_parameter_t * p)
 {
@@ -69,7 +70,7 @@ parameter_free (ykclient_parameter_t * param)
   free (param);
 }
 
-// Calls func on each parameter of params.
+/* Calls func on each parameter of params. */
 static void
 for_each_parameter (ykclient_parameters_t * params,
 		    void (*func) (ykclient_parameter_t * p))
@@ -79,7 +80,7 @@ for_each_parameter (ykclient_parameters_t * params,
     func (iter->parameter);
 }
 
-// Inserts elem in front of params.
+/* Inserts elem in front of params. */
 static void
 list_parameter_insert_front (ykclient_parameters_t ** params,
 			     ykclient_parameter_t * elem)
@@ -103,8 +104,8 @@ list_parameter_insert_front (ykclient_parameters_t ** params,
   *params = new_node;
 }
 
-// Keys comparison function. It compares two keys, and returns 1 if
-// the first precedes the second.
+/* Keys comparison function. It compares two keys, and returns 1 if
+   the first precedes the second. */
 static int
 alphanum_less_than (const ykclient_parameter_t * rhs,
 		    const ykclient_parameter_t * lhs)
@@ -117,9 +118,9 @@ alphanum_less_than (const ykclient_parameter_t * rhs,
   return 0;
 }
 
-// Inserts elem into params. The position where elem must inserted is
-// determined by cmp_func. cmp_func must be a strict weak ordering binary
-// predicate.
+/* Inserts elem into params. The position where elem must inserted is
+   determined by cmp_func. cmp_func must be a strict weak ordering binary
+   predicate. */
 static void
 list_parameter_insert_ord (ykclient_parameters_t ** params,
 			   ykclient_parameter_t * elem,
@@ -136,7 +137,7 @@ list_parameter_insert_ord (ykclient_parameters_t ** params,
     {
       const int result = cmp_func (elem, iter->parameter);
       if (result == -1)
-	return;			// error
+	return;			/* error */
       if (result == 1)
 	break;
       prev = iter;
@@ -190,16 +191,16 @@ ykclient_server_response_free (ykclient_server_response_t * response)
 
 /* Server's response parsing functions */
 
-// Returns 1 if c is a whitespace or a line break character, 0 otherwise.
+/* Returns 1 if c is a whitespace or a line break character, 0 otherwise. */
 static int
 is_ws_or_lb (char c)
 {
   switch (c)
     {
-      // Line breaks
+      /* Line breaks */
     case '\n':
     case '\r':
-      // Spaces
+      /* Spaces */
     case ' ':
     case '\t':
       return 1;
@@ -209,7 +210,7 @@ is_ws_or_lb (char c)
   return 0;
 }
 
-// Trims leading whitespaces and line breaks.
+/* Trims leading whitespaces and line breaks. */
 static void
 trim_ws_and_lb (char **s)
 {
@@ -222,8 +223,8 @@ trim_ws_and_lb (char **s)
   *s = pos;
 }
 
-// Parses and builds the next parameter param from s, moves response's pointer
-// to the immediate right character. Returns 0 if it succeeds.
+/* Parses and builds the next parameter param from s, moves response's pointer
+   to the immediate right character. Returns 0 if it succeeds. */
 static int
 parse_next_parameter (char **s, ykclient_parameter_t * param)
 {
@@ -232,7 +233,7 @@ parse_next_parameter (char **s, ykclient_parameter_t * param)
   char *pos = *s;
   int index = 0;
 
-  // key parsing
+  /* key parsing */
   while (*(pos + index) != '\0' && *(pos + index) != '=')
     ++index;
   if (*(pos + index) == '\0')
@@ -246,7 +247,7 @@ parse_next_parameter (char **s, ykclient_parameter_t * param)
   strncpy (param->key, pos, index);
   param->key[index] = '\0';
 
-  // value parsing
+  /* value parsing */
   pos += index + 1;
   index = 0;
   while (*(pos + index) != '\0' && !is_ws_or_lb (*(pos + index)))
@@ -291,13 +292,13 @@ ykclient_server_response_parse (char *response,
       if (!strcmp (param->key, "h"))
 	serv_response->signature = param;
       else
-	// Parameters are alphanumerically ordered.
+	/* Parameters are alphanumerically ordered. */
 	list_parameter_insert_ord (&serv_response->parameters, param,
 				   alphanum_less_than);
       trim_ws_and_lb (&response);
     }
 
-  // We expect at least one parameter along its mandatory signature.
+  /* We expect at least one parameter along its mandatory signature. */
   if (serv_response->signature == NULL || serv_response->parameters == NULL)
     return YKCLIENT_PARSE_ERROR;
   return 0;
@@ -315,7 +316,7 @@ ykclient_server_response_verify_signature (const ykclient_server_response_t *
   if (hmacReset (&ctx, SHA1, key, key_length))
     return 1;
 
-  // Iterate over parameters and feed the hmac.
+  /* Iterate over parameters and feed the hmac. */
   ykclient_parameters_t *iter = serv_response->parameters;
   for (; iter != NULL; iter = iter->next)
     {

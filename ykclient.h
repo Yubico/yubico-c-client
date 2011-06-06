@@ -67,8 +67,8 @@ extern int ykclient_init (ykclient_t ** ykc);
 
 extern void ykclient_done (ykclient_t ** ykc);
 
-// If value is 0 the authenticity of the signature returned by the
-// server in response to the request won't be verified.
+/* If value is 0 the authenticity of the signature returned by the
+   server in response to the request won't be verified. */
 extern void ykclient_set_verify_signature (ykclient_t * ykc, int value);
 
 extern const char *ykclient_strerror (int ret);
@@ -86,8 +86,8 @@ extern int ykclient_set_client_b64 (ykclient_t * ykc,
 extern void ykclient_set_url_template (ykclient_t * ykc,
 				       const char *url_template);
 
-// By default the signature returned by the server is verified (modify
-// this choice by calling ykclient_set_verify_signature()).
+/* By default the signature returned by the server is verified (modify
+   this choice by calling ykclient_set_verify_signature()). */
 extern void ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path);
 
 /*

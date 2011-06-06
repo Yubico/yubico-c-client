@@ -496,7 +496,8 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
        */
       otp_offset = strstr (ykc->url, "&otp=");
       if (otp_offset == NULL)
-	otp_offset = ykc->url + len;	// point at \0 at end of url in case there is no otp
+	/* point at \0 at end of url in case there is no otp */
+	otp_offset = ykc->url + len;
 
       /* break up ykc->url where we want to insert nonce */
       *otp_offset = 0;
