@@ -1,6 +1,5 @@
 /* tool.c --- Command line interface to libykclient.
  *
- * Written by Simon Josefsson <simon@josefsson.org>.
  * Copyright (c) 2006, 2007, 2008, 2009, 2011 Yubico AB
  * All rights reserved.
  *
@@ -77,12 +76,19 @@ parse_args(int argc, char *argv[],
 	{
 	case 'a':
 	  if (strlen (optarg) < 16)
-	      errx (EXIT_FAILURE, "error: API key must be at least 16 characters.");
+	    {
+	      fprintf (stderr, "error: API key must be at least 16 characters");
+	      exit (EXIT_FAILURE);
+	    }
 	  *api_key = optarg;
 	  break;
 	case 'u':
-	  if (strncmp ("http://", optarg, 7) != 0 && strncmp ("https://", optarg, 8) != 0)
-	    errx (EXIT_FAILURE, "error: validation url must be http or https.");
+	  if (strncmp ("http://", optarg, 7) != 0
+	      && strncmp ("https://", optarg, 8) != 0)
+	    {
+	      fprintf (stderr, "error: validation url must be http or https");
+	      exit (EXIT_FAILURE);
+	    }
 	  *url = optarg;
 	  break;
 	}
@@ -90,20 +96,26 @@ parse_args(int argc, char *argv[],
 
   if (argc - optind != 2)
     {
-      errx (EXIT_FAILURE, usage);
+      fprintf (stderr, "%s", usage);
+      exit (EXIT_FAILURE);
     }
 
   /* Now get mandatory numeric client_id */
   *client_id = atoi (argv[optind++]);
 
   if (*client_id <= 0)
-    errx (EXIT_FAILURE, "error: client identity must be a non-zero integer.");
+    {
+      fprintf (stderr, "error: client identity must be a non-zero integer.");
+      exit (EXIT_FAILURE);
+    }
 
   /* Likewise mandatory OTP token */
   *token = argv[optind++];
   if (strlen (*token) < 32)
     {
-      errx (EXIT_FAILURE, "error: ModHex encoded token must be at least 32 characters.");
+      fprintf (stderr,
+	       "error: modhex encoded token must be at least 32 characters");
+      exit (EXIT_FAILURE);
     }
 }
 
