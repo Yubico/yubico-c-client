@@ -44,18 +44,6 @@
 
 /* Parameters' manipulation functions */
 
-/* Debug function. */
-static void
-parameter_print (ykclient_parameter_t * p)
-{
-  if (p == NULL)
-    return;
-  if (p->key)
-    printf ("Key: %s\n", p->key);
-  if (p->value)
-    printf ("Value: %s\n", p->value);
-}
-
 static void
 parameter_free (ykclient_parameter_t * param)
 {
@@ -68,16 +56,6 @@ parameter_free (ykclient_parameter_t * param)
     free (param->value);
 
   free (param);
-}
-
-/* Calls func on each parameter of params. */
-static void
-for_each_parameter (ykclient_parameters_t * params,
-		    void (*func) (ykclient_parameter_t * p))
-{
-  ykclient_parameters_t *iter = params;
-  for (; iter != NULL; iter = iter->next)
-    func (iter->parameter);
 }
 
 /* Inserts elem in front of params. */
@@ -277,7 +255,7 @@ ykclient_server_response_parse (char *response,
 				ykclient_server_response_t * serv_response)
 {
   if (response == NULL || serv_response == NULL)
-    return;
+    return YKCLIENT_PARSE_ERROR;
 
   trim_ws_and_lb (&response);
   while (*response != '\0')
@@ -313,7 +291,7 @@ ykclient_server_response_verify_signature (const ykclient_server_response_t *
     return 1;
 
   HMACContext ctx;
-  if (hmacReset (&ctx, SHA1, key, key_length))
+  if (hmacReset (&ctx, SHA1, (const unsigned char *) key, key_length))
     return 1;
 
   /* Iterate over parameters and feed the hmac. */
@@ -323,12 +301,13 @@ ykclient_server_response_verify_signature (const ykclient_server_response_t *
       if (hmacInput (&ctx, (unsigned char *) iter->parameter->key,
 		     strlen (iter->parameter->key)))
 	return 1;
-      if (hmacInput (&ctx, "=", 1))
+      if (hmacInput (&ctx, (const unsigned char *) "=", 1))
 	return 1;
       if (hmacInput (&ctx, (unsigned char *) iter->parameter->value,
 		     strlen (iter->parameter->value)))
 	return 1;
-      if (iter->next != NULL && hmacInput (&ctx, "&", 1))
+      if (iter->next != NULL
+	  && hmacInput (&ctx, (const unsigned char *) "&", 1))
 	return 1;
     }
 
