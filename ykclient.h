@@ -33,6 +33,10 @@
 #ifndef YKCLIENT_H
 #define YKCLIENT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <string.h>
 
@@ -113,5 +117,9 @@ extern int ykclient_verify_otp_v2 (ykclient_t * ykc_in,
 				   const char *hexkey,
 				   size_t urlcount,
 				   const char **urls, const char *api_key);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
