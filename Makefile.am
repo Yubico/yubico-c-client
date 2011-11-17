@@ -70,12 +70,13 @@ release:
 		echo "  make release USER=[GOOGLEUSERNAME] KEYID=[PGPKEYID]"; \
 		echo "For example:"; \
 		echo "  make release USER=simon@yubico.com KEYID=2117364A"; \
+		echo "  make release USER=fredrikyubico@gmail.com KEYID=4EAA4232"; \
 		exit 1; \
 	fi
 	@head -3 $(srcdir)/NEWS | grep -q "Version $(VERSION) .released `date -I`" || \
 		(echo 'error: Update date/version in $(srcdir)/NEWS.'; exit 1)
-	make -f simple.mk check
-	rm -f ChangeLog
+	make -f $(srcdir)/simple.mk check
+	rm -f $(srcdir)/ChangeLog
 	make ChangeLog distcheck
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
 	gpg --verify $(PACKAGE)-$(VERSION).tar.gz.sig
