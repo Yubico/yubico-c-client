@@ -224,6 +224,8 @@ ykclient_set_client_b64 (ykclient_t * ykc,
   base64_init_decodestate (&b64);
   ykc->keylen = base64_decode_block (key, key_len, ykc->key_buf, &b64);
   ykc->key = ykc->key_buf;
+  /* Now that we have a key the sensible default is to verify signatures */
+  ykc->verify_signature = 1;
 
   return YKCLIENT_OK;
 }

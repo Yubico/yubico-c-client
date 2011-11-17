@@ -188,7 +188,26 @@ main (void)
   assert (ret == YKCLIENT_OK);
 
 #ifndef TEST_WITHOUT_INTERNET
+  /* When the server dislikes our signature, it will sign the response with a
+     NULL key, so the API call will fail with BAD_SERVER_SIGNATURE even though
+     the server returned status=BAD_SIGNATURE.
+  */
+  TEST(("validation request, expect BAD_SERVER_SIGNATURE"));
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert (ret == YKCLIENT_BAD_SERVER_SIGNATURE);
+#else
+  printf ("Test SKIPPED\n");
+#endif
+
+#ifndef TEST_WITHOUT_INTERNET
+  /* Now, disable our checking of the servers signature to get the error
+     the server returned (server will use 00000 as key when signing this
+     error response).
+  */
   TEST(("validation request, expect BAD_SIGNATURE"));
+  ykclient_set_verify_signature (ykc, 0);
   ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
