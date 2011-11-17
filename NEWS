@@ -2,6 +2,12 @@ Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
 * Version 2.7 (unreleased)
 
+** Verify server signatures per default when a key is provided. The old
+behavior can be restored with ykclient_set_verify_signature (ykc, 0);
+Reported by Dominic Rutherford <dominic@rutherfordfamily.co.uk>.
+
+** Return YKCLIENT_BAD_SERVER_SIGNATURE on missing signature.
+
 * Version 2.6 (released 2011-06-06)
 
 ** Use fprintf+exit instead of glibc-ism errx.
