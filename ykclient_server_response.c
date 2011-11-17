@@ -277,7 +277,9 @@ ykclient_server_response_parse (char *response,
     }
 
   /* We expect at least one parameter along its mandatory signature. */
-  if (serv_response->signature == NULL || serv_response->parameters == NULL)
+  if (serv_response->signature == NULL)
+    return YKCLIENT_BAD_SERVER_SIGNATURE;
+  if (serv_response->parameters == NULL)
     return YKCLIENT_PARSE_ERROR;
   return 0;
 }
