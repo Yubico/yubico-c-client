@@ -75,7 +75,8 @@ release:
 	fi
 	@head -3 $(srcdir)/NEWS | grep -q "Version $(VERSION) .released `date -I`" || \
 		(echo 'error: Update date/version in $(srcdir)/NEWS.'; exit 1)
-	make -f $(srcdir)/simple.mk check
+# check that non-autoconf build system works
+	cd $(srcdir) &&	make -f simple.mk check clean
 	rm -f $(srcdir)/ChangeLog
 	make ChangeLog distcheck
 	gpg --detach-sign --default-key $(KEYID) $(PACKAGE)-$(VERSION).tar.gz
