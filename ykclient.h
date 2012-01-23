@@ -36,6 +36,11 @@
 #include <stdint.h>
 #include <string.h>
 
+# ifdef __cplusplus
+extern "C"
+{
+# endif
+
 typedef enum
 {
   /* Official yubikey client API errors. */
@@ -113,5 +118,9 @@ extern int ykclient_verify_otp_v2 (ykclient_t * ykc_in,
 				   const char *hexkey,
 				   size_t urlcount,
 				   const char **urls, const char *api_key);
+
+# ifdef __cplusplus
+}
+# endif
 
 #endif

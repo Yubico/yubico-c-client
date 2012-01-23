@@ -1,5 +1,9 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
+* Version 2.8 (unreleased)
+
+** ykclient: Add C++ namespace protection.
+
 * Version 2.7 (released 2011-11-23)
 
 ** Verify server signatures per default when a key is provided. The old

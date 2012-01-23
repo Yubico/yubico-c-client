@@ -26,7 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-AC_INIT([ykclient], [2.7], [yubico-devel@googlegroups.com])
+AC_INIT([ykclient], [2.8], [yubico-devel@googlegroups.com])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Library code modified:                              REVISION++
@@ -34,7 +34,7 @@ AC_CONFIG_MACRO_DIR([m4])
 # Interfaces added:                             AGE++
 # Interfaces removed:                           AGE=0
 AC_SUBST(LT_CURRENT, 6)
-AC_SUBST(LT_REVISION, 3)
+AC_SUBST(LT_REVISION, 4)
 AC_SUBST(LT_AGE, 3)
 
 AM_INIT_AUTOMAKE([-Wall -Werror])
