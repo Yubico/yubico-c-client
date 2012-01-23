@@ -1,7 +1,7 @@
 /* ykclient_server_response.c --- Server response parsing and validation.
  *
  * Written by Sebastien Martini <seb@dbzteam.org>.
- * Copyright (c) 2011 Yubico AB
+ * Copyright (c) 2011-2012 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

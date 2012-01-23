@@ -20,6 +20,15 @@ Yubico online server.  Description of included files:
 * configure.ac, Makefile.am: Autoconf/Automake files.
 
 
+License
+-------
+
+The project is licensed under a BSD license.  See the file COPYING for
+exact wording.  For any copyright year range specified as YYYY-ZZZZ in
+this package note that the range specifies every single year in that
+closed interval.
+
+
 Building from Git
 -----------------
 
