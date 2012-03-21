@@ -69,6 +69,8 @@ list_parameter_insert_front (ykclient_parameters_t ** params,
   ykclient_parameters_t *new_node = malloc (sizeof (ykclient_parameters_t));
   if (new_node == NULL)
     return;
+  memset(new_node, 0, (sizeof (ykclient_parameters_t)));
+
   new_node->parameter = elem;
   new_node->next = NULL;
 
@@ -151,6 +153,7 @@ ykclient_server_response_init ()
     malloc (sizeof (ykclient_server_response_t));
   if (serv_response == NULL)
     return NULL;
+  memset(serv_response, 0, (sizeof (ykclient_server_response_t)));
   serv_response->signature = NULL;
   serv_response->parameters = NULL;
   return serv_response;
@@ -261,6 +264,7 @@ ykclient_server_response_parse (char *response,
   while (*response != '\0')
     {
       ykclient_parameter_t *param = malloc (sizeof (ykclient_parameter_t));
+      memset(param,0, (sizeof(ykclient_parameter_t)));
       if (param == NULL)
 	return YKCLIENT_OUT_OF_MEMORY;
       int ret = parse_next_parameter (&response, param);
