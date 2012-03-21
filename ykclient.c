@@ -53,6 +53,7 @@ struct ykclient_st
   const char *ca_path;
   const char *url_template;
   char *url;
+  char *ca;
   unsigned int client_id;
   size_t keylen;
   const char *key;
@@ -132,6 +133,7 @@ ykclient_done (ykclient_t ** ykc)
       if ((*ykc)->mallocd_nonce)
 	free ((*ykc)->nonce);
       free ((*ykc)->url);
+      free ((*ykc)->ca);
       free ((*ykc)->curl_chunk);
       free ((*ykc)->key_buf);
       free (*ykc);
@@ -268,7 +270,7 @@ ykclient_verify_otp (const char *yubikey_otp,
 {
   return ykclient_verify_otp_v2 (NULL,
 				 yubikey_otp,
-				 client_id, hexkey, 0, NULL, NULL);
+				 client_id, hexkey, 0, NULL, NULL, NULL);
 }
 
 /*
@@ -283,7 +285,9 @@ ykclient_verify_otp_v2 (ykclient_t * ykc_in,
 			unsigned int client_id,
 			const char *hexkey,
 			size_t urlcount,
-			const char **urls, const char *api_key)
+			const char **urls, 
+			const char **ca, 
+			const char *api_key)
 {
   ykclient_t *ykc;
   int ret;
@@ -311,6 +315,9 @@ ykclient_verify_otp_v2 (ykclient_t * ykc_in,
   if (urlcount == 1)
     ykclient_set_url_template (ykc, urls[0]);
 
+  if (ca)
+    ykclient_set_ca_path (ykc, *ca);
+    
   if (api_key)
     {
       ykclient_set_verify_signature (ykc, 1);
@@ -450,12 +457,16 @@ int
 ykclient_request (ykclient_t * ykc, const char *yubikey)
 {
   const char *url_template = ykc->url_template;
+  const char *ca_path = ykc->ca_path;
   char *user_agent = NULL;
   char *status;
   int out;
 
   if (!url_template)
-    url_template = "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s";
+    url_template = "https://yubi.hpcmp.hpc.mil/wsapi/2.0/verify.php?id=%d&otp=%s";
+
+  if (!ca_path)
+    ca_path = "/etc/pki/tls/certs";
 
   free (ykc->curl_chunk);
   ykc->curl_chunk_size = 0;
