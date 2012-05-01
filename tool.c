@@ -45,10 +45,12 @@ const char *usage =
   "\n"
   "  Options :\n"
   "    --url URL		Validation service URL (eg: \"http://api.yubico.com/wsapi/verify?id=%%d&otp=%%s\")\n"
+  "    --ca  CA			Path to directory containing the CAs (eg: \"/usr/local/etc/CERTS\")\n"
   "    --apikey Key		API key for HMAC validation of request/response\n";
 
 static struct option long_options[] = {
   {"url", 1, 0, 'u'},
+  {"ca", 1, 0, 'c'},
   {"apikey", 1, 0, 'a'},
   {0, 0, 0, 0}
 };
@@ -56,7 +58,7 @@ static struct option long_options[] = {
 /* Parse command line parameters. */
 void
 parse_args (int argc, char *argv[],
-	    int *client_id, char **token, char **url, char **api_key)
+	    int *client_id, char **token, char **url, char **ca, char **api_key)
 {
   while (1)
     {
@@ -86,6 +88,15 @@ parse_args (int argc, char *argv[],
 	      exit (EXIT_FAILURE);
 	    }
 	  *url = optarg;
+	  break;
+	case 'c':
+/* Add code to check for valid directory */
+	  if (strlen (optarg) < 1)
+	    {
+	      fprintf (stderr, "error: must give a valid directory containing CAs");
+	      exit (EXIT_FAILURE);
+	    }
+	  *ca = optarg;
 	  break;
 	}
     }
@@ -119,15 +130,17 @@ int
 main (int argc, char *argv[])
 {
   int client_id;
-  char *token, *url = NULL, *api_key = NULL;
+  char *token, *url = NULL, *ca = NULL, *api_key = NULL;
   int ret;
 
-  parse_args (argc, argv, &client_id, &token, &url, &api_key);
+  parse_args (argc, argv, &client_id, &token, &url, &ca, &api_key);
 
   /* Debug. */
   fprintf (stderr, "Input:\n");
   if (url)
     fprintf (stderr, "  validation URL: %s\n", url);
+  if (ca)
+    fprintf (stderr, "  CA Path: %s\n", ca);
   fprintf (stderr, "  client id: %d\n", client_id);
   fprintf (stderr, "  token: %s\n", token);
   if (api_key != NULL)
@@ -135,9 +148,14 @@ main (int argc, char *argv[])
 
   ret =
     ykclient_verify_otp_v2 (NULL, token, client_id, NULL, 1,
-			    (const char **) &url, api_key);
+			    (const char **) &url, (const char **) &ca, api_key);
 
+/*
   printf ("Verification output (%d): %s\n", ret, ykclient_strerror (ret));
+*/
+
+/* CHANGE OUTPUT FOR THE KDC */
+  printf ("%d  %s\n", ret, ykclient_strerror (ret));
 
   if (ret != YKCLIENT_OK)
     return EXIT_FAILURE;
