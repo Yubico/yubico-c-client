@@ -117,7 +117,9 @@ extern int ykclient_verify_otp_v2 (ykclient_t * ykc_in,
 				   unsigned int client_id,
 				   const char *hexkey,
 				   size_t urlcount,
-				   const char **urls, const char *api_key);
+				   const char **urls, 
+				   const char **ca, 
+				   const char *api_key);
 
 # ifdef __cplusplus
 }
