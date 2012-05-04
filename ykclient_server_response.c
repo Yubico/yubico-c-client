@@ -264,9 +264,9 @@ ykclient_server_response_parse (char *response,
   while (*response != '\0')
     {
       ykclient_parameter_t *param = malloc (sizeof (ykclient_parameter_t));
-      memset(param,0, (sizeof(ykclient_parameter_t)));
       if (param == NULL)
 	return YKCLIENT_OUT_OF_MEMORY;
+      memset(param,0, (sizeof(ykclient_parameter_t)));
       int ret = parse_next_parameter (&response, param);
       if (ret)
 	return ret;
