@@ -487,8 +487,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   char *status;
   int out;
   char **urls;
-  char b64dig[3 * 4 * SHA1HashSize + 1];
-  char signature_done = 0;
+  char *signature = NULL;
 
   CURL **curls_list;
 
@@ -573,8 +572,9 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 
     if (ykc->key && ykc->keylen)
     {
-      if (signature_done == 0)
+      if (!signature)
       {
+	char b64dig[3 * 4 * SHA1HashSize + 1];
 	uint8_t digest[USHAMaxHashSize];
 	base64_encodestate b64;
 	char *text;
@@ -597,18 +597,8 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 	res = base64_encode_block ((char *) digest, SHA1HashSize, b64dig, &b64);
 	res2 = base64_encode_blockend (&b64dig[res], &b64);
 	b64dig[res + res2 - 1] = '\0';
-	signature_done = 1;
 
-	/* Escape + into %2B. */
-	{
-	  char *p;
-
-	  while ((p = strchr (b64dig, '+')))
-	  {
-	    memmove (p + 3, p + 1, strlen (p));
-	    memcpy (p, "%2B", 3);
-	  }
-	}
+	signature = curl_easy_escape(ykc->curl, b64dig, 0);
       }
 
       /* Create new URL with signature ( h= ) appended to it . */
@@ -617,13 +607,14 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 	size_t len;
 	int wrote;
 
+
 #define ADD_HASH "&h="
-	len = strlen (url) + strlen (ADD_HASH) + strlen (b64dig) + 1;
+	len = strlen (url) + strlen (ADD_HASH) + strlen (signature) + 1;
 	sign_url = malloc (len);
 	if (!sign_url)
 	  return YKCLIENT_OUT_OF_MEMORY;
 
-	wrote = snprintf (sign_url, len, "%s" ADD_HASH "%s", url, b64dig);
+	wrote = snprintf (sign_url, len, "%s" ADD_HASH "%s", url, signature);
 	if (wrote + 1 != len)
 	  return YKCLIENT_FORMAT_ERROR;
 	free (url);
@@ -847,6 +838,7 @@ done:
     free(urls[i]);
   }
 
+  curl_free(signature);
   free (curls_list);
   free(urls);
   free (user_agent);
