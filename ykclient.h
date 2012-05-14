@@ -91,6 +91,9 @@ extern int ykclient_set_client_b64 (ykclient_t * ykc,
 extern void ykclient_set_url_template (ykclient_t * ykc,
 				       const char *url_template);
 
+extern void ykclient_set_url_templates (ykclient_t * ykc,
+				       size_t num_templates, const char **url_templates);
+
 /* By default the signature returned by the server is verified (modify
    this choice by calling ykclient_set_verify_signature()). */
 extern void ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path);

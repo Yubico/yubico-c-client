@@ -49,20 +49,35 @@
 
 struct ykclient_st
 {
-  CURL *curl;
+  CURLM *curl;
   const char *ca_path;
-  const char *url_template;
-  char *url;
+  size_t num_templates;
+  const char **url_templates;
+  char last_url[256];
   unsigned int client_id;
   size_t keylen;
   const char *key;
   char *key_buf;
   char *nonce;
   char mallocd_nonce;
-  char *curl_chunk;
-  size_t curl_chunk_size;
   int verify_signature;
 };
+
+struct curl_data
+{
+  char *curl_chunk;
+  size_t curl_chunk_size;
+};
+
+const char *default_url_templates[] = {
+  "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+  "http://api2.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+  "http://api3.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+  "http://api4.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+  "http://api5.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+};
+
+const size_t default_num_templates = 5;
 
 int
 ykclient_init (ykclient_t ** ykc)
@@ -74,7 +89,7 @@ ykclient_init (ykclient_t ** ykc)
   if (!p)
     return YKCLIENT_OUT_OF_MEMORY;
 
-  p->curl = curl_easy_init ();
+  p->curl = curl_multi_init ();
   if (!p->curl)
     {
       free (p);
@@ -82,15 +97,14 @@ ykclient_init (ykclient_t ** ykc)
     }
 
   p->ca_path = NULL;
-  p->url_template = NULL;
-  p->url = NULL;
-
-  p->curl_chunk = NULL;
-  p->curl_chunk_size = 0;
+  p->num_templates = 0;
+  p->url_templates = NULL;
 
   p->key = NULL;
   p->keylen = 0;
   p->key_buf = NULL;
+
+  memset(p->last_url, 0, sizeof(p->last_url));
 
   /* Generate a random 'nonce' value */
   {
@@ -128,16 +142,16 @@ ykclient_done (ykclient_t ** ykc)
 {
   if (ykc && *ykc)
     {
-      curl_easy_cleanup ((*ykc)->curl);
+      curl_multi_cleanup ((*ykc)->curl);
       if ((*ykc)->mallocd_nonce)
 	free ((*ykc)->nonce);
-      free ((*ykc)->url);
-      free ((*ykc)->curl_chunk);
       free ((*ykc)->key_buf);
+      free ((*ykc)->url_templates);
       free (*ykc);
     }
-  if (ykc)
+  if (ykc) {
     *ykc = NULL;
+  }
 }
 
 void
@@ -239,7 +253,20 @@ ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path)
 void
 ykclient_set_url_template (ykclient_t * ykc, const char *url_template)
 {
-  ykc->url_template = url_template;
+  ykclient_set_url_templates (ykc, 1, (const char **) &url_template);
+}
+
+void
+ykclient_set_url_templates (ykclient_t * ykc, size_t num_templates,
+			    const char **url_templates)
+{
+  free(ykc->url_templates);
+  ykc->url_templates = malloc(sizeof(char*) * num_templates);
+  ykc->num_templates = num_templates;
+  int i = 0;
+  for(;i < num_templates; i++) {
+    ykc->url_templates[i] = url_templates[i];
+  }
 }
 
 /*
@@ -292,9 +319,6 @@ ykclient_verify_otp_v2 (ykclient_t * ykc_in,
    * but this function is prepared to support all of Validation protocol 2.0,
    * which supports multiple parallell querys to multiple validation URLs.
    */
-  if (urlcount > 1)
-    return YKCLIENT_NOT_IMPLEMENTED;
-
   if (ykc_in == NULL)
     {
       ret = ykclient_init (&ykc);
@@ -308,8 +332,10 @@ ykclient_verify_otp_v2 (ykclient_t * ykc_in,
 
   ykclient_set_client_hex (ykc, client_id, hexkey);
 
-  if (urlcount == 1)
-    ykclient_set_url_template (ykc, urls[0]);
+  if (urlcount != 0 && *urls != 0)
+    {
+      ykclient_set_url_templates(ykc, urlcount, urls);
+    }
 
   if (api_key)
     {
@@ -419,29 +445,29 @@ ykclient_strerror (int ret)
 const char *
 ykclient_get_last_url (ykclient_t * ykc)
 {
-  return ykc->url;
+  return ykc->last_url;
 }
 
 static size_t
 curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
 {
-  ykclient_t *ykc = (ykclient_t *) data;
+  struct curl_data *curl_data = (struct curl_data*) data;
   size_t realsize = size * nmemb;
   char *p;
 
-  if (ykc->curl_chunk)
-    p = realloc (ykc->curl_chunk, ykc->curl_chunk_size + realsize + 1);
+  if (curl_data->curl_chunk)
+    p = realloc (curl_data->curl_chunk, curl_data->curl_chunk_size + realsize + 1);
   else
-    p = malloc (ykc->curl_chunk_size + realsize + 1);
+    p = malloc (curl_data->curl_chunk_size + realsize + 1);
 
   if (!p)
     return -1;
 
-  ykc->curl_chunk = p;
+  curl_data->curl_chunk = p;
 
-  memcpy (&(ykc->curl_chunk[ykc->curl_chunk_size]), ptr, realsize);
-  ykc->curl_chunk_size += realsize;
-  ykc->curl_chunk[ykc->curl_chunk_size] = 0;
+  memcpy (&(curl_data->curl_chunk[curl_data->curl_chunk_size]), ptr, realsize);
+  curl_data->curl_chunk_size += realsize;
+  curl_data->curl_chunk[curl_data->curl_chunk_size] = 0;
 
   return realsize;
 }
@@ -449,45 +475,70 @@ curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
 int
 ykclient_request (ykclient_t * ykc, const char *yubikey)
 {
-  const char *url_template = ykc->url_template;
+  const char **url_templates = ykc->url_templates;
+  size_t num_templates = ykc->num_templates;
   char *user_agent = NULL;
   char *status;
   int out;
+  char **urls;
+  char b64dig[3 * 4 * SHA1HashSize + 1];
+  char signature_done = 0;
 
-  if (!url_template)
-    url_template = "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s";
+  CURL **curls_list;
 
-  free (ykc->curl_chunk);
-  ykc->curl_chunk_size = 0;
-  ykc->curl_chunk = NULL;
-
-  {
-    size_t len = strlen (url_template) + strlen (yubikey) + 20;
-    size_t wrote;
-
-    free (ykc->url);
-    ykc->url = malloc (len);
-    if (!ykc->url)
-      return YKCLIENT_OUT_OF_MEMORY;
-    wrote = snprintf (ykc->url, len, url_template, ykc->client_id, yubikey);
-    if (wrote < 0 || wrote > len)
-      return YKCLIENT_FORMAT_ERROR;
+  if (!url_templates || *url_templates == 0) {
+    url_templates = default_url_templates;
+    num_templates = default_num_templates;
   }
 
-  if (ykc->nonce)
+  urls = malloc(sizeof(char*) * num_templates);
+  if(!urls)
+    return YKCLIENT_OUT_OF_MEMORY;
+
+  curls_list = malloc(sizeof(CURL*) * num_templates);
+  if (!curls_list)
+    return YKCLIENT_OUT_OF_MEMORY;
+
+  memset(ykc->last_url, 0, sizeof(ykc->last_url));
+
+  {
+    size_t len = strlen (PACKAGE) + 1 + strlen (PACKAGE_VERSION) + 1;
+    user_agent = malloc (len);
+    if (!user_agent)
+      return YKCLIENT_OUT_OF_MEMORY;
+    snprintf (user_agent, len, "%s/%s", PACKAGE, PACKAGE_VERSION);
+  }
+
+  int i = 0;
+  for(; i < num_templates; i++)
+  {
+    char *url = NULL;
+    {
+      size_t len = strlen (url_templates[i]) + strlen (yubikey) + 20;
+      size_t wrote;
+
+      url = malloc(len);
+      if (!url)
+	return YKCLIENT_OUT_OF_MEMORY;
+      wrote = snprintf (url, len, url_templates[i], ykc->client_id, yubikey);
+      if (wrote < 0 || wrote > len)
+	return YKCLIENT_FORMAT_ERROR;
+    }
+
+    if (ykc->nonce)
     {
       /* Create new URL with nonce in it. */
-      char *url, *otp_offset;
+      char *nonce_url, *otp_offset;
       size_t len;
       int wrote;
 
 #define ADD_NONCE "&nonce="
-      len = strlen (ykc->url) + strlen (ADD_NONCE) + strlen (ykc->nonce) + 1;
-      url = malloc (len);
-      if (!url)
+      len = strlen (url) + strlen (ADD_NONCE) + strlen (ykc->nonce) + 1;
+      nonce_url = malloc (len);
+      if (!nonce_url)
 	return YKCLIENT_OUT_OF_MEMORY;
 
-      /* Find the &otp= in ykc->url and insert ?nonce= before otp. Must get
+      /* Find the &otp= in url and insert ?nonce= before otp. Must get
        *  sorted headers since we calculate HMAC on the result.
        *
        * XXX this will break if the validation protocol gets a parameter that
@@ -496,229 +547,302 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
        * Also, we assume that everyone will have at least one parameter ("id=")
        * before "otp" so there is no need to search for "?otp=".
        */
-      otp_offset = strstr (ykc->url, "&otp=");
+      otp_offset = strstr (url, "&otp=");
       if (otp_offset == NULL)
 	/* point at \0 at end of url in case there is no otp */
-	otp_offset = ykc->url + len;
+	otp_offset = url + len;
 
       /* break up ykc->url where we want to insert nonce */
       *otp_offset = 0;
 
       wrote =
-	snprintf (url, len, "%s" ADD_NONCE "%s&%s", ykc->url, ykc->nonce,
-		  otp_offset + 1);
+	snprintf (nonce_url, len, "%s" ADD_NONCE "%s&%s", url, ykc->nonce,
+	    otp_offset + 1);
       if (wrote + 1 != len)
 	return YKCLIENT_FORMAT_ERROR;
 
-      free (ykc->url);
-      ykc->url = url;
+      free (url);
+      url = nonce_url;
     }
 
-  if (ykc->key && ykc->keylen)
+    if (ykc->key && ykc->keylen)
     {
-      uint8_t digest[USHAMaxHashSize];
-      char b64dig[3 * 4 * SHA1HashSize + 1];
-      base64_encodestate b64;
-      char *text;
-      int res, res2;
-
-      /* Find parameters to sign. */
-      text = strchr (ykc->url, '?');
-      if (!text)
-	return YKCLIENT_PARSE_ERROR;
-      text++;
-
-      /* HMAC data. */
-      res = hmac (SHA1, (unsigned char *) text, strlen (text),
-		  (unsigned char *) ykc->key, ykc->keylen, digest);
-      if (res != shaSuccess)
-	return YKCLIENT_HMAC_ERROR;
-
-      /* Base64 signature. */
-      base64_init_encodestate (&b64);
-      res = base64_encode_block ((char *) digest, SHA1HashSize, b64dig, &b64);
-      res2 = base64_encode_blockend (&b64dig[res], &b64);
-      b64dig[res + res2 - 1] = '\0';
-
-      /* Escape + into %2B. */
+      if (signature_done == 0)
       {
-	char *p;
+	uint8_t digest[USHAMaxHashSize];
+	base64_encodestate b64;
+	char *text;
+	int res, res2;
 
-	while ((p = strchr (b64dig, '+')))
+	/* Find parameters to sign. */
+	text = strchr (url, '?');
+	if (!text)
+	  return YKCLIENT_PARSE_ERROR;
+	text++;
+
+	/* HMAC data. */
+	res = hmac (SHA1, (unsigned char *) text, strlen (text),
+	    (unsigned char *) ykc->key, ykc->keylen, digest);
+	if (res != shaSuccess)
+	  return YKCLIENT_HMAC_ERROR;
+
+	/* Base64 signature. */
+	base64_init_encodestate (&b64);
+	res = base64_encode_block ((char *) digest, SHA1HashSize, b64dig, &b64);
+	res2 = base64_encode_blockend (&b64dig[res], &b64);
+	b64dig[res + res2 - 1] = '\0';
+	signature_done = 1;
+
+	/* Escape + into %2B. */
+	{
+	  char *p;
+
+	  while ((p = strchr (b64dig, '+')))
 	  {
 	    memmove (p + 3, p + 1, strlen (p));
 	    memcpy (p, "%2B", 3);
 	  }
+	}
       }
 
       /* Create new URL with signature ( h= ) appended to it . */
       {
-	char *url;
+	char *sign_url;
 	size_t len;
 	int wrote;
 
 #define ADD_HASH "&h="
-	len = strlen (ykc->url) + strlen (ADD_HASH) + strlen (b64dig) + 1;
-	url = malloc (len);
-	if (!url)
+	len = strlen (url) + strlen (ADD_HASH) + strlen (b64dig) + 1;
+	sign_url = malloc (len);
+	if (!sign_url)
 	  return YKCLIENT_OUT_OF_MEMORY;
 
-	wrote = snprintf (url, len, "%s" ADD_HASH "%s", ykc->url, b64dig);
+	wrote = snprintf (sign_url, len, "%s" ADD_HASH "%s", url, b64dig);
 	if (wrote + 1 != len)
 	  return YKCLIENT_FORMAT_ERROR;
-	free (ykc->url);
-	ykc->url = url;
+	free (url);
+	url = sign_url;
       }
     }
 
-  if (ykc->ca_path)
     {
-      curl_easy_setopt (ykc->curl, CURLOPT_CAPATH, ykc->ca_path);
+      CURL *curl_easy = curl_easy_init();
+      struct curl_data *data = malloc(sizeof(struct curl_data));
+      if (!data) {
+	return YKCLIENT_OUT_OF_MEMORY;
+      }
+      data->curl_chunk = NULL;
+      data->curl_chunk_size = 0;
+      if (ykc->ca_path)
+      {
+	curl_easy_setopt (curl_easy, CURLOPT_CAPATH, ykc->ca_path);
+      }
+      curl_easy_setopt (curl_easy, CURLOPT_URL, url);
+      curl_easy_setopt (curl_easy, CURLOPT_WRITEFUNCTION, curl_callback);
+      curl_easy_setopt (curl_easy, CURLOPT_WRITEDATA, (void *) data);
+      curl_easy_setopt (curl_easy, CURLOPT_PRIVATE, (void *) data);
+      if(user_agent)
+      {
+	curl_easy_setopt (curl_easy, CURLOPT_USERAGENT, user_agent);
+      }
+      curl_multi_add_handle(ykc->curl, curl_easy);
+      curls_list[i] = curl_easy;
+      urls[i] = url;
     }
-
-  curl_easy_setopt (ykc->curl, CURLOPT_URL, ykc->url);
-  curl_easy_setopt (ykc->curl, CURLOPT_WRITEFUNCTION, curl_callback);
-  curl_easy_setopt (ykc->curl, CURLOPT_WRITEDATA, (void *) ykc);
-
-  {
-    size_t len = strlen (PACKAGE) + 1 + strlen (PACKAGE_VERSION) + 1;
-    user_agent = malloc (len);
-    if (!user_agent)
-      return YKCLIENT_OUT_OF_MEMORY;
-    if (snprintf (user_agent, len, "%s/%s", PACKAGE, PACKAGE_VERSION) > 0)
-      curl_easy_setopt (ykc->curl, CURLOPT_USERAGENT, user_agent);
   }
 
-  CURLcode curl_ret = curl_easy_perform (ykc->curl);
+  int still_running = num_templates;
+  while(still_running) {
+    CURLcode curl_ret = curl_multi_perform (ykc->curl, &still_running);
+    struct timeval timeout;
 
-  if (curl_ret != CURLE_OK)
-    {
-      out = YKCLIENT_CURL_PERFORM_ERROR;
-      goto done;
+    fd_set fdread;
+    fd_set fdwrite;
+    fd_set fdexcep;
+    int maxfd = -1;
+
+    long curl_timeo = -1;
+
+    FD_ZERO(&fdread);
+    FD_ZERO(&fdwrite);
+    FD_ZERO(&fdexcep);
+
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 250000;
+
+    curl_multi_timeout(ykc->curl, &curl_timeo);
+    if(curl_timeo >= 0) {
+      timeout.tv_sec = curl_timeo / 1000;
+      if(timeout.tv_sec > 1) {
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 250000;
+      }
+      else
+	timeout.tv_usec = (curl_timeo % 1000) * 1000;
     }
 
-  if (ykc->curl_chunk_size == 0 || ykc->curl_chunk == NULL)
-    {
-      out = YKCLIENT_PARSE_ERROR;
-      goto done;
-    }
+    curl_multi_fdset(ykc->curl, &fdread, &fdwrite, &fdexcep, &maxfd);
 
-  ykclient_server_response_t *serv_response =
-    ykclient_server_response_init ();
-  if (serv_response == NULL)
-    {
-      out = YKCLIENT_PARSE_ERROR;
-      goto done;
-    }
+    select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
 
-  int parse_ret = ykclient_server_response_parse (ykc->curl_chunk,
-						  serv_response);
-  if (parse_ret)
     {
-      out = parse_ret;
-      goto done;
-    }
+      int msgs_left = 1;
+      while(msgs_left) {
+	CURLMsg *msg = curl_multi_info_read(ykc->curl, &msgs_left);
+	if(msg && msg->msg == CURLMSG_DONE) {
+	  CURL *curl_easy = msg->easy_handle;
+	  struct curl_data *data;
+	  ykclient_server_response_t *serv_response = NULL;
+	  curl_easy_getinfo(curl_easy, CURLINFO_PRIVATE, (char **) &data);
 
-  if (ykc->verify_signature != 0 &&
-      ykclient_server_response_verify_signature (serv_response,
-						 ykc->key, ykc->keylen))
-    {
-      out = YKCLIENT_BAD_SERVER_SIGNATURE;
-      goto done;
-    }
+	  if (data == 0 || data->curl_chunk_size == 0 || data->curl_chunk == NULL)
+	  {
+	    out = YKCLIENT_PARSE_ERROR;
+	    goto done;
+	  }
 
-  status = ykclient_server_response_get (serv_response, "status");
-  if (!status)
-    {
-      out = YKCLIENT_PARSE_ERROR;
-      goto done;
-    }
+	  char *url_used;
+	  curl_easy_getinfo(curl_easy, CURLINFO_EFFECTIVE_URL, &url_used);
+	  strncpy(ykc->last_url, url_used, 200);
 
-  if (strcmp (status, "OK") == 0)
-    {
-      char *server_otp;
+	  serv_response = ykclient_server_response_init ();
+	  if (serv_response == NULL)
+	  {
+	    out = YKCLIENT_PARSE_ERROR;
+	    goto done;
+	  }
+	  int parse_ret = ykclient_server_response_parse (data->curl_chunk,
+	      serv_response);
+	  if (parse_ret)
+	  {
+	    out = parse_ret;
+	    goto done;
+	  }
 
-      /* Verify that the OTP and nonce we put in our request is echoed in the response.
-       *
-       * This is to protect us from a man in the middle sending us a previously
-       * seen genuine response again (such as an status=OK response even though
-       * the real server will respond status=REPLAYED_OTP in a few milliseconds.
-       */
-      if (ykc->nonce)
-	{
-	  char *server_nonce =
-	    ykclient_server_response_get (serv_response, "nonce");
-	  if (server_nonce == NULL || strcmp (ykc->nonce, server_nonce))
+	  if (ykc->verify_signature != 0 &&
+	      ykclient_server_response_verify_signature (serv_response,
+		ykc->key, ykc->keylen))
+	  {
+	    out = YKCLIENT_BAD_SERVER_SIGNATURE;
+	    goto done;
+	  }
+
+	  status = ykclient_server_response_get (serv_response, "status");
+	  if (!status)
+	  {
+	    out = YKCLIENT_PARSE_ERROR;
+	    goto done;
+	  }
+
+	  if (strcmp (status, "OK") == 0)
+	  {
+	    char *server_otp;
+
+	    /* Verify that the OTP and nonce we put in our request is echoed in the response.
+	     *
+	     * This is to protect us from a man in the middle sending us a previously
+	     * seen genuine response again (such as an status=OK response even though
+	     * the real server will respond status=REPLAYED_OTP in a few milliseconds.
+	     */
+	    if (ykc->nonce)
+	    {
+	      char *server_nonce =
+		ykclient_server_response_get (serv_response, "nonce");
+	      if (server_nonce == NULL || strcmp (ykc->nonce, server_nonce))
+	      {
+		out = YKCLIENT_HMAC_ERROR;
+		goto done;
+	      }
+	    }
+
+	    server_otp = ykclient_server_response_get (serv_response, "otp");
+	    if (server_otp == NULL || strcmp (yubikey, server_otp))
 	    {
 	      out = YKCLIENT_HMAC_ERROR;
 	      goto done;
 	    }
-	}
 
-      server_otp = ykclient_server_response_get (serv_response, "otp");
-      if (server_otp == NULL || strcmp (yubikey, server_otp))
-	{
-	  out = YKCLIENT_HMAC_ERROR;
-	  goto done;
-	}
+	    out = YKCLIENT_OK;
+	    goto done;
+	  }
+	  else if (strcmp (status, "BAD_OTP") == 0)
+	  {
+	    out = YKCLIENT_BAD_OTP;
+	    goto done;
+	  }
+	  else if (strcmp (status, "REPLAYED_OTP") == 0)
+	  {
+	    out = YKCLIENT_REPLAYED_OTP;
+	    goto done;
+	  }
+	  else if (strcmp (status, "REPLAYED_REQUEST") == 0)
+	  {
+	    out = YKCLIENT_REPLAYED_REQUEST;
+	    goto done;
+	  }
+	  else if (strcmp (status, "BAD_SIGNATURE") == 0)
+	  {
+	    out = YKCLIENT_BAD_SIGNATURE;
+	    goto done;
+	  }
+	  else if (strcmp (status, "MISSING_PARAMETER") == 0)
+	  {
+	    out = YKCLIENT_MISSING_PARAMETER;
+	    goto done;
+	  }
+	  else if (strcmp (status, "NO_SUCH_CLIENT") == 0)
+	  {
+	    out = YKCLIENT_NO_SUCH_CLIENT;
+	    goto done;
+	  }
+	  else if (strcmp (status, "OPERATION_NOT_ALLOWED") == 0)
+	  {
+	    out = YKCLIENT_OPERATION_NOT_ALLOWED;
+	    goto done;
+	  }
+	  else if (strcmp (status, "BACKEND_ERROR") == 0)
+	  {
+	    out = YKCLIENT_BACKEND_ERROR;
+	    goto done;
+	  }
+	  else if (strcmp (status, "NOT_ENOUGH_ANSWERS") == 0)
+	  {
+	    out = YKCLIENT_NOT_ENOUGH_ANSWERS;
+	    goto done;
+	  }
 
-      out = YKCLIENT_OK;
-      goto done;
-    }
-  else if (strcmp (status, "BAD_OTP") == 0)
-    {
-      out = YKCLIENT_BAD_OTP;
-      goto done;
-    }
-  else if (strcmp (status, "REPLAYED_OTP") == 0)
-    {
-      out = YKCLIENT_REPLAYED_OTP;
-      goto done;
-    }
-  else if (strcmp (status, "REPLAYED_REQUEST") == 0)
-    {
-      out = YKCLIENT_REPLAYED_REQUEST;
-      goto done;
-    }
-  else if (strcmp (status, "BAD_SIGNATURE") == 0)
-    {
-      out = YKCLIENT_BAD_SIGNATURE;
-      goto done;
-    }
-  else if (strcmp (status, "MISSING_PARAMETER") == 0)
-    {
-      out = YKCLIENT_MISSING_PARAMETER;
-      goto done;
-    }
-  else if (strcmp (status, "NO_SUCH_CLIENT") == 0)
-    {
-      out = YKCLIENT_NO_SUCH_CLIENT;
-      goto done;
-    }
-  else if (strcmp (status, "OPERATION_NOT_ALLOWED") == 0)
-    {
-      out = YKCLIENT_OPERATION_NOT_ALLOWED;
-      goto done;
-    }
-  else if (strcmp (status, "BACKEND_ERROR") == 0)
-    {
-      out = YKCLIENT_BACKEND_ERROR;
-      goto done;
-    }
-  else if (strcmp (status, "NOT_ENOUGH_ANSWERS") == 0)
-    {
-      out = YKCLIENT_NOT_ENOUGH_ANSWERS;
-      goto done;
-    }
-
-  out = YKCLIENT_PARSE_ERROR;
-
+	  out = YKCLIENT_PARSE_ERROR;
 done:
-  if (user_agent)
-    free (user_agent);
+	  if (serv_response)
+	    ykclient_server_response_free (serv_response);
+	  /* if we got a valid response, get out of the loops */
+	  if (out != YKCLIENT_PARSE_ERROR && out != YKCLIENT_REPLAYED_REQUEST)
+	  {
+	    still_running = 0;
+	    msgs_left = 0;
+	  }
+	}
+      }
+    }
+  }
 
-  if (serv_response)
-    ykclient_server_response_free (serv_response);
+  for(i = 0; i < num_templates; i++)
+  {
+    CURL *curl = curls_list[i];
+    CURLMcode code = curl_multi_remove_handle(ykc->curl, curl);
+
+    struct curl_data *data;
+    curl_easy_getinfo(curl, CURLINFO_PRIVATE, (char **) &data);
+    free(data->curl_chunk);
+    free(data);
+
+    curl_easy_cleanup(curl);
+
+    free(urls[i]);
+  }
+
+  free(urls);
+  free (user_agent);
 
   return out;
 }
