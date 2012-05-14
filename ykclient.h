@@ -63,7 +63,8 @@ typedef enum
   YKCLIENT_HEX_DECODE_ERROR,
   YKCLIENT_BAD_SERVER_SIGNATURE,
   YKCLIENT_NOT_IMPLEMENTED,
-  YKCLIENT_CURL_PERFORM_ERROR
+  YKCLIENT_CURL_PERFORM_ERROR,
+  YKCLIENT_BAD_INPUT
 } ykclient_rc;
 
 typedef struct ykclient_st ykclient_t;
@@ -91,7 +92,7 @@ extern int ykclient_set_client_b64 (ykclient_t * ykc,
 extern void ykclient_set_url_template (ykclient_t * ykc,
 				       const char *url_template);
 
-extern void ykclient_set_url_templates (ykclient_t * ykc,
+extern int ykclient_set_url_templates (ykclient_t * ykc,
 				       size_t num_templates, const char **url_templates);
 
 /* By default the signature returned by the server is verified (modify

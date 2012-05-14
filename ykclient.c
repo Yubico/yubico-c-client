@@ -46,6 +46,7 @@
 #include "b64/cdecode.h"
 
 #define NONCE_LEN 32
+#define MAX_TEMPLATES 255
 
 struct ykclient_st
 {
@@ -256,17 +257,22 @@ ykclient_set_url_template (ykclient_t * ykc, const char *url_template)
   ykclient_set_url_templates (ykc, 1, (const char **) &url_template);
 }
 
-void
+int
 ykclient_set_url_templates (ykclient_t * ykc, size_t num_templates,
 			    const char **url_templates)
 {
+  if(num_templates > MAX_TEMPLATES)
+    return YKCLIENT_BAD_INPUT;
   free(ykc->url_templates);
   ykc->url_templates = malloc(sizeof(char*) * num_templates);
+  if(!ykc->url_templates)
+    return YKCLIENT_OUT_OF_MEMORY;
   ykc->num_templates = num_templates;
   int i = 0;
   for(;i < num_templates; i++) {
     ykc->url_templates[i] = url_templates[i];
   }
+  return YKCLIENT_OK;
 }
 
 /*
