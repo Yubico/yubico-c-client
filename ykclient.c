@@ -841,6 +841,7 @@ done:
     free(urls[i]);
   }
 
+  free (curls_list);
   free(urls);
   free (user_agent);
 
