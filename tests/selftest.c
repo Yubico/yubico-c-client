@@ -102,9 +102,6 @@ main (void)
   printf ("ykclient_init (%d): %s\n", ret, ykclient_strerror (ret));
   assert(ret == YKCLIENT_OK);
 
-  ykclient_set_url_template
-    (ykc, "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s");
-
   TEST(("null client_id, expect REPLAYED_OTP"));
   ykclient_set_verify_signature(ykc, 0);
   ykclient_set_client (ykc, client_id, 0, NULL);
@@ -232,8 +229,7 @@ main (void)
 #endif
 
   TEST(("set WS 2.0 URL template"));
-  /* Same URL used by library, somewhat silly but still verifies the
-     code path. */
+  /* Set one URL and run tests with that. */
   ykclient_set_url_template
     (ykc, "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s");
 
@@ -269,6 +265,25 @@ main (void)
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_BAD_SERVER_SIGNATURE);
+#else
+  printf ("Test SKIPPED\n");
+#endif
+
+  TEST(("Set and use several V2.0 URLs"));
+  const char *templates[] = {
+    "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+    "http://api2.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+    "http://api3.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+    "http://api4.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+    "http://api5.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+  };
+  ykclient_set_url_templates(ykc, 5, templates);
+  ykclient_set_client (ykc, client_id, 20, client_key);
+#ifndef TEST_WITHOUT_INTERNET
+  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert (ret == YKCLIENT_REPLAYED_OTP);
 #else
   printf ("Test SKIPPED\n");
 #endif
