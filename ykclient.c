@@ -90,6 +90,8 @@ ykclient_init (ykclient_t ** ykc)
   if (!p)
     return YKCLIENT_OUT_OF_MEMORY;
 
+  memset(p, 0, (sizeof (*p)));
+
   p->curl = curl_multi_init ();
   if (!p->curl)
     {
@@ -659,6 +661,14 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
     int maxfd = -1;
 
     long curl_timeo = -1;
+
+    if (curl_ret != CURLE_OK)
+      {
+	fprintf(stderr, "Error with curl: %s\n", curl_multi_strerror(curl_ret));
+	out = YKCLIENT_CURL_PERFORM_ERROR;
+	still_running = 0;
+	break;
+      }
 
     FD_ZERO(&fdread);
     FD_ZERO(&fdwrite);
