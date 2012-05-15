@@ -263,6 +263,7 @@ int
 ykclient_set_url_templates (ykclient_t * ykc, size_t num_templates,
 			    const char **url_templates)
 {
+  int i;
   if(num_templates > MAX_TEMPLATES)
     return YKCLIENT_BAD_INPUT;
   free(ykc->url_templates);
@@ -270,8 +271,7 @@ ykclient_set_url_templates (ykclient_t * ykc, size_t num_templates,
   if(!ykc->url_templates)
     return YKCLIENT_OUT_OF_MEMORY;
   ykc->num_templates = num_templates;
-  int i = 0;
-  for(;i < num_templates; i++) {
+  for(i = 0; i < num_templates; i++) {
     ykc->url_templates[i] = url_templates[i];
   }
   return YKCLIENT_OK;
@@ -490,7 +490,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   int out;
   char **urls;
   char *signature = NULL;
-
+  int still_running;
   CURL **curls_list;
 
   if (!url_templates || *url_templates == 0) {
@@ -650,7 +650,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
     }
   }
 
-  int still_running = num_templates;
+  still_running = num_templates;
   while(still_running) {
     CURLcode curl_ret = curl_multi_perform (ykc->curl, &still_running);
     struct timeval timeout;
@@ -699,6 +699,9 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 	if(msg && msg->msg == CURLMSG_DONE) {
 	  CURL *curl_easy = msg->easy_handle;
 	  struct curl_data *data;
+	  char *url_used;
+	  int parse_ret;
+
 	  ykclient_server_response_t *serv_response = NULL;
 	  curl_easy_getinfo(curl_easy, CURLINFO_PRIVATE, (char **) &data);
 
@@ -708,7 +711,6 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 	    goto done;
 	  }
 
-	  char *url_used;
 	  curl_easy_getinfo(curl_easy, CURLINFO_EFFECTIVE_URL, &url_used);
 	  strncpy(ykc->last_url, url_used, 200);
 
@@ -718,7 +720,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 	    out = YKCLIENT_PARSE_ERROR;
 	    goto done;
 	  }
-	  int parse_ret = ykclient_server_response_parse (data->curl_chunk,
+	  parse_ret = ykclient_server_response_parse (data->curl_chunk,
 	      serv_response);
 	  if (parse_ret)
 	  {
