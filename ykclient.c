@@ -534,7 +534,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 
 #define ADD_NONCE "&nonce="
       len = strlen (url) + strlen (ADD_NONCE) + strlen (ykc->nonce) + 1;
-      nonce_url = malloc (len);
+      nonce_url = malloc (len + 4); /* avoid valgrind complaint */
       if (!nonce_url)
 	return YKCLIENT_OUT_OF_MEMORY;
 
