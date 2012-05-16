@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include <curl/curl.h>
+
 #define TEST(xX) printf ("\nTest %s:%d (%s): ", __FILE__, __LINE__, __FUNCTION__); \
   printf xX; \
   printf ("\n")
@@ -96,6 +98,8 @@ main (void)
   char *client_b64key = "oBVbNt7IZehZGR99rvq8d6RZ1DM=";
   ykclient_t *ykc;
   int ret;
+
+  curl_global_init(CURL_GLOBAL_ALL);
 
   TEST(("init self"));
   ret = ykclient_init (&ykc);
@@ -301,6 +305,8 @@ main (void)
   test_v1_validation(client_id, client_b64key);
 
   printf ("All tests passed\n");
+
+  curl_global_cleanup();
 
   return 0;
 }
