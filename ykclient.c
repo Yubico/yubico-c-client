@@ -492,6 +492,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   char *signature = NULL;
   int still_running;
   CURL **curls_list;
+  char *encoded_otp;
 
   if (!url_templates || *url_templates == 0) {
     url_templates = default_url_templates;
@@ -516,18 +517,21 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
     snprintf (user_agent, len, "%s/%s", PACKAGE, PACKAGE_VERSION);
   }
 
+  /* URL-encode the OTP */
+  encoded_otp = curl_easy_escape(ykc->curl, yubikey, 0);
+
   int i = 0;
   for(; i < num_templates; i++)
   {
     char *url = NULL;
     {
-      size_t len = strlen (url_templates[i]) + strlen (yubikey) + 20;
+      size_t len = strlen (url_templates[i]) + strlen (encoded_otp) + 20;
       size_t wrote;
 
       url = malloc(len);
       if (!url)
 	return YKCLIENT_OUT_OF_MEMORY;
-      wrote = snprintf (url, len, url_templates[i], ykc->client_id, yubikey);
+      wrote = snprintf (url, len, url_templates[i], ykc->client_id, encoded_otp);
       if (wrote < 0 || wrote > len)
 	return YKCLIENT_FORMAT_ERROR;
     }
@@ -850,6 +854,7 @@ done:
     free(urls[i]);
   }
 
+  curl_free(encoded_otp);
   curl_free(signature);
   free (curls_list);
   free(urls);
