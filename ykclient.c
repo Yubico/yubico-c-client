@@ -109,25 +109,12 @@ ykclient_init (ykclient_t ** ykc)
 
   memset(p->last_url, 0, sizeof(p->last_url));
 
-  /* Generate a random 'nonce' value */
+  /* Allocate space for the 'nonce', generated on request */
   {
-    int i = 0;
-    struct timeval tv;
-
     p->nonce = malloc (NONCE_LEN + 1);
     if (!p->nonce)
       return YKCLIENT_OUT_OF_MEMORY;
     p->mallocd_nonce = 1;
-
-    gettimeofday (&tv, 0);
-    srandom (tv.tv_sec * tv.tv_usec);
-
-    for (i = 0; i < NONCE_LEN; ++i)
-      {
-	p->nonce[i] = (random () % 26) + 'a';
-      }
-
-    p->nonce[NONCE_LEN] = 0;
   }
 
   /* Verification of server signature can only be done if there is
@@ -519,6 +506,23 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 
   /* URL-encode the OTP */
   encoded_otp = curl_easy_escape(ykc->curl, yubikey, 0);
+
+  if(ykc->mallocd_nonce)
+  {
+    /* Generate a random 'nonce' value */
+    int i = 0;
+    struct timeval tv;
+
+    gettimeofday (&tv, 0);
+    srandom (tv.tv_sec * tv.tv_usec);
+
+    for (i = 0; i < NONCE_LEN; ++i)
+    {
+      ykc->nonce[i] = (random () % 26) + 'a';
+    }
+
+    ykc->nonce[NONCE_LEN] = 0;
+  }
 
   int i = 0;
   for(; i < num_templates; i++)
