@@ -60,7 +60,7 @@ struct ykclient_st
   const char *key;
   char *key_buf;
   char *nonce;
-  char mallocd_nonce;
+  char nonce_supplied;
   int verify_signature;
 };
 
@@ -109,13 +109,8 @@ ykclient_init (ykclient_t ** ykc)
 
   memset(p->last_url, 0, sizeof(p->last_url));
 
-  /* Allocate space for the 'nonce', generated on request */
-  {
-    p->nonce = malloc (NONCE_LEN + 1);
-    if (!p->nonce)
-      return YKCLIENT_OUT_OF_MEMORY;
-    p->mallocd_nonce = 1;
-  }
+  p->nonce = NULL;
+  p->nonce_supplied = 0;
 
   /* Verification of server signature can only be done if there is
    * an API key provided
@@ -133,8 +128,6 @@ ykclient_done (ykclient_t ** ykc)
   if (ykc && *ykc)
     {
       curl_multi_cleanup ((*ykc)->curl);
-      if ((*ykc)->mallocd_nonce)
-	free ((*ykc)->nonce);
       free ((*ykc)->key_buf);
       free ((*ykc)->url_templates);
       free (*ykc);
@@ -273,10 +266,7 @@ ykclient_set_url_templates (ykclient_t * ykc, size_t num_templates,
 void
 ykclient_set_nonce (ykclient_t * ykc, char *nonce)
 {
-  if (ykc->mallocd_nonce)
-    free (ykc->nonce);
-  ykc->mallocd_nonce = 0;
-
+  ykc->nonce_supplied = 1;
   ykc->nonce = nonce;
 }
 
@@ -476,6 +466,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   int still_running;
   CURL **curls_list;
   char *encoded_otp;
+  char *nonce;
 
   if (!url_templates || *url_templates == 0) {
     url_templates = default_url_templates;
@@ -503,8 +494,16 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   /* URL-encode the OTP */
   encoded_otp = curl_easy_escape(ykc->curl, yubikey, 0);
 
-  if(ykc->mallocd_nonce)
+  if(ykc->nonce_supplied)
   {
+    nonce = ykc->nonce;
+  }
+  else
+  {
+    nonce = malloc (NONCE_LEN + 1);
+    if(!nonce)
+      return YKCLIENT_OUT_OF_MEMORY;
+
     /* Generate a random 'nonce' value */
     int i = 0;
     struct timeval tv;
@@ -514,10 +513,10 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 
     for (i = 0; i < NONCE_LEN; ++i)
     {
-      ykc->nonce[i] = (random () % 26) + 'a';
+      nonce[i] = (random () % 26) + 'a';
     }
 
-    ykc->nonce[NONCE_LEN] = 0;
+    nonce[NONCE_LEN] = 0;
   }
 
   int i = 0;
@@ -536,7 +535,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 	return YKCLIENT_FORMAT_ERROR;
     }
 
-    if (ykc->nonce)
+    if (nonce)
     {
       /* Create new URL with nonce in it. */
       char *nonce_url, *otp_offset;
@@ -544,7 +543,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
       int wrote;
 
 #define ADD_NONCE "&nonce="
-      len = strlen (url) + strlen (ADD_NONCE) + strlen (ykc->nonce) + 1;
+      len = strlen (url) + strlen (ADD_NONCE) + strlen (nonce) + 1;
       nonce_url = malloc (len + 4); /* avoid valgrind complaint */
       if (!nonce_url)
 	return YKCLIENT_OUT_OF_MEMORY;
@@ -567,7 +566,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
       *otp_offset = 0;
 
       wrote =
-	snprintf (nonce_url, len, "%s" ADD_NONCE "%s&%s", url, ykc->nonce,
+	snprintf (nonce_url, len, "%s" ADD_NONCE "%s&%s", url, nonce,
 	    otp_offset + 1);
       if (wrote + 1 != len)
 	return YKCLIENT_FORMAT_ERROR;
@@ -761,7 +760,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 	    {
 	      char *server_nonce =
 		ykclient_server_response_get (serv_response, "nonce");
-	      if (server_nonce == NULL || strcmp (ykc->nonce, server_nonce))
+	      if (server_nonce == NULL || strcmp (nonce, server_nonce))
 	      {
 		out = YKCLIENT_HMAC_ERROR;
 		goto done;
@@ -853,6 +852,10 @@ done:
 
     free(urls[i]);
   }
+
+  /* if we allocated the nonce ourselves, free it */
+  if(!ykc->nonce_supplied)
+    free(nonce);
 
   curl_free(encoded_otp);
   curl_free(signature);
