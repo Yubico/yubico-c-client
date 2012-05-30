@@ -310,10 +310,6 @@ ykclient_verify_otp_v2 (ykclient_t * ykc_in,
   ykclient_t *ykc;
   int ret;
 
-  /* We currently only support 0 (for default YubiCloud URL) or 1 URL argument,
-   * but this function is prepared to support all of Validation protocol 2.0,
-   * which supports multiple parallell querys to multiple validation URLs.
-   */
   if (ykc_in == NULL)
     {
       ret = ykclient_init (&ykc);
