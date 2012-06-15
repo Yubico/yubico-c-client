@@ -1,5 +1,7 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
+* Version 2.9 (unreleased)
+
 * Version 2.8 (released 2012-06-15)
 
 ** ykclient: Add C++ namespace protection.
