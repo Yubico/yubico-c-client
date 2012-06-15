@@ -28,9 +28,10 @@
 
 # Self tests.
 
+AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
 AM_LDFLAGS = -no-install
 AM_CFLAGS=-I$(srcdir)/..
-LDADD = ../libykclient.la
+LDADD = ../libykclient.la -lcurl
 
 check_PROGRAMS = selftest
 TESTS = $(check_PROGRAMS)
