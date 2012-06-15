@@ -1,8 +1,25 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
-* Version 2.8 (unreleased)
+* Version 2.8 (released 2012-06-15)
 
 ** ykclient: Add C++ namespace protection.
+
+** Add multi-server support with curl_multi.
+   Enabled by default for YubiCloud servers.
+   Settable with the new library function set_template_urls() or
+   the urls parameter to ykclient_verify_otp_v2().
+
+** Remove extra % in ykclient help.
+
+** Add ca path option to ykclient, --ca.
+   Patch from Jay Kline <jay.kline.ctr@hpcmo.hpc.mil>.
+
+** Make the nonce unique for consecutive calls to the same ykclient handle.
+
+** Do url encoding of OTP before sending.
+
+** Fix segfault on curl error.
+   Patch from Lee Hinman <lee.hinman.ctr@hpc.mil>
 
 * Version 2.7 (released 2011-11-23)
 
