@@ -50,7 +50,6 @@
 
 struct ykclient_st
 {
-  CURLM *curl;
   const char *ca_path;
   size_t num_templates;
   const char **url_templates;
@@ -92,13 +91,6 @@ ykclient_init (ykclient_t ** ykc)
 
   memset(p, 0, (sizeof (*p)));
 
-  p->curl = curl_multi_init ();
-  if (!p->curl)
-    {
-      free (p);
-      return YKCLIENT_CURL_INIT_ERROR;
-    }
-
   p->ca_path = NULL;
   p->num_templates = 0;
   p->url_templates = NULL;
@@ -127,7 +119,6 @@ ykclient_done (ykclient_t ** ykc)
 {
   if (ykc && *ykc)
     {
-      curl_multi_cleanup ((*ykc)->curl);
       free ((*ykc)->key_buf);
       free ((*ykc)->url_templates);
       free (*ykc);
@@ -467,6 +458,12 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   CURL **curls_list;
   char *encoded_otp;
   char *nonce;
+  CURLM *curl = curl_multi_init ();
+
+  if (!curl)
+    {
+      return YKCLIENT_CURL_INIT_ERROR;
+    }
 
   if (!url_templates || *url_templates == 0) {
     url_templates = default_url_templates;
@@ -492,7 +489,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   }
 
   /* URL-encode the OTP */
-  encoded_otp = curl_easy_escape(ykc->curl, yubikey, 0);
+  encoded_otp = curl_easy_escape(curl, yubikey, 0);
 
   if(ykc->nonce_supplied)
   {
@@ -603,7 +600,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 	res2 = base64_encode_blockend (&b64dig[res], &b64);
 	b64dig[res + res2 - 1] = '\0';
 
-	signature = curl_easy_escape(ykc->curl, b64dig, 0);
+	signature = curl_easy_escape(curl, b64dig, 0);
       }
 
       /* Create new URL with signature ( h= ) appended to it . */
@@ -647,7 +644,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
       {
 	curl_easy_setopt (curl_easy, CURLOPT_USERAGENT, user_agent);
       }
-      curl_multi_add_handle(ykc->curl, curl_easy);
+      curl_multi_add_handle(curl, curl_easy);
       curls_list[i] = curl_easy;
       urls[i] = url;
     }
@@ -655,7 +652,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 
   still_running = num_templates;
   while(still_running) {
-    CURLcode curl_ret = curl_multi_perform (ykc->curl, &still_running);
+    CURLcode curl_ret = curl_multi_perform (curl, &still_running);
     struct timeval timeout;
 
     fd_set fdread;
@@ -686,7 +683,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
     timeout.tv_sec = 0;
     timeout.tv_usec = 250000;
 
-    curl_multi_timeout(ykc->curl, &curl_timeo);
+    curl_multi_timeout(curl, &curl_timeo);
     if(curl_timeo >= 0) {
       timeout.tv_sec = curl_timeo / 1000;
       if(timeout.tv_sec > 1) {
@@ -697,14 +694,14 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 	timeout.tv_usec = (curl_timeo % 1000) * 1000;
     }
 
-    curl_multi_fdset(ykc->curl, &fdread, &fdwrite, &fdexcep, &maxfd);
+    curl_multi_fdset(curl, &fdread, &fdwrite, &fdexcep, &maxfd);
 
     select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
 
     {
       int msgs_left = 1;
       while(msgs_left) {
-	CURLMsg *msg = curl_multi_info_read(ykc->curl, &msgs_left);
+	CURLMsg *msg = curl_multi_info_read(curl, &msgs_left);
 	if(msg && msg->msg == CURLMSG_DONE) {
 	  CURL *curl_easy = msg->easy_handle;
 	  struct curl_data *data;
@@ -846,15 +843,15 @@ done:
 
   for(i = 0; i < num_templates; i++)
   {
-    CURL *curl = curls_list[i];
-    CURLMcode code = curl_multi_remove_handle(ykc->curl, curl);
+    CURL *curlh = curls_list[i];
+    CURLMcode code = curl_multi_remove_handle(curl, curlh);
 
     struct curl_data *data;
-    curl_easy_getinfo(curl, CURLINFO_PRIVATE, (char **) &data);
+    curl_easy_getinfo(curlh, CURLINFO_PRIVATE, (char **) &data);
     free(data->curl_chunk);
     free(data);
 
-    curl_easy_cleanup(curl);
+    curl_easy_cleanup(curlh);
 
     free(urls[i]);
   }
@@ -868,6 +865,7 @@ done:
   free (curls_list);
   free(urls);
   free (user_agent);
+  curl_multi_cleanup (curl);
 
   return out;
 }
