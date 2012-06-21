@@ -665,6 +665,12 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 
     long curl_timeo = -1;
 
+    /* curl before 7.20.0 can return CURLM_CALL_MULTI_PERFORM, continue so we
+     * call curl_multi_perform again. */
+    if(curl_ret == CURLM_CALL_MULTI_PERFORM) {
+      continue;
+    }
+
     if (curl_ret != CURLE_OK)
       {
 	fprintf(stderr, "Error with curl: %s\n", curl_multi_strerror(curl_ret));
