@@ -32,6 +32,7 @@ AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
 AM_LDFLAGS = -no-install
 AM_CFLAGS=-I$(srcdir)/..
 LDADD = ../libykclient.la -lcurl
+selftest_SOURCES = selftest.c ../b64/cencode.c ../b64/cdecode.c
 
 check_PROGRAMS = selftest
 TESTS = $(check_PROGRAMS)

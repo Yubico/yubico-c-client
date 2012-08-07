@@ -36,6 +36,9 @@
 
 #include <curl/curl.h>
 
+#include "b64/cencode.h"
+#include "b64/cdecode.h"
+
 #define TEST(xX) printf ("\nTest %s:%d (%s): ", __FILE__, __LINE__, __FUNCTION__); \
   printf xX; \
   printf ("\n")
@@ -84,6 +87,35 @@ test_v1_validation(int client_id, char *client_b64key)
 #endif
 
   ykclient_done (&ykc);
+}
+
+void
+test_base64 (void)
+{
+  base64_encodestate encode;
+  base64_decodestate decode;
+  char b64dig[64];
+  char buf[64];
+  int size1, size2;
+  int ret;
+
+  TEST(("test base64 encoding"));
+  base64_init_encodestate(&encode);
+  size1 = base64_encode_block("foo", 3, b64dig, &encode);
+  size2 = base64_encode_blockend(&b64dig[size1], &encode);
+  b64dig[size1 + size2 - 1] = '\0';
+
+  printf("b64 encode: %s, expected: Zm9v\n", b64dig);
+  ret = strcmp(b64dig, "Zm9v");
+  assert(ret == 0);
+
+  TEST(("test base64 decoding"));
+  base64_init_decodestate(&decode);
+  base64_decode_block ("YmxhaG9uZ2E=", 12, buf, &decode);
+
+  printf("b64 decode: %s, expexted: blahonga\n", buf);
+  ret = strcmp(buf, "blahonga");
+  assert(ret == 0);
 }
 
 int
@@ -303,6 +335,8 @@ main (void)
   ret = strcmp(ykclient_strerror (YKCLIENT_BAD_OTP), "Yubikey OTP was bad (BAD_OTP)"); assert (ret == 0);
 
   test_v1_validation(client_id, client_b64key);
+
+  test_base64();
 
   printf ("All tests passed\n");
 
