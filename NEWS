@@ -1,6 +1,10 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
-* Version 2.9 (unreleased)
+* Version 2.9 (released 2012-08-07)
+
+** Compability with curl versions before 7.20.
+
+** Fix signature checking on ARM (at least).
 
 * Version 2.8 (released 2012-06-15)
 
