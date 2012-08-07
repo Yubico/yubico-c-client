@@ -34,7 +34,7 @@ CFLAGS = $(MORE_CFLAGS) \
 	-DPACKAGE=\"ykclient\"	\
 	-DPACKAGE_VERSION=\"0\"
 
-LDFLAGS = -lcurl
+LDLIBS = -lcurl
 
 PROGRAMS = ykclient selftest
 
