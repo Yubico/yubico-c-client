@@ -49,6 +49,8 @@ This will create a directory 'yubico-c-client'.  Enter the directory:
 
 Autoconf, automake and libtool must be installed.
 
+libcurl-dev must be installed.
+
 Generate the build system using:
 
 -----------
@@ -69,7 +71,7 @@ cross-compilation and shared library support, build it as follows.
 
 -----------
   $ ./configure
-  $ make check install
+  $ make check && sudo make install
 -----------
 
 Another way to build the package is by running 'make -f simple.mk
