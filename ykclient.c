@@ -528,7 +528,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
       if (!url)
 	return YKCLIENT_OUT_OF_MEMORY;
       wrote = snprintf (url, len, url_templates[i], ykc->client_id, encoded_otp);
-      if (wrote < 0 || wrote > len)
+      if (wrote > len)
 	return YKCLIENT_FORMAT_ERROR;
     }
 
@@ -652,7 +652,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 
   still_running = num_templates;
   while(still_running) {
-    CURLcode curl_ret = curl_multi_perform (curl, &still_running);
+    CURLMcode curl_ret = curl_multi_perform (curl, &still_running);
     struct timeval timeout;
 
     fd_set fdread;
