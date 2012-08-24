@@ -652,7 +652,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 
   still_running = num_templates;
   while(still_running) {
-    CURLcode curl_ret = curl_multi_perform (curl, &still_running);
+    CURLMcode curl_ret = curl_multi_perform (curl, &still_running);
     struct timeval timeout;
 
     fd_set fdread;
