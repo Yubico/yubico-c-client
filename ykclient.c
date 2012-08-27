@@ -668,7 +668,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
       continue;
     }
 
-    if (curl_ret != CURLE_OK)
+    if (curl_ret != CURLM_OK)
       {
 	fprintf(stderr, "Error with curl: %s\n", curl_multi_strerror(curl_ret));
 	out = YKCLIENT_CURL_PERFORM_ERROR;
