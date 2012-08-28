@@ -234,7 +234,7 @@ int
 ykclient_set_url_templates (ykclient_t * ykc, size_t num_templates,
 			    const char **url_templates)
 {
-  int i;
+  size_t i;
   if(num_templates > MAX_TEMPLATES)
     return YKCLIENT_BAD_INPUT;
   free(ykc->url_templates);
