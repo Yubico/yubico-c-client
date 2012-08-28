@@ -521,13 +521,13 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
     char *url = NULL;
     {
       size_t len = strlen (url_templates[i]) + strlen (encoded_otp) + 20;
-      size_t wrote;
+      int wrote;
 
       url = malloc(len);
       if (!url)
 	return YKCLIENT_OUT_OF_MEMORY;
       wrote = snprintf (url, len, url_templates[i], ykc->client_id, encoded_otp);
-      if (wrote > len)
+      if (wrote < 0 || wrote > len)
 	return YKCLIENT_FORMAT_ERROR;
     }
 
