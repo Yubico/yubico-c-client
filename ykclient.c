@@ -451,7 +451,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   size_t num_templates = ykc->num_templates;
   char *user_agent = NULL;
   char *status;
-  int out;
+  int out = YKCLIENT_PARSE_ERROR;
   char **urls;
   char *signature = NULL;
   int still_running;
