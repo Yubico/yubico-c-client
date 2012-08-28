@@ -842,10 +842,10 @@ done:
 
   for(i = 0; i < num_templates; i++)
   {
-    CURL *curlh = curls_list[i];
-    CURLMcode code = curl_multi_remove_handle(curl, curlh);
-
     struct curl_data *data;
+    CURL *curlh = curls_list[i];
+    curl_multi_remove_handle(curl, curlh);
+
     curl_easy_getinfo(curlh, CURLINFO_PRIVATE, (char **) &data);
     free(data->curl_chunk);
     free(data);
