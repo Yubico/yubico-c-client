@@ -459,6 +459,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   char *encoded_otp;
   char *nonce;
   CURLM *curl = curl_multi_init ();
+  size_t i;
 
   if (!curl)
     {
@@ -497,14 +498,13 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   }
   else
   {
+    struct timeval tv;
+
     nonce = malloc (NONCE_LEN + 1);
     if(!nonce)
       return YKCLIENT_OUT_OF_MEMORY;
 
     /* Generate a random 'nonce' value */
-    int i = 0;
-    struct timeval tv;
-
     gettimeofday (&tv, 0);
     srandom (tv.tv_sec * tv.tv_usec);
 
@@ -516,8 +516,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
     nonce[NONCE_LEN] = 0;
   }
 
-  int i = 0;
-  for(; i < num_templates; i++)
+  for(i = 0; i < num_templates; i++)
   {
     char *url = NULL;
     {
