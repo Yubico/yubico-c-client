@@ -589,7 +589,7 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
 
 	/* HMAC data. */
 	res = hmac (SHA1, (unsigned char *) text, strlen (text),
-	    (unsigned char *) ykc->key, ykc->keylen, digest);
+	    (const unsigned char *) ykc->key, ykc->keylen, digest);
 	if (res != shaSuccess)
 	  return YKCLIENT_HMAC_ERROR;
 
