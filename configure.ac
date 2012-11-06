@@ -40,6 +40,11 @@ AC_SUBST(LT_AGE, 4)
 AM_INIT_AUTOMAKE([1.10 -Wall -Werror])
 AM_SILENT_RULES([yes])
 AC_PROG_CC
+
+# needed for automake 1.12 and other workarounds break 1.11...
+m4_pattern_allow([AM_PROG_AR])
+AM_PROG_AR
+
 AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
