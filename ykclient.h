@@ -78,6 +78,8 @@ extern void ykclient_done (ykclient_t ** ykc);
 
 extern ykclient_rc ykclient_handle_init (ykclient_t * ykc,
                                          ykclient_handle_t ** ykh);
+                                         
+extern void ykclient_handle_cleanup (ykclient_handle_t * ykh);
 
 extern void ykclient_handle_done (ykclient_handle_t ** ykh);
 
@@ -122,6 +124,9 @@ extern void ykclient_set_nonce (ykclient_t * ykc, char *nonce);
 
 extern const char *ykclient_get_last_url (ykclient_t * ykc);
 
+extern ykclient_rc ykclient_request_process (ykclient_t * ykc, ykclient_handle_t * ykh,
+                                             const char *yubikey);
+                         
 extern ykclient_rc ykclient_request (ykclient_t * ykc, const char *yubikey_otp);
 
 /* One call interface for validation protocol 1.x, with default URL. */
