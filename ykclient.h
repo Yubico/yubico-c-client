@@ -70,9 +70,9 @@ typedef enum
 
 typedef struct ykclient_st ykclient_t;
 
-extern int ykclient_init (ykclient_t ** ykc);
 typedef struct ykclient_handle_st ykclient_handle_t;
 
+extern ykclient_rc ykclient_init (ykclient_t ** ykc);
 
 extern void ykclient_done (ykclient_t ** ykc);
 
@@ -85,23 +85,26 @@ extern void ykclient_handle_done (ykclient_handle_t ** ykh);
    server in response to the request won't be verified. */
 extern void ykclient_set_verify_signature (ykclient_t * ykc, int value);
 
-extern const char *ykclient_strerror (int ret);
+extern const char *ykclient_strerror (ykclient_rc ret);
 
 extern void ykclient_set_client (ykclient_t * ykc,
 				 unsigned int client_id,
 				 size_t keylen, const char *key);
 
-extern int ykclient_set_client_hex (ykclient_t * ykc,
-				    unsigned int client_id, const char *key);
+extern ykclient_rc ykclient_set_client_hex (ykclient_t * ykc,
+				            unsigned int client_id,
+				            const char *key);
 
-extern int ykclient_set_client_b64 (ykclient_t * ykc,
-				    unsigned int client_id, const char *key);
+extern ykclient_rc ykclient_set_client_b64 (ykclient_t * ykc,
+				            unsigned int client_id,
+				            const char *key);
 
-extern void ykclient_set_url_template (ykclient_t * ykc,
-				       const char *url_template);
+extern ykclient_rc ykclient_set_url_template (ykclient_t * ykc, 
+                                              const char *url_template);
 
-extern int ykclient_set_url_templates (ykclient_t * ykc,
-				       size_t num_templates, const char **url_templates);
+extern ykclient_rc ykclient_set_url_templates (ykclient_t * ykc,
+				               size_t num_templates,
+				               const char **url_templates);
 
 /* By default the signature returned by the server is verified (modify
    this choice by calling ykclient_set_verify_signature()). */
@@ -115,21 +118,25 @@ extern void ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path);
  */
 extern void ykclient_set_nonce (ykclient_t * ykc, char *nonce);
 
-extern int ykclient_request (ykclient_t * ykc, const char *yubikey_otp);
+
 
 extern const char *ykclient_get_last_url (ykclient_t * ykc);
 
+extern ykclient_rc ykclient_request (ykclient_t * ykc, const char *yubikey_otp);
+
 /* One call interface for validation protocol 1.x, with default URL. */
-extern int ykclient_verify_otp (const char *yubikey_otp,
-				unsigned int client_id, const char *hexkey);
+extern ykclient_rc ykclient_verify_otp (const char *yubikey_otp,
+				        unsigned int client_id,
+				        const char *hexkey);
 
 /* One call interface for validation protocol 2.0 and/or non-default URL. */
-extern int ykclient_verify_otp_v2 (ykclient_t * ykc_in,
-				   const char *yubikey_otp,
-				   unsigned int client_id,
-				   const char *hexkey,
-				   size_t urlcount,
-				   const char **urls, const char *api_key);
+extern ykclient_rc ykclient_verify_otp_v2 (ykclient_t * ykc_in,
+				           const char *yubikey_otp,
+				           unsigned int client_id,
+				           const char *hexkey,
+				           size_t urlcount,
+				           const char **urls,
+				           const char *api_key);
 
 # ifdef __cplusplus
 }

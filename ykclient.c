@@ -88,7 +88,16 @@ const char *default_url_templates[] = {
 
 const size_t default_num_templates = 5;
 
-int
+/** Initialise a new configuration structure
+ *
+ * Additional options can be set with ykclient_set_* functions
+ * after memory for the configuration has been allocated with
+ * this function.
+ *
+ * @param ykc Where to write a pointer to the new configuration.
+ * @return one of the YKCLIENT_* values or YKCLIENT_OK on success.
+ */
+ykclient_rc
 ykclient_init (ykclient_t ** ykc)
 {
   ykclient_t *p;
@@ -126,6 +135,13 @@ ykclient_init (ykclient_t ** ykc)
   return YKCLIENT_OK;
 }
 
+/** Frees a configuration structure allocated by ykclient_init
+ *
+ * Any handles created with ykclient_handle_init must be freed
+ * separately with ykclient_handle_done.
+ *
+ * @param ykc configuration to free.
+ */
 void
 ykclient_done (ykclient_t ** ykc)
 {
@@ -322,7 +338,7 @@ ykclient_set_client (ykclient_t * ykc,
   ykc->key = key;
 }
 
-int
+ykclient_rc
 ykclient_set_client_hex (ykclient_t * ykc,
                          unsigned int client_id, const char *key)
 {
@@ -374,7 +390,7 @@ ykclient_set_client_hex (ykclient_t * ykc,
   return YKCLIENT_OK;
 }
 
-int
+ykclient_rc
 ykclient_set_client_b64 (ykclient_t * ykc,
                          unsigned int client_id, const char *key)
 {
@@ -408,19 +424,43 @@ ykclient_set_client_b64 (ykclient_t * ykc,
   return YKCLIENT_OK;
 }
 
+/** Set the CA path 
+ *
+ * Must be called before creating handles.
+ */
 void
 ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path)
 {
   ykc->ca_path = ca_path;
 }
 
-void
+/** Set a single URL template
+ *
+ * @param ykc Yubikey client configuration.
+ * @param url_template to set.
+ * @return one of the YKCLIENT_* values or YKCLIENT_OK on success.
+ */
+ykclient_rc
 ykclient_set_url_template (ykclient_t * ykc, const char *url_template)
 {
-  ykclient_set_url_templates (ykc, 1, (const char **) &url_template);
+  return ykclient_set_url_templates (ykc, 1,
+                                     (const char **) &url_template);
 }
 
-int
+/** Set the URLs of the YK validation servers
+ *
+ * The URL strings will be copied to the new buffers, so the 
+ * caller may free the original URL strings if they are no 
+ * longer needed.
+ *
+ * @note This function MUST be called before calling ykclient_handle_init
+ *
+ * @param ykc Yubikey client configuration.
+ * @param num_templates Number of template URLs passed in url_templates.
+ * @param url_templates Array of template URL strings.
+ * @return one of the YKCLIENT_* values or YKCLIENT_OK on success.
+ */
+ykclient_rc
 ykclient_set_url_templates (ykclient_t * ykc, size_t num_templates,
                             const char **url_templates)
 {
@@ -457,11 +497,17 @@ ykclient_set_nonce (ykclient_t * ykc, char *nonce)
   ykc->nonce = nonce;
 }
 
+/** Convert a ykclient_rc value to a string
+ *
+ * Returns a more verbose error message relating to the ykclient_rc
+ * value passed as ret.
  *
  * Special CURL settings can be achieved by passing a non-null ykc_in.
+ * @param ret the error code to convert.
+ * @return verbose error string.
  */
 const char *
-ykclient_strerror (int ret)
+ykclient_strerror (ykclient_rc ret)
 {
   const char *p;
 
@@ -1041,6 +1087,16 @@ done:
     curl_easy_getinfo (curlh, CURLINFO_PRIVATE, (char **) &data);
     free (data->curl_chunk);
     free (data);
+/** Returns the actual URL the request was sent to
+ *
+ * @param ykc Yubikey client configuration.
+ * @return the last URL a request was send to.
+ */
+const char *
+ykclient_get_last_url (ykclient_t * ykc)
+{
+  return ykc->last_url;
+}
 
     curl_easy_cleanup (curlh);
 
