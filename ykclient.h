@@ -64,14 +64,22 @@ typedef enum
   YKCLIENT_BAD_SERVER_SIGNATURE,
   YKCLIENT_NOT_IMPLEMENTED,
   YKCLIENT_CURL_PERFORM_ERROR,
-  YKCLIENT_BAD_INPUT
+  YKCLIENT_BAD_INPUT,
+  YKCLIENT_HANDLE_NOT_REINIT
 } ykclient_rc;
 
 typedef struct ykclient_st ykclient_t;
 
 extern int ykclient_init (ykclient_t ** ykc);
+typedef struct ykclient_handle_st ykclient_handle_t;
+
 
 extern void ykclient_done (ykclient_t ** ykc);
+
+extern ykclient_rc ykclient_handle_init (ykclient_t * ykc,
+                                         ykclient_handle_t ** ykh);
+
+extern void ykclient_handle_done (ykclient_handle_t ** ykh);
 
 /* If value is 0 the authenticity of the signature returned by the
    server in response to the request won't be verified. */

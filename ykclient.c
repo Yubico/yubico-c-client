@@ -69,6 +69,15 @@ struct curl_data
   size_t curl_chunk_size;
 };
 
+struct ykclient_handle_st
+{
+  CURL **easy;
+  CURLM *multi;
+  size_t num_easy;
+  struct curl_data *data;
+  char **url_exp;
+};
+
 const char *default_url_templates[] = {
   "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
   "http://api2.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
@@ -130,6 +139,166 @@ ykclient_done (ykclient_t ** ykc)
   if (ykc)
   {
     *ykc = NULL;
+  }
+}
+
+
+/** Create a new handle
+ *
+ * These handles contain curl easy and multi handles required to
+ * process a request.
+ *
+ * This must be called after configuring template URLs, and handles
+ * MUST NOT be reused if new template URLs have been set.
+ *
+ * If new template URLs have been set all handles must be destroyed
+ * with ykclient_handle_close and recreated with this function.
+ *
+ * Handles must be cleaned with ykclient_handle_cleanup between 
+ * requests, and closed with ykclient_handle_close when they are no
+ * longer needed.
+ *
+ * @param ykc Yubikey client configuration.
+ * @param[out] ykh where to write pointer to new handle.
+ * @return one of the YKCLIENT_* values or YKCLIENT_OK on success.
+ */
+ykclient_rc
+ykclient_handle_init (ykclient_t * ykc, ykclient_handle_t ** ykh)
+{
+  ykclient_handle_t *p;
+  
+  *ykh = NULL;
+  
+  p = malloc (sizeof (*p));
+  if (!p)
+  {
+    return YKCLIENT_OUT_OF_MEMORY;
+  }
+  memset (p, 0, (sizeof (*p)));
+  
+  p->multi = curl_multi_init ();
+  if (!p->multi)
+  {
+    free (p);
+    return YKCLIENT_CURL_INIT_ERROR;
+  }
+  
+  p->easy = malloc (sizeof (CURL*) * ykc->num_templates);
+  for (p->num_easy = 0; p->num_easy < ykc->num_templates; p->num_easy++)
+  {
+    CURL *easy;
+    struct curl_data *data;
+
+    data = malloc (sizeof (*data));
+    if (!data)
+    {
+      ykclient_handle_done (&p);
+      return YKCLIENT_OUT_OF_MEMORY;
+    }
+    data->curl_chunk = NULL;
+    data->curl_chunk_size = 0;
+    
+    easy = curl_easy_init ();
+    if (!easy) 
+    {
+      free (data);
+      ykclient_handle_done (&p);
+      return YKCLIENT_CURL_INIT_ERROR;
+    }
+
+    if (ykc->ca_path)
+    {
+      curl_easy_setopt (easy, CURLOPT_CAPATH, ykc->ca_path);
+    }
+
+    curl_easy_setopt (easy, CURLOPT_WRITEDATA, (void *) data);
+    curl_easy_setopt (easy, CURLOPT_PRIVATE, (void *) data);
+    curl_easy_setopt (easy, CURLOPT_WRITEFUNCTION, curl_callback);
+    curl_easy_setopt (easy, CURLOPT_USERAGENT, ykc->user_agent);
+      
+    curl_multi_add_handle (p->multi, easy);
+    p->easy[p->num_easy] = easy;
+  }
+  
+  /* Take this opportunity to allocate the array for expanded URLs */
+  p->url_exp = malloc (sizeof (char*) * p->num_easy);
+  if (!p->url_exp)
+  {
+    ykclient_handle_done (&p);
+    return YKCLIENT_OUT_OF_MEMORY;
+  }
+  memset (p->url_exp, 0, (sizeof (char*) * p->num_easy));
+
+  *ykh = p;
+  
+  return YKCLIENT_OK;
+}
+
+/** Cleanup memory allocated for requests
+ *
+ * Cleans up any memory allocated and held by the handle for a
+ * request. Must be called after each request.
+ *
+ * @param ykh to close.
+ */
+void
+ykclient_handle_cleanup (ykclient_handle_t * ykh)
+{
+  size_t i;
+  struct curl_data *data;
+  
+  for (i = 0; i < ykh->num_easy; i++)
+  {
+    free (ykh->url_exp[i]);
+    ykh->url_exp[i] = NULL;
+    
+    curl_easy_getinfo (ykh->easy[i], CURLINFO_PRIVATE, (char **) &data);
+    free (data->curl_chunk);
+    data->curl_chunk = NULL;
+    data->curl_chunk_size = 0;
+  }
+}
+
+/** Close a handle freeing memory and destroying connections
+ *
+ * Frees any memory allocated for the handle, and calls various CURL
+ * functions to destroy all curl easy and multi handles created for
+ * this handle.
+ *
+ * @param ykh to close.
+ */
+void
+ykclient_handle_done (ykclient_handle_t ** ykh)
+{
+  struct curl_data *data;
+  size_t i;
+  
+  if (ykh && *ykh)
+  {
+    ykclient_handle_cleanup (*ykh);
+    
+    for (i = 0; i < (*ykh)->num_easy; i++)
+    {
+      curl_easy_getinfo ((*ykh)->easy[i], CURLINFO_PRIVATE, (char **) &data);
+      free (data);
+        
+      curl_multi_remove_handle ((*ykh)->multi, (*ykh)->easy[i]);
+      curl_easy_cleanup ((*ykh)->easy[i]);
+    }
+
+    if ((*ykh)->multi)
+    {
+      curl_multi_cleanup ((*ykh)->multi);
+    }
+
+    free ((*ykh)->url_exp);
+    free ((*ykh)->easy);
+    free (*ykh);
+  }
+  
+  if (ykh)
+  {
+    *ykh = NULL;
   }
 }
 
