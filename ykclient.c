@@ -457,72 +457,9 @@ ykclient_set_nonce (ykclient_t * ykc, char *nonce)
   ykc->nonce = nonce;
 }
 
-/*
- * Simple API to validate an OTP (hexkey) using the YubiCloud validation
- * service.
- */
-int
-ykclient_verify_otp (const char *yubikey_otp,
-                     unsigned int client_id, const char *hexkey)
-{
-  return ykclient_verify_otp_v2 (NULL,
-                                 yubikey_otp,
-                                 client_id, hexkey, 0, NULL, NULL);
-}
-
-/*
- * Extended API to validate an OTP (hexkey) using either the YubiCloud
- * validation service, or any other validation service.
  *
  * Special CURL settings can be achieved by passing a non-null ykc_in.
  */
-int
-ykclient_verify_otp_v2 (ykclient_t * ykc_in,
-                        const char *yubikey_otp,
-                        unsigned int client_id,
-                        const char *hexkey,
-                        size_t urlcount,
-                        const char **urls, const char *api_key)
-{
-  ykclient_t *ykc;
-  int ret;
-
-  if (ykc_in == NULL)
-  {
-    ret = ykclient_init (&ykc);
-    if (ret != YKCLIENT_OK)
-    {
-      return ret;
-    }
-  }
-  else
-  {
-    ykc = ykc_in;
-  }
-
-  ykclient_set_client_hex (ykc, client_id, hexkey);
-
-  if (urlcount != 0 && *urls != 0)
-  {
-    ykclient_set_url_templates (ykc, urlcount, urls);
-  }
-
-  if (api_key)
-  {
-    ykclient_set_verify_signature (ykc, 1);
-    ykclient_set_client_b64 (ykc, client_id, api_key);
-  }
-
-  ret = ykclient_request (ykc, yubikey_otp);
-
-  if (ykc_in == NULL)
-  {
-    ykclient_done (&ykc);
-  }
-  
-  return ret;
-}
-
 const char *
 ykclient_strerror (int ret)
 {
@@ -1124,4 +1061,70 @@ done:
   curl_multi_cleanup (curl);
 
   return out;
+}
+
+/** Extended API to validate an OTP (hexkey) 
+ * 
+ * Will default to YubiCloud validation service, but may be used
+ * with any service, if non-NULL ykc_in pointer is passed, and 
+ * ykclient_set_url_templates is used to configure template URLs.
+ *
+ */
+ykclient_rc
+ykclient_verify_otp_v2 (ykclient_t * ykc_in,
+                        const char *yubikey_otp,
+                        unsigned int client_id,
+                        const char *hexkey,
+                        size_t urlcount,
+                        const char **urls, const char *api_key)
+{
+  ykclient_rc out;
+  ykclient_t *ykc;
+
+
+  if (ykc_in == NULL)
+  {
+    out = ykclient_init (&ykc);
+    if (out != YKCLIENT_OK)
+    {
+      return out;
+    }
+  }
+  else
+  {
+    ykc = ykc_in;
+  }
+
+  ykclient_set_client_hex (ykc, client_id, hexkey);
+
+  if (urlcount != 0 && *urls != 0)
+  {
+    ykclient_set_url_templates (ykc, urlcount, urls);
+  }
+
+  if (api_key)
+  {
+    ykclient_set_verify_signature (ykc, 1);
+    ykclient_set_client_b64 (ykc, client_id, api_key);
+  }
+
+  out = ykclient_request (ykc, yubikey_otp);
+
+  if (ykc_in == NULL)
+  {
+    ykclient_done (&ykc);
+  }
+  
+  return out;
+}
+
+/** Simple API to validate an OTP (hexkey) using YubiCloud
+ */
+ykclient_rc
+ykclient_verify_otp (const char *yubikey_otp,
+                     unsigned int client_id, const char *hexkey)
+{
+  return ykclient_verify_otp_v2 (NULL,
+                                 yubikey_otp,
+                                 client_id, hexkey, 0, NULL, NULL);
 }
