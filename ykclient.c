@@ -158,6 +158,39 @@ ykclient_done (ykclient_t ** ykc)
   }
 }
 
+/** Callback for processing CURL data received from the validation server
+ *
+ */
+static size_t
+curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
+{
+  struct curl_data *curl_data = (struct curl_data*) data;
+  size_t realsize = size * nmemb;
+  char *p;
+
+  if (curl_data->curl_chunk)
+  {
+    p = realloc (curl_data->curl_chunk, 
+        curl_data->curl_chunk_size + realsize + 1);
+  }
+  else
+  {
+    p = malloc (curl_data->curl_chunk_size + realsize + 1);
+  }
+  
+  if (!p)
+  {
+    return -1;
+  }
+  
+  curl_data->curl_chunk = p;
+
+  memcpy (& (curl_data->curl_chunk[curl_data->curl_chunk_size]), ptr, realsize);
+  curl_data->curl_chunk_size += realsize;
+  curl_data->curl_chunk[curl_data->curl_chunk_size] = 0;
+
+  return realsize;
+}
 
 /** Create a new handle
  *
@@ -603,36 +636,6 @@ ykclient_get_last_url (ykclient_t * ykc)
   return ykc->last_url;
 }
 
-static size_t
-curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
-{
-  struct curl_data *curl_data = (struct curl_data*) data;
-  size_t realsize = size * nmemb;
-  char *p;
-
-  if (curl_data->curl_chunk)
-  {
-    p = realloc (curl_data->curl_chunk, 
-        curl_data->curl_chunk_size + realsize + 1);
-  }
-  else
-  {
-    p = malloc (curl_data->curl_chunk_size + realsize + 1);
-  }
-  
-  if (!p)
-  {
-    return -1;
-  }
-  
-  curl_data->curl_chunk = p;
-
-  memcpy (& (curl_data->curl_chunk[curl_data->curl_chunk_size]), ptr, realsize);
-  curl_data->curl_chunk_size += realsize;
-  curl_data->curl_chunk[curl_data->curl_chunk_size] = 0;
-
-  return realsize;
-}
 
 int
 ykclient_request (ykclient_t * ykc, const char *yubikey)
