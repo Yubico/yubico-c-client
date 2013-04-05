@@ -29,5 +29,8 @@ test-driver
 tests/.deps/
 tests/Makefile
 tests/selftest
+tests/test-suite.log
+tests/selftest.trs
+tests/selftest.log
 ykclient
 ykclient-*.tar.gz
