@@ -199,7 +199,7 @@ curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
   
   if (!p)
   {
-    return -1;
+    return 0;
   }
   
   curl_data->curl_chunk = p;
@@ -447,6 +447,8 @@ ykclient_set_client_b64 (ykclient_t * ykc,
                          unsigned int client_id, const char *key)
 {
   size_t key_len;
+  ssize_t dec_len;;
+  
   base64_decodestate b64;
 
   ykc->client_id = client_id;
@@ -467,7 +469,11 @@ ykclient_set_client_b64 (ykclient_t * ykc,
   }
   
   base64_init_decodestate (&b64);
-  ykc->keylen = base64_decode_block (key, key_len, ykc->key_buf, &b64);
+  dec_len = (ssize_t) base64_decode_block (key, key_len, ykc->key_buf, &b64);
+  if (dec_len < 0) {
+    return YKCLIENT_BASE64_DECODE_ERROR;
+  }
+  ykc->keylen = (size_t) dec_len; 
   ykc->key = ykc->key_buf;
   
   /* Now that we have a key the sensible default is to verify signatures */
@@ -652,6 +658,10 @@ ykclient_strerror (ykclient_rc ret)
       p = "Error decoding hex string";
       break;
 
+    case YKCLIENT_BASE64_DECODE_ERROR:
+      p = "Error decoding base64 string";
+      break;
+
     case YKCLIENT_NOT_IMPLEMENTED:
       p = "Not implemented";
       break;
@@ -660,8 +670,8 @@ ykclient_strerror (ykclient_rc ret)
       p = "Request template URLs modified without reinitialising handles";
       break;
 
-    default:
-      p = "Unknown error";
+    case YKCLIENT_BAD_INPUT:
+      p = "Passed invalid or incorrect number of parameters";
       break;
   }
 
@@ -767,9 +777,10 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
   for (i = 0; i < ykc->num_templates; i++)
   {
     {
-      size_t len = strlen (ykc->url_templates[i]) + strlen (encoded_otp) + 20;
-      int wrote;
+      size_t len;
+      ssize_t wrote;
 
+      len = strlen (ykc->url_templates[i]) + strlen (encoded_otp) + 20;
       ykh->url_exp[i] = malloc (len);
       if (!ykh->url_exp[i])
       {
@@ -779,7 +790,7 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
       
       wrote = snprintf (ykh->url_exp[i], len, ykc->url_templates[i], 
           ykc->client_id, encoded_otp);
-      if (wrote < 0 || wrote > len)
+      if (wrote < 0 || (size_t) wrote > len)
       {
         out = YKCLIENT_FORMAT_ERROR;
         goto finish;
@@ -791,7 +802,7 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
       /* Create new URL with nonce in it. */
       char *nonce_url, *otp_offset;
       size_t len;
-      int wrote;
+      ssize_t wrote;
 
 #define ADD_NONCE "&nonce="
       len = strlen (ykh->url_exp[i]) + strlen (ADD_NONCE) + strlen (nonce) + 1;
@@ -823,7 +834,7 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
 
       wrote = snprintf (nonce_url, len, "%s" ADD_NONCE "%s&%s", ykh->url_exp[i],
           nonce, otp_offset + 1);
-      if (wrote + 1 != len)
+      if (wrote < 0 || (size_t) wrote + 1 != len)
       {
         free (nonce_url);
         
@@ -877,7 +888,7 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
       {
         char *sign_url;
         size_t len;
-        int wrote;
+        ssize_t wrote;
 
 #define ADD_HASH "&h="
         len = strlen (ykh->url_exp[i]) + strlen (ADD_HASH) + strlen (signature) + 1;
@@ -892,7 +903,7 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
         
         wrote = snprintf (sign_url, len, "%s" ADD_HASH "%s", ykh->url_exp[i],
             signature);
-        if (wrote + 1 != len)
+        if (wrote < 0 || (size_t) wrote + 1 != len)
         {
           free (sign_url);
           

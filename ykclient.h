@@ -35,38 +35,12 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "ykclient_errors.h"
 
 # ifdef __cplusplus
 extern "C"
 {
 # endif
-
-typedef enum
-{
-  /* Official yubikey client API errors. */
-  YKCLIENT_OK = 0,
-  YKCLIENT_BAD_OTP,
-  YKCLIENT_REPLAYED_OTP,
-  YKCLIENT_BAD_SIGNATURE,
-  YKCLIENT_MISSING_PARAMETER,
-  YKCLIENT_NO_SUCH_CLIENT,
-  YKCLIENT_OPERATION_NOT_ALLOWED,
-  YKCLIENT_BACKEND_ERROR,
-  YKCLIENT_NOT_ENOUGH_ANSWERS,
-  YKCLIENT_REPLAYED_REQUEST,
-  /* Other implementation specific errors. */
-  YKCLIENT_OUT_OF_MEMORY = 100,
-  YKCLIENT_PARSE_ERROR,
-  YKCLIENT_FORMAT_ERROR,
-  YKCLIENT_CURL_INIT_ERROR,
-  YKCLIENT_HMAC_ERROR,
-  YKCLIENT_HEX_DECODE_ERROR,
-  YKCLIENT_BAD_SERVER_SIGNATURE,
-  YKCLIENT_NOT_IMPLEMENTED,
-  YKCLIENT_CURL_PERFORM_ERROR,
-  YKCLIENT_BAD_INPUT,
-  YKCLIENT_HANDLE_NOT_REINIT
-} ykclient_rc;
 
 typedef struct ykclient_st ykclient_t;
 

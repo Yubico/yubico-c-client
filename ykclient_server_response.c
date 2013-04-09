@@ -206,7 +206,7 @@ trim_ws_and_lb (char **s)
 
 /* Parses and builds the next parameter param from s, moves response's pointer
    to the immediate right character. Returns 0 if it succeeds. */
-static int
+static ykclient_rc
 parse_next_parameter (char **s, ykclient_parameter_t * param)
 {
   if (s == NULL || *s == NULL || param == NULL)
@@ -253,7 +253,7 @@ parse_next_parameter (char **s, ykclient_parameter_t * param)
   return 0;
 }
 
-int
+ykclient_rc
 ykclient_server_response_parse (char *response,
 				ykclient_server_response_t * serv_response)
 {
