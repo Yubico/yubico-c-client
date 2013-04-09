@@ -32,6 +32,7 @@
 
 #ifndef YKCLIENT_SERVER_RESPONSE_H
 #define YKCLIENT_SERVER_RESPONSE_H
+#include "ykclient_errors.h"
 
 /* Example:
      key:   status
@@ -65,7 +66,7 @@ extern void ykclient_server_response_free (ykclient_server_response_t
 
 /* Parses server's response and builds a list of parameters and isolates
    the corresponding signature parameter. Returns 0 if it succeeds. */
-extern int
+extern ykclient_rc
 ykclient_server_response_parse (char *response,
 				ykclient_server_response_t *serv_response);
 
