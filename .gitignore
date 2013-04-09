@@ -24,6 +24,8 @@ libtool
 libykclient.la
 ltmain.sh
 m4/*
+!m4/manywarnings.m4
+!m4/warnings.m4
 missing
 test-driver
 tests/.deps/
