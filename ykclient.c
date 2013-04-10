@@ -447,7 +447,7 @@ ykclient_set_client_b64 (ykclient_t * ykc,
                          unsigned int client_id, const char *key)
 {
   size_t key_len;
-  ssize_t dec_len;;
+  ssize_t dec_len;
   
   base64_decodestate b64;
 
