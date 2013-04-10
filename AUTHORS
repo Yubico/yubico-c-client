@@ -1,4 +1,19 @@
+Author
+------
 Simon Josefsson <simon@yubico.com>
 
 For technical feedback, please consider using our forum:
 http://forum.yubico.com/
+
+
+Patches
+-------
+Remi Mollon <remi.mollon@cern.ch>
+Supply server urls and add nonce to requests.
+
+Sebastien Martini <seb@dbzteam.org> and qistoph@gmail.com
+Patches for Protocol 2 support.
+
+Arran Cudbard-Bell <a.cudbardb@freeradius.org>
+Added support for persistent curl handles and cleanup of
+error conditions in the library.
