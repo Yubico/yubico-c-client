@@ -673,6 +673,9 @@ ykclient_strerror (ykclient_rc ret)
     case YKCLIENT_BAD_INPUT:
       p = "Passed invalid or incorrect number of parameters";
       break;
+
+    default:
+      p = "Unknown error";
   }
 
   return p;
