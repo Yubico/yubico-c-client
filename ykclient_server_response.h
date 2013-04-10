@@ -58,7 +58,7 @@ typedef struct ykclient_server_response_st
 
 
 /* Returns NULL if it fails. */
-extern ykclient_server_response_t *ykclient_server_response_init ();
+extern ykclient_server_response_t *ykclient_server_response_init (void);
 
 /* Frees allocated data structures. */
 extern void ykclient_server_response_free (ykclient_server_response_t
