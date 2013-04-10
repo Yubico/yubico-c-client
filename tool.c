@@ -57,9 +57,9 @@ static struct option long_options[] = {
 };
 
 /* Parse command line parameters. */
-void
+static void
 parse_args (int argc, char *argv[],
-	    int *client_id, char **token, char **url, char **ca, char **api_key)
+	    unsigned int *client_id, char **token, char **url, char **ca, char **api_key)
 {
   while (1)
     {
@@ -108,7 +108,7 @@ parse_args (int argc, char *argv[],
     }
 
   /* Now get mandatory numeric client_id */
-  *client_id = atoi (argv[optind++]);
+  *client_id = strtoul (argv[optind++], NULL, 10);
 
   if (*client_id <= 0)
     {
@@ -129,9 +129,9 @@ parse_args (int argc, char *argv[],
 int
 main (int argc, char *argv[])
 {
-  int client_id;
+  unsigned int client_id;
   char *token, *url = NULL, *ca = NULL, *api_key = NULL;
-  int ret;
+  ykclient_rc ret;
   ykclient_t *ykc = NULL;
 
   parse_args (argc, argv, &client_id, &token, &url, &ca, &api_key);
