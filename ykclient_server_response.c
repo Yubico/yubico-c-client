@@ -147,7 +147,7 @@ list_parameter_free (ykclient_parameters_t * params)
 /* Server's response functions */
 
 ykclient_server_response_t *
-ykclient_server_response_init ()
+ykclient_server_response_init (void)
 {
   ykclient_server_response_t *serv_response =
     malloc (sizeof (ykclient_server_response_t));
