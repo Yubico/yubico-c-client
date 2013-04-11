@@ -352,6 +352,9 @@ ykclient_handle_cleanup (ykclient_handle_t * ykh)
     free (data->curl_chunk);
     data->curl_chunk = NULL;
     data->curl_chunk_size = 0;
+    
+    curl_multi_remove_handle (ykh->multi, ykh->easy[i]);
+    curl_multi_add_handle (ykh->multi, ykh->easy[i]);
   }
 }
 
