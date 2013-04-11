@@ -1272,8 +1272,6 @@ ykclient_request_process (ykclient_t * ykc, ykclient_handle_t * ykh,
 
   finish:
   free (nonce);
-  
-  ykclient_handle_cleanup (ykh);
 
   return out;
 }
