@@ -1188,10 +1188,12 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
           if (server_otp == NULL || strcmp (yubikey, server_otp))
           {
             out = YKCLIENT_HMAC_ERROR;
-            goto finish;
           }  
+          
+          goto finish;
         }
-        else
+        else if ((out != YKCLIENT_PARSE_ERROR) && 
+                 (out != YKCLIENT_REPLAYED_REQUEST))
         {
           goto finish;
         }
