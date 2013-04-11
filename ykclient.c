@@ -1173,7 +1173,7 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
            * response even though the real server will respond 
            * status=REPLAYED_OTP in a few milliseconds.
            */
-          if (ykc->nonce)
+          if (nonce)
           {
              char *server_nonce = ykclient_server_response_get (srv_response, 
                   "nonce");
