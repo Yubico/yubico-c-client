@@ -342,7 +342,21 @@ ykclient_handle_cleanup (ykclient_handle_t * ykh)
 {
   size_t i;
   struct curl_data *data;
+  int requests = 0;
   
+  /*
+   *  Curl will not allow a connection to be re-used unless the 
+   *  request finished, call curl_multi_perform one last time
+   *  to give libcurl an opportunity to mark the request as 
+   *  complete.
+   *
+   *  If the delay between yk_request_send and 
+   *  ykclient_handle_cleanup is sufficient to allow the request
+   *  to complete, the connection can be re-used, else it will 
+   *  be re-established on next yk_request_send.
+   */
+  (void) curl_multi_perform (ykh->multi, &requests);
+
   for (i = 0; i < ykh->num_easy; i++)
   {
     free (ykh->url_exp[i]);
