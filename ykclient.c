@@ -342,7 +342,21 @@ ykclient_handle_cleanup (ykclient_handle_t * ykh)
 {
   size_t i;
   struct curl_data *data;
+  int requests = 0;
   
+  /*
+   *  Curl will not allow a connection to be re-used unless the 
+   *  request finished, call curl_multi_perform one last time
+   *  to give libcurl an opportunity to mark the request as 
+   *  complete.
+   *
+   *  If the delay between yk_request_send and 
+   *  ykclient_handle_cleanup is sufficient to allow the request
+   *  to complete, the connection can be re-used, else it will 
+   *  be re-established on next yk_request_send.
+   */
+  (void) curl_multi_perform (ykh->multi, &requests);
+
   for (i = 0; i < ykh->num_easy; i++)
   {
     free (ykh->url_exp[i]);
@@ -1048,6 +1062,10 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
   int requests;
   ykclient_server_response_t *srv_response = NULL;
   
+  if (!ykc->num_templates) {
+    return YKCLIENT_MISSING_PARAMETER;
+  }
+
   /* The handle must have the same number of easy handles as we have templates */
   if (ykc->num_templates != ykh->num_easy) {
     return YKCLIENT_HANDLE_NOT_REINIT;
@@ -1056,12 +1074,10 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
   memset (ykc->last_url, 0, sizeof (ykc->last_url));
 
   /* Perform the request */
-  requests = ykc->num_templates;
-  while (requests)
-  {
+  do {
+    int msgs = 1;
     CURLMcode curl_ret = curl_multi_perform (ykh->multi, &requests);
     struct timeval timeout;
-    int msgs = 1;
 
     fd_set fdread;
     fd_set fdwrite;
@@ -1088,6 +1104,8 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
     FD_ZERO (&fdwrite);
     FD_ZERO (&fdexcep);
 
+    memset(&timeout, 0, sizeof(timeout));
+    
     timeout.tv_sec = 0;
     timeout.tv_usec = 250000;
 
@@ -1108,101 +1126,105 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 
     curl_multi_fdset (ykh->multi, &fdread, &fdwrite, &fdexcep, &maxfd);
     select (maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
-    
+
     while (msgs)
     {
-      CURLMsg *msg = curl_multi_info_read (ykh->multi, &msgs);
-      if (msg && msg->msg == CURLMSG_DONE)
-      {
-        CURL *curl_easy = msg->easy_handle;
-        struct curl_data *data;
-        char *url_used;
-        char *status;
+      CURL *curl_easy;
+      struct curl_data *data;
+      char *url_used;
+      char *status;
+      CURLMsg *msg;
 
-        curl_easy_getinfo (curl_easy, CURLINFO_PRIVATE, (char **) &data);
-
-        if (data == 0 || data->curl_chunk_size == 0 || 
-            data->curl_chunk == NULL)
-        {
-          out = YKCLIENT_PARSE_ERROR;
-          goto finish;
-        }
-
-        curl_easy_getinfo (curl_easy, CURLINFO_EFFECTIVE_URL, &url_used);
-        strncpy (ykc->last_url, url_used, sizeof(ykc->last_url));
-
-        srv_response = ykclient_server_response_init ();
-        if (srv_response == NULL)
-        {
-          out = YKCLIENT_PARSE_ERROR;
-          goto finish;
-        }
-          
-        out = ykclient_server_response_parse (data->curl_chunk, 
-            srv_response);
-        if (out != YKCLIENT_OK)
-        {
-          goto finish;
-        }
-
-        if (ykc->verify_signature != 0 &&
-            ykclient_server_response_verify_signature (srv_response,
-                ykc->key, ykc->keylen))
-        {
-          out = YKCLIENT_BAD_SERVER_SIGNATURE;
-          goto finish;
-        }
-
-        status = ykclient_server_response_get (srv_response, "status");
-        if (!status)
-        {
-          out = YKCLIENT_PARSE_ERROR;
-          goto finish;
-        }
-
-        out = ykclient_parse_srv_error (status);
-        if (out == YKCLIENT_OK)
-        {
-          char *server_otp;
-
-          /* Verify that the OTP and nonce we put in our request is echoed 
-           * in the response.
-           *
-           * This is to protect us from a man in the middle sending us a 
-           * previously seen genuine response again (such as an status=OK 
-           * response even though the real server will respond 
-           * status=REPLAYED_OTP in a few milliseconds.
-           */
-          if (nonce)
-          {
-             char *server_nonce = ykclient_server_response_get (srv_response, 
-                  "nonce");
-             if (server_nonce == NULL || strcmp (nonce, server_nonce))
-             {
-               out = YKCLIENT_HMAC_ERROR;
-               goto finish;
-             }
-          }
-
-          server_otp = ykclient_server_response_get (srv_response, "otp");
-          if (server_otp == NULL || strcmp (yubikey, server_otp))
-          {
-            out = YKCLIENT_HMAC_ERROR;
-          }  
-          
-          goto finish;
-        }
-        else if ((out != YKCLIENT_PARSE_ERROR) && 
-                 (out != YKCLIENT_REPLAYED_REQUEST))
-        {
-          goto finish;
-        }
-
-        ykclient_server_response_free (srv_response);
-        srv_response = NULL;
+      msg = curl_multi_info_read (ykh->multi, &msgs);
+      if (!msg || msg->msg != CURLMSG_DONE) {
+        continue;
       }
+      
+      curl_easy = msg->easy_handle;
+
+      curl_easy_getinfo (curl_easy, CURLINFO_PRIVATE, (char **) &data);
+
+      if (data == 0 || data->curl_chunk_size == 0 || 
+          data->curl_chunk == NULL)
+      {
+        out = YKCLIENT_PARSE_ERROR;
+        goto finish;
+      }
+
+      curl_easy_getinfo (curl_easy, CURLINFO_EFFECTIVE_URL, &url_used);
+      strncpy (ykc->last_url, url_used, sizeof(ykc->last_url));
+
+      srv_response = ykclient_server_response_init ();
+      if (srv_response == NULL)
+      {
+        out = YKCLIENT_PARSE_ERROR;
+        goto finish;
+      }
+        
+      out = ykclient_server_response_parse (data->curl_chunk, 
+          srv_response);
+      if (out != YKCLIENT_OK)
+      {
+        goto finish;
+      }
+
+      if (ykc->verify_signature != 0 &&
+          ykclient_server_response_verify_signature (srv_response,
+              ykc->key, ykc->keylen))
+      {
+        out = YKCLIENT_BAD_SERVER_SIGNATURE;
+        goto finish;
+      }
+
+      status = ykclient_server_response_get (srv_response, "status");
+      if (!status)
+      {
+        out = YKCLIENT_PARSE_ERROR;
+        goto finish;
+      }
+
+      out = ykclient_parse_srv_error (status);
+      if (out == YKCLIENT_OK)
+      {
+        char *server_otp;
+
+        /* Verify that the OTP and nonce we put in our request is echoed 
+         * in the response.
+         *
+         * This is to protect us from a man in the middle sending us a 
+         * previously seen genuine response again (such as an status=OK 
+         * response even though the real server will respond 
+         * status=REPLAYED_OTP in a few milliseconds.
+         */
+        if (nonce)
+        {
+           char *server_nonce = ykclient_server_response_get (srv_response, 
+                "nonce");
+           if (server_nonce == NULL || strcmp (nonce, server_nonce))
+           {
+             out = YKCLIENT_HMAC_ERROR;
+             goto finish;
+           }
+        }
+
+        server_otp = ykclient_server_response_get (srv_response, "otp");
+        if (server_otp == NULL || strcmp (yubikey, server_otp))
+        {
+          out = YKCLIENT_HMAC_ERROR;
+        }  
+        
+        goto finish;
+      }
+      else if ((out != YKCLIENT_PARSE_ERROR) && 
+               (out != YKCLIENT_REPLAYED_REQUEST))
+      {
+        goto finish;
+      }
+
+      ykclient_server_response_free (srv_response);
+      srv_response = NULL;
     }
-  }
+  } while (requests);
 finish:
   if (srv_response)
   {
@@ -1234,7 +1256,7 @@ ykclient_get_last_url (ykclient_t * ykc)
  */
 ykclient_rc
 ykclient_request_process (ykclient_t * ykc, ykclient_handle_t * ykh,
-                         const char *yubikey)
+                          const char *yubikey)
 {
   ykclient_rc out;
   char *nonce = NULL;
@@ -1258,8 +1280,6 @@ ykclient_request_process (ykclient_t * ykc, ykclient_handle_t * ykh,
 
   finish:
   free (nonce);
-  
-  ykclient_handle_cleanup (ykh);
 
   return out;
 }
