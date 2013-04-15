@@ -35,7 +35,8 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "ykclient_errors.h"
+
+#include <ykclient_errors.h>
 
 # ifdef __cplusplus
 extern "C"
