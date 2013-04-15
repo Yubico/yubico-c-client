@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@josefsson.org>.
-# Copyright (c) 2008-2012 Yubico AB
+# Copyright (c) 2008-2013 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,10 +35,14 @@ AM_CFLAGS = $(WARN_CFLAGS)
 # The library.
 
 lib_LTLIBRARIES = libykclient.la
-include_HEADERS = ykclient_server_response.h ykclient.h ykclient_errors.h
+include_HEADERS = ykclient_server_response.h ykclient.h \
+	ykclient_errors.h ykclient_version.h
 
-libykclient_la_SOURCES = ykclient_server_response.h ykclient_server_response.c	\
-			ykclient.h ykclient_errors.h ykclient.c
+libykclient_la_SOURCES = ykclient_server_response.h \
+			 ykclient_server_response.c
+libykclient_la_SOURCES += ykclient.h ykclient_errors.h	\
+			  ykclient_version.h
+libykclient_la_SOURCES += ykclient.c ykclient_version.c
 libykclient_la_SOURCES += rfc4634/sha.h rfc4634/sha-private.h		\
 			rfc4634/hmac.c rfc4634/sha1.c rfc4634/usha.c	\
 			rfc4634/sha224-256.c rfc4634/sha384-512.c

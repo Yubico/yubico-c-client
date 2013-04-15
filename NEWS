@@ -4,6 +4,11 @@ Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
 ** Add ykclient_global_init and ykclient_global_done.
 
+** Add ykclient_version.h header file with versioning information.
+New symbols are YKCLIENT_VERSION_STRING, YKCLIENT_VERSION_NUMBER,
+YKCLIENT_VERSION_MAJOR, YKCLIENT_VERSION_MINOR,
+YKCLIENT_VERSION_PATCH.  New function ykclient_check_version.
+
 * Version 2.9 (released 2012-08-07)
 
 ** Compability with curl versions before 7.20.

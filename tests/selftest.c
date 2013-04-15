@@ -210,6 +210,28 @@ main (void)
   ykclient_t *ykc;
   int ret;
 
+  if (strcmp (YKCLIENT_VERSION_STRING, ykclient_check_version (NULL)) != 0)
+    {
+      printf ("version mismatch %s != %s\n",YKCLIENT_VERSION_STRING,
+	      ykclient_check_version (NULL));
+      return 1;
+    }
+
+  if (ykclient_check_version (YKCLIENT_VERSION_STRING) == NULL)
+    {
+      printf ("version NULL?\n");
+      return 1;
+    }
+
+  if (ykclient_check_version ("99.99.99") != NULL)
+    {
+      printf ("version not NULL?\n");
+      return 1;
+    }
+
+  printf ("ykclient version: header %s library %s\n",
+	  YKCLIENT_VERSION_STRING, ykclient_check_version(NULL));
+
   ret = ykclient_global_init ();
   assert (ret == YKCLIENT_OK);
 

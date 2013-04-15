@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@josefsson.org>.
-# Copyright (c) 2008-2012 Yubico AB
+# Copyright (c) 2008-2013 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,8 +78,26 @@ if test "$gl_gcc_warnings" = yes; then
   gl_WARN_ADD([-fdiagnostics-show-option])
 fi
 
+AC_SUBST(YKCLIENT_VERSION_MAJOR, `echo $PACKAGE_VERSION | sed 's/\(.*\)\..*/\1/g'`)
+AC_SUBST(YKCLIENT_VERSION_MINOR, `echo $PACKAGE_VERSION | sed 's/.*\.\(.*\)/\1/g'`)
+AC_SUBST(YKCLIENT_VERSION_PATCH, 0)
+AC_SUBST(YKCLIENT_VERSION_NUMBER, `printf "0x%02x%02x%02x" $YKCLIENT_VERSION_MAJOR $YKCLIENT_VERSION_MINOR $YKCLIENT_VERSION_PATCH`)
+
 AC_CONFIG_FILES([
-	Makefile
-	tests/Makefile
+  Makefile
+  ykclient_version.h
+  tests/Makefile
 ])
 AC_OUTPUT
+
+AC_MSG_NOTICE([summary of build options:
+
+  version:          ${VERSION} shared $LT_CURRENT:$LT_REVISION:$LT_AGE major $YKCLIENT_VERSION_MAJOR minor $YKCLIENT_VERSION_MINOR patch $YKCLIENT_VERSION_PATCH number $YKCLIENT_VERSION_NUMBER
+  Host type:        ${host}
+  Install prefix:   ${prefix}
+  Compiler:         ${CC}
+  Shared library:   ${enable_shared}
+  Static library:   ${enable_static}
+  Curl CPPFLAGS:    ${LIBCURL_CPPFLAGS}
+        LDFLAGS:    ${LIBCURL}
+])
