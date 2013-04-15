@@ -1,7 +1,7 @@
 /* selftest.c --- Self-tests for Yubico client library.
  *
  * Written by Simon Josefsson <simon@josefsson.org>.
- * Copyright (c) 2006-2012 Yubico AB
+ * Copyright (c) 2006-2013 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,6 @@
 #include "ykclient.h"
 #include <stdio.h>
 #include <assert.h>
-
-#include <curl/curl.h>
 
 #include "b64/cencode.h"
 #include "b64/cdecode.h"
@@ -212,7 +210,8 @@ main (void)
   ykclient_t *ykc;
   int ret;
 
-  curl_global_init(CURL_GLOBAL_ALL);
+  ret = ykclient_global_init ();
+  assert (ret == YKCLIENT_OK);
 
   TEST(("init self"));
   ret = ykclient_init (&ykc);
@@ -423,7 +422,7 @@ main (void)
 
   printf ("All tests passed\n");
 
-  curl_global_cleanup();
+  ykclient_global_done();
 
   return 0;
 }

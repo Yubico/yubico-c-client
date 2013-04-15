@@ -2,6 +2,8 @@ Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
 * Version 2.10 (unreleased)
 
+** Add ykclient_global_init and ykclient_global_done.
+
 * Version 2.9 (released 2012-08-07)
 
 ** Compability with curl versions before 7.20.

@@ -1,7 +1,7 @@
 /* ykclient.c --- Implementation of Yubikey OTP validation client library.
  *
  * Written by Simon Josefsson <simon@josefsson.org>.
- * Copyright (c) 2006-2012 Yubico AB
+ * Copyright (c) 2006-2013 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -88,6 +88,34 @@ const char *default_url_templates[] = {
 };
 
 const size_t default_num_templates = 5;
+
+/** Initialise the global context for the library
+ *
+ * This function is not thread safe.  It must be invoked successfully
+ * before using any other function.
+ *
+ * @return one of the YKCLIENT_* values or YKCLIENT_OK on success.
+ */
+ykclient_rc
+ykclient_global_init (void)
+{
+  if (curl_global_init(CURL_GLOBAL_ALL) != 0)
+    return YKCLIENT_CURL_INIT_ERROR;
+  return YKCLIENT_OK;
+}
+
+/** Deinitialise the global context for the library
+ *
+ * This function is not thread safe.  After this function has been
+ * called, no other library functions may be used reliably.
+ *
+ * @return one of the YKCLIENT_* values or YKCLIENT_OK on success.
+ */
+void
+ykclient_global_done (void)
+{
+  curl_global_cleanup();
+}
 
 /** Initialise a new configuration structure
  *

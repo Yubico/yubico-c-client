@@ -1,7 +1,7 @@
 /* ykclient.h --- Prototypes for Yubikey OTP validation client library.
  *
  * Written by Simon Josefsson <simon@josefsson.org>.
- * Copyright (c) 2006-2012 Yubico AB
+ * Copyright (c) 2006-2013 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,10 @@
 extern "C"
 {
 # endif
+
+/* Must be called successfully before using any other functions. */
+extern ykclient_rc ykclient_global_init (void);
+extern void ykclient_global_done (void);
 
 typedef struct ykclient_st ykclient_t;
 
