@@ -738,6 +738,8 @@ ykclient_generate_nonce (ykclient_t * ykc, char **nonce)
     if (ykc->nonce)
     {
       *nonce = strdup (ykc->nonce);
+      if (*nonce == NULL)
+	return YKCLIENT_OUT_OF_MEMORY;
     }
   }
   /*
