@@ -37,4 +37,5 @@ tests/selftest.trs
 tests/test-suite.log
 ykclient
 ykclient-*.tar.gz
+ykclient.1
 ykclient_version.h
