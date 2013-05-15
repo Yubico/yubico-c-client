@@ -47,9 +47,8 @@ This will create a directory 'yubico-c-client'.  Enter the directory:
   $ cd yubico-c-client
 -----------
 
-Autoconf, automake and libtool must be installed.
-
-libcurl-dev must be installed.
+Autoconf, automake and libtool must be installed.  Help2man is used to
+generate the manpages.  Libcurl-dev must be installed.
 
 Generate the build system using:
 
