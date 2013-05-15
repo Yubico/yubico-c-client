@@ -63,7 +63,7 @@ ykclient_LDADD = ./libykclient.la
 # Man page
 
 dist_man_MANS = ykclient.1
-MAINTAINERCLEANFILES = $(dist_man_MANS)
+DISTCLEANFILES = $(dist_man_MANS)
 
 ykclient.1: $(builddir)/ykclient $(srcdir)/tool.c $(srcdir)/configure.ac
 	$(HELP2MAN) \
