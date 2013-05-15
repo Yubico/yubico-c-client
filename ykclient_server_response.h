@@ -63,13 +63,13 @@ extern ykclient_server_response_t *ykclient_server_response_init (void);
 
 /* Frees allocated data structures. */
 extern void ykclient_server_response_free (ykclient_server_response_t
-					   *response);
+					   * response);
 
 /* Parses server's response and builds a list of parameters and isolates
    the corresponding signature parameter. Returns 0 if it succeeds. */
 extern ykclient_rc
 ykclient_server_response_parse (char *response,
-				ykclient_server_response_t *serv_response);
+				ykclient_server_response_t * serv_response);
 
 /* Iterates the parameters buils a HMAC-SHA1 and checks it matches the
    signature returned by the server. This function returns 0 if the signature
@@ -77,13 +77,11 @@ ykclient_server_response_parse (char *response,
 extern int
 ykclient_server_response_verify_signature (const ykclient_server_response_t
 					   * serv_response,
-					   const char *key,
-					   int key_length);
+					   const char *key, int key_length);
 
 /* Returns value associated to key or NULL if unmatched. The caller doesn't
    take ownership of the returned value. */
-extern char *
-ykclient_server_response_get (const ykclient_server_response_t *serv_response,
-			      const char *key);
+extern char *ykclient_server_response_get (const ykclient_server_response_t *
+					   serv_response, const char *key);
 
 #endif /* YKCLIENT_SERVER_RESPONSE_H */

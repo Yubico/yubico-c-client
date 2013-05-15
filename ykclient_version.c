@@ -35,94 +35,101 @@
 
 /* From http://article.gmane.org/gmane.os.freebsd.devel.hackers/23606 */
 int
-my_strverscmp(const char *s1, const char *s2)
+my_strverscmp (const char *s1, const char *s2)
 {
   static const char *digits = "0123456789";
   int ret, lz1, lz2;
   size_t p1, p2;
 
-  p1 = strcspn(s1, digits);
-  p2 = strcspn(s2, digits);
-  while (p1 == p2 && s1[p1] != '\0' && s2[p2] != '\0') {
-    /* Different prefix */
-    if ((ret = strncmp(s1, s2, p1)) != 0)
-      return ret;
+  p1 = strcspn (s1, digits);
+  p2 = strcspn (s2, digits);
+  while (p1 == p2 && s1[p1] != '\0' && s2[p2] != '\0')
+    {
+      /* Different prefix */
+      if ((ret = strncmp (s1, s2, p1)) != 0)
+	return ret;
 
-    s1 += p1;
-    s2 += p2;
+      s1 += p1;
+      s2 += p2;
 
-    lz1 = lz2 = 0;
-    if (*s1 == '0')
-      lz1 = 1;
-    if (*s2 == '0')
-      lz2 = 1;
+      lz1 = lz2 = 0;
+      if (*s1 == '0')
+	lz1 = 1;
+      if (*s2 == '0')
+	lz2 = 1;
 
-    if (lz1 > lz2)
-      return -1;
-    else if (lz1 < lz2)
-      return 1;
-    else if (lz1 == 1) {
-      /*
-       * If the common prefix for s1 and s2 consists only of zeros, then the
-       * "longer" number has to compare less. Otherwise the comparison needs
-       * to be numerical (just fallthrough). See
-       * http://refspecs.freestandards.org/LSB_2.0.1/LSB-generic/
-       *                                 LSB-generic/baselib-strverscmp.html
-       */
-      while (*s1 == '0' && *s2 == '0') {
-	++s1;
-	++s2;
-      }
-
-      p1 = strspn(s1, digits);
-      p2 = strspn(s2, digits);
-
-      /* Catch empty strings */
-      if (p1 == 0 && p2 > 0)
-	return 1;
-      else if (p2 == 0 && p1 > 0)
+      if (lz1 > lz2)
 	return -1;
+      else if (lz1 < lz2)
+	return 1;
+      else if (lz1 == 1)
+	{
+	  /*
+	   * If the common prefix for s1 and s2 consists only of zeros, then the
+	   * "longer" number has to compare less. Otherwise the comparison needs
+	   * to be numerical (just fallthrough). See
+	   * http://refspecs.freestandards.org/LSB_2.0.1/LSB-generic/
+	   *                                 LSB-generic/baselib-strverscmp.html
+	   */
+	  while (*s1 == '0' && *s2 == '0')
+	    {
+	      ++s1;
+	      ++s2;
+	    }
 
-      /* Prefixes are not same */
-      if (*s1 != *s2 && *s1 != '0' && *s2 != '0') {
-	if (p1 < p2)
-	  return 1;
-	else if (p1 > p2)
-	  return -1;
-      } else {
-	if (p1 < p2)
-	  ret = strncmp(s1, s2, p1);
-	else if (p1 > p2)
-	  ret = strncmp(s1, s2, p2);
-	if (ret != 0)
-	  return ret;
-      }
+	  p1 = strspn (s1, digits);
+	  p2 = strspn (s2, digits);
+
+	  /* Catch empty strings */
+	  if (p1 == 0 && p2 > 0)
+	    return 1;
+	  else if (p2 == 0 && p1 > 0)
+	    return -1;
+
+	  /* Prefixes are not same */
+	  if (*s1 != *s2 && *s1 != '0' && *s2 != '0')
+	    {
+	      if (p1 < p2)
+		return 1;
+	      else if (p1 > p2)
+		return -1;
+	    }
+	  else
+	    {
+	      if (p1 < p2)
+		ret = strncmp (s1, s2, p1);
+	      else if (p1 > p2)
+		ret = strncmp (s1, s2, p2);
+	      if (ret != 0)
+		return ret;
+	    }
+	}
+
+      p1 = strspn (s1, digits);
+      p2 = strspn (s2, digits);
+
+      if (p1 < p2)
+	return -1;
+      else if (p1 > p2)
+	return 1;
+      else if ((ret = strncmp (s1, s2, p1)) != 0)
+	return ret;
+
+      /* Numbers are equal or not present, try with next ones. */
+      s1 += p1;
+      s2 += p2;
+      p1 = strcspn (s1, digits);
+      p2 = strcspn (s2, digits);
     }
 
-    p1 = strspn(s1, digits);
-    p2 = strspn(s2, digits);
-
-    if (p1 < p2)
-      return -1;
-    else if (p1 > p2)
-      return 1;
-    else if ((ret = strncmp(s1, s2, p1)) != 0)
-      return ret;
-
-    /* Numbers are equal or not present, try with next ones. */
-    s1 += p1;
-    s2 += p2;
-    p1 = strcspn(s1, digits);
-    p2 = strcspn(s2, digits);
-  }
-
-  return strcmp(s1, s2);
+  return strcmp (s1, s2);
 }
 
 const char *
 ykclient_check_version (const char *req_version)
 {
-  if (!req_version || my_strverscmp (req_version, YKCLIENT_VERSION_STRING) <= 0)
+  if (!req_version
+      || my_strverscmp (req_version, YKCLIENT_VERSION_STRING) <= 0)
     return YKCLIENT_VERSION_STRING;
 
   return NULL;

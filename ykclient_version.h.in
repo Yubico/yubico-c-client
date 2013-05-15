@@ -30,9 +30,10 @@
 #ifndef YKCLIENT_VERSION_H
 #define YKCLIENT_VERSION_H
 
-# ifdef __cplusplus
-extern "C" {
-# endif
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /**
  * YKCLIENT_VERSION_STRING
@@ -80,10 +81,10 @@ extern "C" {
  */
 #define YKCLIENT_VERSION_PATCH @YKCLIENT_VERSION_PATCH@
 
-const char *ykclient_check_version (const char *req_version);
+  const char *ykclient_check_version (const char *req_version);
 
-# ifdef __cplusplus
+#ifdef __cplusplus
 }
-# endif
+#endif
 
-#endif /* YKCLIENT_VERSION_H */
+#endif				/* YKCLIENT_VERSION_H */

@@ -57,8 +57,7 @@ const char *usage =
   "\n"
   "Exit status is 0 on success, 1 if there is a hard failure, 2 if the\n"
   "OTP was replayed, 3 for other soft OTP-related failures.\n"
-  "\n"
-  "Report bugs at <https://github.com/Yubico/yubico-c-client>.\n";
+  "\n" "Report bugs at <https://github.com/Yubico/yubico-c-client>.\n";
 
 static struct option long_options[] = {
   {"url", 1, 0, 'u'},
@@ -191,8 +190,8 @@ main (int argc, char *argv[])
 	fprintf (stderr, "  api key: %s\n", api_key);
     }
 
-  ret = ykclient_verify_otp_v2 ( ykc, token, client_id, NULL, 1,
-				 (const char **) &url, api_key);
+  ret = ykclient_verify_otp_v2 (ykc, token, client_id, NULL, 1,
+				(const char **) &url, api_key);
 
   if (debug)
     printf ("Verification output (%d): %s\n", ret, ykclient_strerror (ret));

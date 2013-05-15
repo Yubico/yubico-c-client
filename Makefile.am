@@ -75,6 +75,10 @@ ykclient.1: $(builddir)/ykclient $(srcdir)/tool.c $(srcdir)/configure.ac
 
 EXTRA_DIST = simple.mk
 
+indent:
+	indent *.c *.h *.h.in
+	indent *.c *.h *.h.in
+
 ChangeLog:
 	cd $(srcdir) && git2cl > ChangeLog
 
