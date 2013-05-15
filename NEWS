@@ -9,6 +9,14 @@ New symbols are YKCLIENT_VERSION_STRING, YKCLIENT_VERSION_NUMBER,
 YKCLIENT_VERSION_MAJOR, YKCLIENT_VERSION_MINOR,
 YKCLIENT_VERSION_PATCH.  New function ykclient_check_version.
 
+** Modified API to use 'ykclient_rc' enum as return type instead of 'int'.
+** Enum also moved to separate new header file ykclient_errors.h.
+This should be backwards compatible.  It makes the return type
+clearer.  From Arran Cudbard-Bell <a.cudbardb@freeradius.org>.
+
+** Improve curl multi usage.
+From Arran Cudbard-Bell <a.cudbardb@freeradius.org>.
+
 ** ykclient: Cleanup command line tool a bit to make it more useful.
 Added --help, --version and --debug.  Defaults to silent output.  Exit
 codes are documented and more useful.  Added manpage.
