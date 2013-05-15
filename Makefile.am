@@ -107,7 +107,7 @@ release:
 	$(YUBICO_GITHUB_REPO)/publish $(PROJECT) $(VERSION) $(PACKAGE)-$(VERSION).tar.gz*
 	@if test -d $(srcdir)/../wiki-$(PROJECT); then \
 		cd $(srcdir) && \
-		cp README ../wiki-$(PROJECT)/ReadMe.wiki && \
+		cp README ../wiki-$(PROJECT)/ReadMe.asciidoc && \
 		cd ../wiki-$(PROJECT) && \
-		git commit -m Sync. ReadMe.wiki; \
+		git commit -m Sync. ReadMe.asciidoc; \
 	fi
