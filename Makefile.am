@@ -85,16 +85,20 @@ ChangeLog:
 PROJECT = yubico-c-client
 
 release:
-	@if test -z "$(USER)" || test -z "$(KEYID)"; then \
+	@if test -z "$(KEYID)"; then \
 		echo "Try this instead:"; \
-		echo "  make release USER=[GOOGLEUSERNAME] KEYID=[PGPKEYID]"; \
+		echo "  make release KEYID=[PGPKEYID]"; \
 		echo "For example:"; \
-		echo "  make release USER=simon@yubico.com KEYID=2117364A"; \
-		echo "  make release USER=fredrikyubico@gmail.com KEYID=4EAA4232"; \
+		echo "  make release KEYID=2117364A"; \
+		exit 1; \
+	fi
+	@if test ! -d "$(YUBICO_GITHUB_REPO)"; then \
+		echo "yubico.github.com repo not found!"; \
+		echo "Make sure that YUBICO_GITHUB_REPO is set"; \
 		exit 1; \
 	fi
 	@head -3 $(srcdir)/NEWS | grep -q "Version $(VERSION) .released `date -I`" || \
-		(echo 'error: Update date/version in $(srcdir)/NEWS.'; exit 1)
+		(echo 'error: You need to update date/version in $(srcdir)/NEWS'; exit 1)
 # check that non-autoconf build system works
 	cd $(srcdir) &&	make -f simple.mk check clean
 	rm -f $(srcdir)/ChangeLog
@@ -104,9 +108,10 @@ release:
 	cd $(srcdir) && git push
 	cd $(srcdir) && git tag -u $(KEYID)! -m $(VERSION) $(PACKAGE)-$(VERSION)
 	cd $(srcdir) && git push --tags
-	mkdir -p ../releases/$(PACKAGE)/ && \
-		cp -v $(PACKAGE)-$(VERSION).tar.gz* ../releases/$(PACKAGE)/
-	googlecode_upload.py -s "OpenPGP signature for $(PACKAGE) $(VERSION)." \
-	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz.sig
-	googlecode_upload.py -s "$(PACKAGE) $(VERSION)" \
-	 -p $(PROJECT) -u $(USER) $(PACKAGE)-$(VERSION).tar.gz
+	$(YUBICO_GITHUB_REPO)/publish $(PROJECT) $(VERSION) $(PACKAGE)-$(VERSION).tar.gz*
+	@if test -d $(srcdir)/../wiki-$(PROJECT); then \
+		cd $(srcdir) && \
+		cp README ../wiki-$(PROJECT)/ReadMe.wiki && \
+		cd ../wiki-$(PROJECT) && \
+		git commit -m Sync. ReadMe.wiki; \
+	fi
