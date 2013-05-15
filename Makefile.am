@@ -65,7 +65,7 @@ ykclient_LDADD = ./libykclient.la
 dist_man_MANS = ykclient.1
 MAINTAINERCLEANFILES = $(dist_man_MANS)
 
-ykclient.1: $(srcdir)/tool.c $(srcdir)/configure.ac
+ykclient.1: $(builddir)/ykclient $(srcdir)/tool.c $(srcdir)/configure.ac
 	$(HELP2MAN) \
 		--output=$@ $(builddir)/ykclient$(EXEEXT) \
 		--name="YubiCloud One-Time-Password Validation Client" \
