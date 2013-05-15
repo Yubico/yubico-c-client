@@ -15,8 +15,6 @@ Yubico online server.  Description of included files:
 
 * selftest.c: Self tests of the library.
 
-* simple.mk: Simple makefile to build the above parts.
-
 * configure.ac, Makefile.am: Autoconf/Automake files.
 
 
@@ -67,26 +65,6 @@ cross-compilation and shared library support, build it as follows.
   $ ./configure
   $ make check && sudo make install
 -----------
-
-Another way to build the package is by running 'make -f simple.mk
-check'.  It will build each component, and also test it.  See below
-for sample session.  This is useful if you want to target a platform
-that doesn't support Autoconf/automake/libtool well.
-
------------
-jas@mocca:~/src/yubico-c-client$ make -f simple.mk  check
-cc -I. -Wall -g -DPACKAGE=\"ykclient\" -DPACKAGE_VERSION=\"0\"   -c -o ykclient.o ykclient.c
-cc -lcurl  ykclient.o tool.c   -o ykclient
-cc -I. -Wall -g -DPACKAGE=\"ykclient\" -DPACKAGE_VERSION=\"0\"  -lcurl  selftest.c ykclient.o   -o selftest
-./selftest
-ykclient_init (0): Success
-ykclient_request (2): Yubikey OTP was replayed (REPLAYED_OTP)
-yubikey_request (2): Yubikey OTP was replayed (REPLAYED_OTP)
-strerror(0): Success
-strerror(BAD_OTP): Yubikey OTP was bad (BAD_OTP)
-jas@mocca:~/src/yubico-c-client$ 
------------
-
 
 Command-line tools
 ------------------
