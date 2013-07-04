@@ -39,7 +39,7 @@ AC_SUBST(LT_AGE, 5)
 
 AM_INIT_AUTOMAKE([1.11 -Wall -Werror subdir-objects])
 AM_SILENT_RULES([yes])
-AC_PROG_CC
+AM_PROG_CC_C_O
 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
