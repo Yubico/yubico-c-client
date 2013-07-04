@@ -62,7 +62,7 @@ test_v1_validation(int client_id, char *client_b64key)
   ykclient_set_client (ykc, client_id, 0, NULL);
 
 #ifndef TEST_WITHOUT_INTERNET
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert(ret == YKCLIENT_REPLAYED_OTP);
@@ -78,7 +78,7 @@ test_v1_validation(int client_id, char *client_b64key)
   ykclient_set_nonce(ykc, NULL);
 
 #ifndef TEST_WITHOUT_INTERNET
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert(ret == YKCLIENT_REPLAYED_OTP);
@@ -245,7 +245,7 @@ main (void)
   ykclient_set_client (ykc, client_id, 0, NULL);
 
 #ifndef TEST_WITHOUT_INTERNET
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert(ret == YKCLIENT_REPLAYED_OTP);
@@ -257,7 +257,7 @@ main (void)
   ykclient_set_client (ykc, client_id, 20, client_key);
 
 #ifndef TEST_WITHOUT_INTERNET
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
@@ -269,7 +269,7 @@ main (void)
   ykclient_set_client (ykc, client_id, 10, client_key);
 
 #ifndef TEST_WITHOUT_INTERNET
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_BAD_SIGNATURE);
@@ -294,7 +294,7 @@ main (void)
 
 #ifndef TEST_WITHOUT_INTERNET
   TEST(("validation request, expect REPLAYED_OTP"));
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
@@ -309,7 +309,7 @@ main (void)
 
 #ifndef TEST_WITHOUT_INTERNET
   TEST(("validation request, expect BAD_SIGNATURE"));
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_BAD_SIGNATURE);
@@ -328,7 +328,7 @@ main (void)
      the server returned status=BAD_SIGNATURE.
   */
   TEST(("validation request, expect BAD_SERVER_SIGNATURE"));
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_BAD_SERVER_SIGNATURE);
@@ -343,7 +343,7 @@ main (void)
   */
   TEST(("validation request, expect BAD_SIGNATURE"));
   ykclient_set_verify_signature (ykc, 0);
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_BAD_SIGNATURE);
@@ -358,7 +358,7 @@ main (void)
 
 #ifndef TEST_WITHOUT_INTERNET
   TEST(("validation request, expect REPLAYED_OTP"));
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
@@ -373,7 +373,7 @@ main (void)
 
 #ifndef TEST_WITHOUT_INTERNET
   TEST(("validation request, expect REPLAYED_OTP"));
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("yubikey_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
@@ -387,7 +387,7 @@ main (void)
   // Check a genuine signature.
   ykclient_set_client (ykc, client_id, 20, client_key);
 #ifndef TEST_WITHOUT_INTERNET
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
@@ -399,7 +399,7 @@ main (void)
   // Check a genuine signature with a truncated key.
   ykclient_set_client (ykc, client_id, 10, client_key);
 #ifndef TEST_WITHOUT_INTERNET
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_BAD_SERVER_SIGNATURE);
@@ -418,7 +418,7 @@ main (void)
   ykclient_set_url_templates(ykc, 5, templates);
   ykclient_set_client (ykc, client_id, 20, client_key);
 #ifndef TEST_WITHOUT_INTERNET
-  ret = ykclient_request (ykc, "dteffujehknhfjbrjnlnldnhcujvddbikngjrtgh");
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
   printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
   printf ("used url: %s\n", ykclient_get_last_url (ykc));
   assert (ret == YKCLIENT_REPLAYED_OTP);
