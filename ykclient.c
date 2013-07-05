@@ -41,9 +41,9 @@
 
 #include <curl/curl.h>
 
-#include "rfc4634/sha.h"
-#include "b64/cencode.h"
-#include "b64/cdecode.h"
+#include "sha.h"
+#include "cencode.h"
+#include "cdecode.h"
 
 #define NONCE_LEN 32
 #define MAX_TEMPLATES 255

@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@josefsson.org>.
-# Copyright (c) 2011-2012 Yubico AB
+# Copyright (c) 2011-2013 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,7 @@ AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
 AM_LDFLAGS = -no-install
 AM_CFLAGS=-I$(srcdir)/..
 LDADD = ../libykclient.la -lcurl
-selftest_SOURCES = selftest.c ../b64/cencode.c ../b64/cdecode.c \
-                   ../rfc4634/hmac.c ../rfc4634/sha1.c ../rfc4634/usha.c  \
-                   ../rfc4634/sha224-256.c ../rfc4634/sha384-512.c
+selftest_SOURCES = selftest.c
 
 check_PROGRAMS = selftest
 TESTS = $(check_PROGRAMS)

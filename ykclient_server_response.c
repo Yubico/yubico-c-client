@@ -1,7 +1,7 @@
 /* ykclient_server_response.c --- Server response parsing and validation.
  *
  * Written by Sebastien Martini <seb@dbzteam.org>.
- * Copyright (c) 2011-2012 Yubico AB
+ * Copyright (c) 2011-2013 Yubico AB
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "rfc4634/sha.h"
-#include "b64/cdecode.h"
+#include "sha.h"
+#include "cdecode.h"
 
 
 /* Parameters' manipulation functions */

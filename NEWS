@@ -1,5 +1,9 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
+* Version 2.11 (unreleased)
+
+** Fix breakage with latest automake.
+
 * Version 2.10 (released 2013-05-15)
 
 ** Add ykclient_global_init and ykclient_global_done.

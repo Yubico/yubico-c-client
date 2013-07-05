@@ -31,13 +31,9 @@
  */
 
 #include "ykclient.h"
+
 #include <stdio.h>
 #include <assert.h>
-
-#include "b64/cencode.h"
-#include "b64/cdecode.h"
-
-#include "rfc4634/sha.h"
 
 #define TEST(xX) printf ("\nTest %s:%d (%s): ", __FILE__, __LINE__, __FUNCTION__); \
   printf xX; \
@@ -89,6 +85,7 @@ test_v1_validation(int client_id, char *client_b64key)
   ykclient_done (&ykc);
 }
 
+#if 0
 void
 test_base64 (void)
 {
@@ -195,7 +192,7 @@ test_hmac (void)
   assert(res == 0);
   assert(memcmp(result, expected7, 20) == 0);
 }
-
+#endif
 
 int
 main (void)
@@ -438,9 +435,11 @@ main (void)
 
   test_v1_validation(client_id, client_b64key);
 
+#if 0
   test_base64();
 
   test_hmac();
+#endif
 
   printf ("All tests passed\n");
 

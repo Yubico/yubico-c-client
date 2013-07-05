@@ -16,6 +16,7 @@ Makefile.in
 aclocal.m4
 ar-lib
 build-aux
+compile
 config.guess
 config.log
 config.status
