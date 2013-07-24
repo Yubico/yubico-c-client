@@ -1,5 +1,7 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
+* Version 2.12 (unreleased)
+
 * Version 2.11 (released 2013-07-24)
 
 ** Fix breakage with latest automake.
