@@ -1,3 +1,4 @@
+!m4/libcurl.m4
 !m4/manywarnings.m4
 !m4/pkg.m4
 !m4/warnings.m4
