@@ -54,10 +54,6 @@ Generate the build system using:
   $ autoreconf --install
 -----------
 
-If this gives the error "possibly undefined macro: AC_MSG_ERROR" it is probably
-because autoreconf can't find the .m4 file for libcurl, check that libcurl-dev
-is properly installed.
-
 Building
 --------
 
