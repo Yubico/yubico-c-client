@@ -92,12 +92,15 @@ AC_OUTPUT
 
 AC_MSG_NOTICE([summary of build options:
 
-  version:          ${VERSION} shared $LT_CURRENT:$LT_REVISION:$LT_AGE major $YKCLIENT_VERSION_MAJOR minor $YKCLIENT_VERSION_MINOR patch $YKCLIENT_VERSION_PATCH number $YKCLIENT_VERSION_NUMBER
+  Version:          ${VERSION}
+     Library:       current $LT_CURRENT revision $LT_REVISION age $LT_AGE
+     Header:        major $YKCLIENT_VERSION_MAJOR minor $YKCLIENT_VERSION_MINOR patch $YKCLIENT_VERSION_PATCH number $YKCLIENT_VERSION_NUMBER
   Host type:        ${host}
   Install prefix:   ${prefix}
   Compiler:         ${CC}
-  Shared library:   ${enable_shared}
-  Static library:   ${enable_static}
+     CFLAGS:        ${CFLAGS}
+     Warning:       ${WARN_CFLAGS}
+  Library types:    Shared=${enable_shared}, Static=${enable_static}
   Curl CFLAGS:      ${LIBCURL_CFLAGS}
       LDFLAGS:      ${LIBCURL_LIBS}
 ])
