@@ -47,8 +47,7 @@ AM_MISSING_PROG(HELP2MAN, help2man, $missing_dir)
 AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
-LIBCURL_CHECK_CONFIG([yes], [], [], [
-  AC_MSG_ERROR([[Libcurl header files not found, install libcurl-dev.]])])
+PKG_CHECK_MODULES([LIBCURL], [libcurl])
 
 AC_ARG_ENABLE([gcc-warnings],
   [AS_HELP_STRING([--enable-gcc-warnings],
@@ -99,6 +98,6 @@ AC_MSG_NOTICE([summary of build options:
   Compiler:         ${CC}
   Shared library:   ${enable_shared}
   Static library:   ${enable_static}
-  Curl CPPFLAGS:    ${LIBCURL_CPPFLAGS}
-        LDFLAGS:    ${LIBCURL}
+  Curl CFLAGS:      ${LIBCURL_CFLAGS}
+      LDFLAGS:      ${LIBCURL_LIBS}
 ])

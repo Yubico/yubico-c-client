@@ -28,7 +28,7 @@
 
 SUBDIRS = . tests
 
-AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
+AM_CPPFLAGS = $(LIBCURL_CFLAGS)
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = $(WARN_CFLAGS)
 
@@ -46,7 +46,7 @@ libykclient_la_SOURCES += ykclient.c ykclient_version.c
 libykclient_la_SOURCES += sha.h sha-private.h hmac.c sha1.c usha.c	\
 			sha224-256.c sha384-512.c
 libykclient_la_SOURCES += cencode.h cencode.c cdecode.h cdecode.c
-libykclient_la_LIBADD = @LIBCURL@
+libykclient_la_LIBADD = $(LIBCURL_LIBS)
 libykclient_la_LDFLAGS = -no-undefined \
 	-export-symbols-regex '^ykclient_.*' \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)

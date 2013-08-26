@@ -28,7 +28,6 @@
 
 # Self tests.
 
-AM_CPPFLAGS = @LIBCURL_CPPFLAGS@
 AM_LDFLAGS = -no-install
 AM_CFLAGS=-I$(srcdir)/..
 LDADD = ../libykclient.la -lcurl
