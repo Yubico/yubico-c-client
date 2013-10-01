@@ -796,6 +796,79 @@ ykclient_generate_nonce (ykclient_t * ykc, char **nonce)
   return YKCLIENT_OK;
 }
 
+static ykclient_rc ykclient_expand_old_url(const char *template,
+    const char *encoded_otp, const char *nonce, int client_id,
+    char **url_exp)
+{
+  {
+    size_t len;
+    ssize_t wrote;
+
+    len = strlen (template) + strlen (encoded_otp) + 20;
+    *url_exp = malloc (len);
+    if (!*url_exp)
+      {
+        return YKCLIENT_OUT_OF_MEMORY;
+      }
+
+    wrote = snprintf (*url_exp, len, template,
+        client_id, encoded_otp);
+    if (wrote < 0 || (size_t) wrote > len)
+      {
+        return YKCLIENT_FORMAT_ERROR;
+      }
+  }
+
+  if (nonce)
+    {
+      /* Create new URL with nonce in it. */
+      char *nonce_url, *otp_offset;
+      size_t len;
+      ssize_t wrote;
+
+#define ADD_NONCE "&nonce="
+      len =
+        strlen (*url_exp) + strlen (ADD_NONCE) + strlen (nonce) +
+        1;
+      nonce_url = malloc (len + 4);	/* avoid valgrind complaint */
+      if (!nonce_url)
+        {
+          return YKCLIENT_OUT_OF_MEMORY;
+        }
+
+      /* Find the &otp= in url and insert ?nonce= before otp. Must get
+       *  sorted headers since we calculate HMAC on the result.
+       *
+       * XXX this will break if the validation protocol gets a parameter that
+       * sorts in between "nonce" and "otp", because the headers we sign won't
+       * be alphabetically sorted if we insert the nonce between "nz" and "otp".
+       * Also, we assume that everyone will have at least one parameter ("id=")
+       * before "otp" so there is no need to search for "?otp=".
+       */
+      otp_offset = strstr (*url_exp, "&otp=");
+      if (otp_offset == NULL)
+        {
+          /* point at \0 at end of url in case there is no otp */
+          otp_offset = *url_exp + len;
+        }
+
+      /* break up ykc->url where we want to insert nonce */
+      *otp_offset = 0;
+
+      wrote = snprintf (nonce_url, len, "%s" ADD_NONCE "%s&%s", *url_exp,
+          nonce, otp_offset + 1);
+      if (wrote < 0 || (size_t) wrote + 1 != len)
+        {
+          free (nonce_url);
+          return YKCLIENT_FORMAT_ERROR;
+        }
+
+      free (*url_exp);
+      *url_exp = nonce_url;
+    }
+    return YKCLIENT_OK;
+}
+
 /** Expand URL templates specified with set_url_templates
  *
  * Expands placeholderss or inserts additional parameters for nonce,
@@ -833,79 +906,13 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
 
   for (i = 0; i < ykc->num_templates; i++)
     {
-      {
-	size_t len;
-	ssize_t wrote;
-
-	len = strlen (ykc->url_templates[i]) + strlen (encoded_otp) + 20;
-	ykh->url_exp[i] = malloc (len);
-	if (!ykh->url_exp[i])
-	  {
-	    out = YKCLIENT_OUT_OF_MEMORY;
-	    goto finish;
-	  }
-
-	wrote = snprintf (ykh->url_exp[i], len, ykc->url_templates[i],
-			  ykc->client_id, encoded_otp);
-	if (wrote < 0 || (size_t) wrote > len)
-	  {
-	    out = YKCLIENT_FORMAT_ERROR;
-	    goto finish;
-	  }
-      }
-
-      if (nonce)
-	{
-	  /* Create new URL with nonce in it. */
-	  char *nonce_url, *otp_offset;
-	  size_t len;
-	  ssize_t wrote;
-
-#define ADD_NONCE "&nonce="
-	  len =
-	    strlen (ykh->url_exp[i]) + strlen (ADD_NONCE) + strlen (nonce) +
-	    1;
-	  nonce_url = malloc (len + 4);	/* avoid valgrind complaint */
-	  if (!nonce_url)
-	    {
-	      out = YKCLIENT_OUT_OF_MEMORY;
-	      goto finish;
-	    }
-
-	  /* Find the &otp= in url and insert ?nonce= before otp. Must get
-	   *  sorted headers since we calculate HMAC on the result.
-	   *
-	   * XXX this will break if the validation protocol gets a parameter that
-	   * sorts in between "nonce" and "otp", because the headers we sign won't
-	   * be alphabetically sorted if we insert the nonce between "nz" and "otp".
-	   * Also, we assume that everyone will have at least one parameter ("id=")
-	   * before "otp" so there is no need to search for "?otp=".
-	   */
-	  otp_offset = strstr (ykh->url_exp[i], "&otp=");
-	  if (otp_offset == NULL)
-	    {
-	      /* point at \0 at end of url in case there is no otp */
-	      otp_offset = ykh->url_exp[i] + len;
-	    }
-
-	  /* break up ykc->url where we want to insert nonce */
-	  *otp_offset = 0;
-
-	  wrote =
-	    snprintf (nonce_url, len, "%s" ADD_NONCE "%s&%s", ykh->url_exp[i],
-		      nonce, otp_offset + 1);
-	  if (wrote < 0 || (size_t) wrote + 1 != len)
-	    {
-	      free (nonce_url);
-
-	      out = YKCLIENT_FORMAT_ERROR;
-	      goto finish;
-	    }
-
-	  free (ykh->url_exp[i]);
-	  ykh->url_exp[i] = nonce_url;
-	}
-
+	     ykclient_rc res = ykclient_expand_old_url(ykc->url_templates[i],
+	         encoded_otp, nonce, ykc->client_id, &ykh->url_exp[i]);
+      if(res != YKCLIENT_OK)
+        {
+          out = res;
+          goto finish;
+        }
       if (ykc->key && ykc->keylen)
 	{
 	  if (!signature)
