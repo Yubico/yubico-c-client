@@ -404,7 +404,7 @@ main (void)
   printf ("Test SKIPPED\n");
 #endif
 
-  TEST(("Set and use several V2.0 URLs"));
+  TEST(("Set and use several OLD V2.0 URLs"));
   const char *templates[] = {
     "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
     "http://api2.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
@@ -413,6 +413,25 @@ main (void)
     "http://api5.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
   };
   ykclient_set_url_templates(ykc, 5, templates);
+  ykclient_set_client (ykc, client_id, 20, client_key);
+#ifndef TEST_WITHOUT_INTERNET
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert (ret == YKCLIENT_REPLAYED_OTP);
+#else
+  printf ("Test SKIPPED\n");
+#endif
+
+  TEST(("Set and use several NEW V2.0 URLs"));
+  const char *bases[] = {
+    "http://api.yubico.com/wsapi/2.0/verify",
+    "http://api2.yubico.com/wsapi/2.0/verify",
+    "http://api3.yubico.com/wsapi/2.0/verify",
+    "http://api4.yubico.com/wsapi/2.0/verify",
+    "http://api5.yubico.com/wsapi/2.0/verify",
+  };
+  ykclient_set_url_bases(ykc, 5, bases);
   ykclient_set_client (ykc, client_id, 20, client_key);
 #ifndef TEST_WITHOUT_INTERNET
   ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");

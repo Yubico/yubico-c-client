@@ -50,7 +50,7 @@ const char *usage =
   "\n"
   "    --debug        Print debugging information\n"
   "    --url URL      Validation service URL, for example,\n"
-  "                   \"http://api.yubico.com/wsapi/verify?id=%d&otp=%s\"\n"
+  "                   \"http://api.yubico.com/wsapi/verify\"\n"
   "    --ca CADIR     Path to directory containing Certificate Authoritity,\n"
   "                   e.g., \"/usr/local/etc/CERTS\"\n"
   "    --apikey Key   API key for HMAC validation of request/response\n"
