@@ -95,8 +95,6 @@ const char *default_url_templates[] = {
   "http://api5.yubico.com/wsapi/2.0/verify",
 };
 
-const size_t default_num_templates = 5;
-
 /** Initialise the global context for the library
  *
  * This function is not thread safe.  It must be invoked successfully
