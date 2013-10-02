@@ -958,20 +958,20 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
 
   for (i = 0; i < ykc->num_templates; i++)
     {
-      ykclient_rc res;
+      ykclient_rc ret;
       if(ykc->template_format == TEMPLATE_FORMAT_OLD)
         {
-	  res = ykclient_expand_old_url(ykc->url_templates[i],
+	  ret = ykclient_expand_old_url(ykc->url_templates[i],
 	      encoded_otp, nonce, ykc->client_id, &ykh->url_exp[i]);
         }
       else
 	{
-	  res = ykclient_expand_new_url(ykc->url_templates[i],
+	  ret = ykclient_expand_new_url(ykc->url_templates[i],
 	      encoded_otp, nonce, ykc->client_id, &ykh->url_exp[i]);
 	}
-      if(res != YKCLIENT_OK)
+      if(ret != YKCLIENT_OK)
         {
-          out = res;
+          out = ret;
           goto finish;
         }
       if (ykc->key && ykc->keylen)
