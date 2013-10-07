@@ -58,6 +58,7 @@
 struct ykclient_st
 {
   const char *ca_path;
+  const char *ca_info;
   size_t num_templates;
   char **url_templates;
   int template_format;
@@ -105,6 +106,7 @@ const char *default_url_templates[] = {
 ykclient_rc
 ykclient_global_init (void)
 {
+
   if (curl_global_init (CURL_GLOBAL_ALL) != 0)
     return YKCLIENT_CURL_INIT_ERROR;
   return YKCLIENT_OK;
@@ -147,6 +149,7 @@ ykclient_init (ykclient_t ** ykc)
   memset (p, 0, (sizeof (*p)));
 
   p->ca_path = NULL;
+  p->ca_info = NULL;
 
   p->key = NULL;
   p->keylen = 0;
@@ -314,6 +317,11 @@ ykclient_handle_init (ykclient_t * ykc, ykclient_handle_t ** ykh)
       if (ykc->ca_path)
 	{
 	  curl_easy_setopt (easy, CURLOPT_CAPATH, ykc->ca_path);
+        }
+
+      if (ykc->ca_info)
+        {
+          curl_easy_setopt (easy, CURLOPT_CAINFO, ykc->ca_info);
 	}
 
       curl_easy_setopt (easy, CURLOPT_WRITEDATA, (void *) data);
@@ -546,6 +554,16 @@ void
 ykclient_set_ca_path (ykclient_t * ykc, const char *ca_path)
 {
   ykc->ca_path = ca_path;
+}
+
+/** Set the CA info, needed for linking with GnuTLS
+ *
+ * Must be called before creating handles.
+ */
+void
+ykclient_set_ca_info (ykclient_t * ykc, const char *ca_info)
+{
+  ykc->ca_info = ca_info;
 }
 
 /** Set a single URL template

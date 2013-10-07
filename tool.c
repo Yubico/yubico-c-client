@@ -62,6 +62,7 @@ const char *usage =
 static struct option long_options[] = {
   {"url", 1, 0, 'u'},
   {"ca", 1, 0, 'c'},
+  {"cai", 1, 0, 'i'},
   {"apikey", 1, 0, 'a'},
   {"debug", 0, 0, 'd'},
   {"help", 0, 0, 'h'},
@@ -72,7 +73,7 @@ static struct option long_options[] = {
 /* Parse command line parameters. */
 static void
 parse_args (int argc, char *argv[],
-	    unsigned int *client_id, char **token, char **url, char **ca,
+       unsigned int *client_id, char **token, char **url, char **ca, char **cai,
 	    char **api_key, int *debug)
 {
   while (1)
@@ -120,6 +121,16 @@ parse_args (int argc, char *argv[],
 	  *ca = optarg;
 	  break;
 
+   case 'i':
+     if (strlen (optarg) < 1)
+       {
+         fprintf (stderr,
+              "error: must give a valid filename with one or more certificates");
+         exit (EXIT_FAILURE);
+       }
+     *cai = optarg;
+     break;
+
 	case 'h':
 	  printf ("%s", usage);
 	  exit (EXIT_SUCCESS);
@@ -161,20 +172,28 @@ int
 main (int argc, char *argv[])
 {
   unsigned int client_id;
-  char *token, *url = NULL, *ca = NULL, *api_key = NULL;
+  char *token, *url = NULL, *ca = NULL, *api_key = NULL, *cai = NULL;
   int debug = 0;
   ykclient_rc ret;
   ykclient_t *ykc = NULL;
 
-  parse_args (argc, argv, &client_id, &token, &url, &ca, &api_key, &debug);
+  parse_args (argc, argv, &client_id, &token, &url, &ca, &cai, &api_key, &debug);
 
-  if (ca)
+  if (ca || cai)
     {
       ret = ykclient_init (&ykc);
       if (ret != YKCLIENT_OK)
 	return EXIT_FAILURE;
+    }
 
+  if (ca)
+    {
       ykclient_set_ca_path (ykc, ca);
+    }
+
+  if (cai)
+    {
+      ykclient_set_ca_info (ykc, cai);
     }
 
   if (debug)
@@ -184,6 +203,8 @@ main (int argc, char *argv[])
 	fprintf (stderr, "  validation URL: %s\n", url);
       if (ca)
 	fprintf (stderr, "  CA Path: %s\n", ca);
+      if (cai)
+   fprintf (stderr, "  CA Info: %s\n", cai);
       fprintf (stderr, "  client id: %d\n", client_id);
       fprintf (stderr, "  token: %s\n", token);
       if (api_key != NULL)
