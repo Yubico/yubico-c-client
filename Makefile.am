@@ -46,10 +46,16 @@ libykclient_la_SOURCES += ykclient.c ykclient_version.c
 libykclient_la_SOURCES += sha.h sha-private.h hmac.c sha1.c usha.c	\
 			sha224-256.c sha384-512.c
 libykclient_la_SOURCES += cencode.h cencode.c cdecode.h cdecode.c
+libykclient_la_SOURCES += libykclient.map
 libykclient_la_LIBADD = $(LIBCURL_LIBS)
 libykclient_la_LDFLAGS = -no-undefined \
-	-export-symbols-regex '^ykclient_.*' \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
+
+if HAVE_LD_VERSION_SCRIPT
+libykclient_la_LDFLAGS += -Wl,--version-script=$(srcdir)/libykclient.map
+else
+libykclient_la_LDFLAGS += -export-symbols-regex '^ykclient_.*'
+endif
 
 # The command line tools.
 

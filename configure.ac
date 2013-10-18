@@ -48,6 +48,9 @@ AM_MISSING_PROG(HELP2MAN, help2man, $missing_dir)
 AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
+gl_LD_VERSION_SCRIPT
+gl_VALGRIND_TESTS
+
 PKG_CHECK_MODULES([LIBCURL], [libcurl])
 
 AC_ARG_ENABLE([gcc-warnings],
@@ -99,9 +102,11 @@ AC_MSG_NOTICE([summary of build options:
   Host type:        ${host}
   Install prefix:   ${prefix}
   Compiler:         ${CC}
-     CFLAGS:        ${CFLAGS}
-     Warning:       ${WARN_CFLAGS}
+  Compiler CFLAGS:  ${CFLAGS}
+  Warning flags:    ${WARN_CFLAGS}
   Library types:    Shared=${enable_shared}, Static=${enable_static}
   Curl CFLAGS:      ${LIBCURL_CFLAGS}
       LDFLAGS:      ${LIBCURL_LIBS}
+  Valgrind:         ${VALGRIND}
+  Version script:   $have_ld_version_script
 ])

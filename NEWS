@@ -13,6 +13,8 @@ Used when curl is linked with GnuTLS, used to set CA Info.
 Uses a more reasonable/extensible URL string syntax.  The old
 ykclient_set_url_templates is hereby deprecated.
 
+** Added shared library versioning script.
+
 * Version 2.11 (released 2013-07-24)
 
 ** Fix breakage with latest automake.

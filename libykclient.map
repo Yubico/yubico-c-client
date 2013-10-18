@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@josefsson.org>.
-# Copyright (c) 2011-2013 Yubico AB
+# Copyright (c) 2013 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,14 +26,46 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Self tests.
+YKCLIENT_2.9 {
+  global:
+    ykclient_done;
+    ykclient_get_last_url;
+    ykclient_init;
+    ykclient_request;
+    ykclient_server_response_free;
+    ykclient_server_response_get;
+    ykclient_server_response_init;
+    ykclient_server_response_parse;
+    ykclient_server_response_verify_signature;
+    ykclient_set_ca_path;
+    ykclient_set_client;
+    ykclient_set_client_b64;
+    ykclient_set_client_hex;
+    ykclient_set_nonce;
+    ykclient_set_url_template;
+    ykclient_set_url_templates;
+    ykclient_set_verify_signature;
+    ykclient_strerror;
+    ykclient_verify_otp;
+    ykclient_verify_otp_v2;
 
-AM_LDFLAGS = -no-install
-AM_CFLAGS=-I$(srcdir)/..
-LDADD = ../libykclient.la -lcurl
-selftest_SOURCES = selftest.c
+  local:
+    *;
+};
 
-check_PROGRAMS = selftest
-TESTS = $(check_PROGRAMS)
+YKCLIENT_2.11 {
+  global:
+    ykclient_check_version;
+    ykclient_global_done;
+    ykclient_global_init;
+    ykclient_handle_cleanup;
+    ykclient_handle_done;
+    ykclient_handle_init;
+    ykclient_request_process;
+} YKCLIENT_2.9;
 
-TESTS_ENVIRONMENT = $(VALGRIND)
+YKCLIENT_2.12 {
+  global:
+    ykclient_set_ca_info;
+    ykclient_set_url_bases;
+} YKCLIENT_2.11;
