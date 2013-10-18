@@ -4,6 +4,15 @@ Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
 ** Use pkg-config to find curl, instead of libcurl.m4.
 
+** ykclient: Added --cai parameter to specify GnuTLS-compatible CA Info.
+
+** libykclient: Added ykclient_set_ca_info function.
+Used when curl is linked with GnuTLS, used to set CA Info.
+
+** libykclient: Added ykclient_set_url_bases function.
+Uses a more reasonable/extensible URL string syntax.  The old
+ykclient_set_url_templates is hereby deprecated.
+
 * Version 2.11 (released 2013-07-24)
 
 ** Fix breakage with latest automake.
