@@ -26,7 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-YKCLIENT_2.9 {
+Base {
   global:
     ykclient_done;
     ykclient_get_last_url;
@@ -48,13 +48,6 @@ YKCLIENT_2.9 {
     ykclient_strerror;
     ykclient_verify_otp;
     ykclient_verify_otp_v2;
-
-  local:
-    *;
-};
-
-YKCLIENT_2.11 {
-  global:
     ykclient_check_version;
     ykclient_global_done;
     ykclient_global_init;
@@ -62,10 +55,13 @@ YKCLIENT_2.11 {
     ykclient_handle_done;
     ykclient_handle_init;
     ykclient_request_process;
-} YKCLIENT_2.9;
+
+  local:
+    *;
+};
 
 YKCLIENT_2.12 {
   global:
     ykclient_set_ca_info;
     ykclient_set_url_bases;
-} YKCLIENT_2.11;
+} Base;
