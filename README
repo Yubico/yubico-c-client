@@ -1,22 +1,9 @@
-Introduction to Yubikey client C library
-========================================
+YubiKey C Client Library: libykclient
+=====================================
 
-Introduction
-------------
-
-This is a library written in C to validate a Yubikey OTP against the
-Yubico online server.  Description of included files:
-
-* AUTHORS, COPYING, NEWS, README: meta-information about the project.
-
-* ykclient.h, ykclient.c: Implementation of the library.
-
-* tool.c: Source for command line tool "ykclient" to validate an OTP.
-
-* selftest.c: Self tests of the library.
-
-* configure.ac, Makefile.am: Autoconf/Automake files.
-
+YubiKey C Client Library (libykclient) is a C library used to validate
+an Yubikey OTP against Yubico's servers.  See https://www.yubico.com/
+for more information about Yubico and the YubiKey.
 
 License
 -------
@@ -26,54 +13,48 @@ exact wording.  For any copyright year range specified as YYYY-ZZZZ in
 this package note that the range specifies every single year in that
 closed interval.
 
-
-Building from Git
------------------
-
-Skip to the next section if you are using an official packaged
-version.
-
-You may check out the sources using Git with the following command:
-
------------
-  $ git clone git://github.com/Yubico/yubico-c-client.git
------------
-
-This will create a directory 'yubico-c-client'.  Enter the directory:
-
------------
-  $ cd yubico-c-client
------------
-
-Autoconf, automake and libtool must be installed.  Help2man is used to
-generate the manpages.  Libcurl-dev must be installed.
-
-Generate the build system using:
-
------------
-  $ autoreconf --install
------------
-
 Building
 --------
 
-To build using the Autoconf, automake and libtool infrastructure,
-which is recommend for more advanced purposes especially for
-cross-compilation and shared library support, build it as follows.
+After downloading and unpacking the package tarball, you build it as
+follows.
 
------------
-  $ ./configure
-  $ make check && sudo make install
------------
+  ./configure
+  make check
+  sudo make install
+
+Building from version controlled sources
+----------------------------------------
+
+Warning!  This is only for developers and if you don't understand what
+you are doing, you should download the release files instead.
+
+You may check out the sources using Git with the following command:
+
+  git clone git://github.com/Yubico/yubico-c-client.git
+
+This will create a directory 'yubico-c-client'.  Enter the directory:
+
+  cd yubico-c-client
+
+Recent versions of autoconf, automake and libtool must be installed.
+Help2man is used to generate the manpages.  Libcurl development files
+(headers and *.so) must also be installed.
+
+Generate the build system using:
+
+  autoreconf --install
+
+Then refer to the user sections above regarding building.
 
 Command-line tools
 ------------------
 
 There is one command line tool, ykclient, to validate a particular
-OTP.  It needs a client id, which you can allocate for yourself on
-Yubico's web site.
+OTP.  It needs a client id, which you can generate on Yubico's web
+site: https://upgrade.yubico.com/getapikey/
 
-Example session below.
+Example usage:
 
 -----------
 jas@mocca:~/src/yubico-c-client$ ./ykclient 
@@ -87,9 +68,3 @@ Input:
 Verification output (2): Yubikey OTP was replayed (REPLAYED_OTP)
 jas@mocca:~/src/yubico-c-client$ 
 -----------
-
-
-Questions?
-----------
-
-Talk to <yubico-devel@googlegroups.com>.
