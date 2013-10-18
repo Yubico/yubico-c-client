@@ -30,7 +30,7 @@
 
 AM_LDFLAGS = -no-install
 AM_CFLAGS=-I$(srcdir)/..
-LDADD = ../libykclient.la -lcurl
+LDADD = ../libykclient.la
 selftest_SOURCES = selftest.c
 
 check_PROGRAMS = selftest
