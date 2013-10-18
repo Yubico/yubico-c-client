@@ -26,4 +26,3 @@
 #define SHA_Parity(x, y, z)  ((x) ^ (y) ^ (z))
 
 #endif /* _SHA_PRIVATE__H */
-

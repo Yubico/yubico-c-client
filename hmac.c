@@ -35,14 +35,13 @@
  *      sha Error Code.
  *
  */
-int hmac(SHAversion whichSha, const unsigned char *text, int text_len,
-    const unsigned char *key, int key_len,
-    uint8_t digest[USHAMaxHashSize])
+int
+hmac (SHAversion whichSha, const unsigned char *text, int text_len,
+      const unsigned char *key, int key_len, uint8_t digest[USHAMaxHashSize])
 {
   HMACContext ctx;
-  return hmacReset(&ctx, whichSha, key, key_len) ||
-         hmacInput(&ctx, text, text_len) ||
-         hmacResult(&ctx, digest);
+  return hmacReset (&ctx, whichSha, key, key_len) ||
+    hmacInput (&ctx, text, text_len) || hmacResult (&ctx, digest);
 }
 
 /*
@@ -66,8 +65,9 @@ int hmac(SHAversion whichSha, const unsigned char *text, int text_len,
  *      sha Error Code.
  *
  */
-int hmacReset(HMACContext *ctx, enum SHAversion whichSha,
-    const unsigned char *key, int key_len)
+int
+hmacReset (HMACContext * ctx, enum SHAversion whichSha,
+	   const unsigned char *key, int key_len)
 {
   int i, blocksize, hashsize;
 
@@ -77,10 +77,11 @@ int hmacReset(HMACContext *ctx, enum SHAversion whichSha,
   /* temporary buffer when keylen > blocksize */
   unsigned char tempkey[USHAMaxHashSize];
 
-  if (!ctx) return shaNull;
+  if (!ctx)
+    return shaNull;
 
-  blocksize = ctx->blockSize = USHABlockSize(whichSha);
-  hashsize = ctx->hashSize = USHAHashSize(whichSha);
+  blocksize = ctx->blockSize = USHABlockSize (whichSha);
+  hashsize = ctx->hashSize = USHAHashSize (whichSha);
 
   ctx->whichSha = whichSha;
 
@@ -88,16 +89,17 @@ int hmacReset(HMACContext *ctx, enum SHAversion whichSha,
    * If key is longer than the hash blocksize,
    * reset it to key = HASH(key).
    */
-  if (key_len > blocksize) {
-    USHAContext tctx;
-    int err = USHAReset(&tctx, whichSha) ||
-              USHAInput(&tctx, key, key_len) ||
-              USHAResult(&tctx, tempkey);
-    if (err != shaSuccess) return err;
+  if (key_len > blocksize)
+    {
+      USHAContext tctx;
+      int err = USHAReset (&tctx, whichSha) ||
+	USHAInput (&tctx, key, key_len) || USHAResult (&tctx, tempkey);
+      if (err != shaSuccess)
+	return err;
 
-    key = tempkey;
-    key_len = hashsize;
-  }
+      key = tempkey;
+      key_len = hashsize;
+    }
 
   /*
    * The HMAC transform looks like:
@@ -111,21 +113,23 @@ int hmacReset(HMACContext *ctx, enum SHAversion whichSha,
    */
 
   /* store key into the pads, XOR'd with ipad and opad values */
-  for (i = 0; i < key_len; i++) {
-    k_ipad[i] = key[i] ^ 0x36;
-    ctx->k_opad[i] = key[i] ^ 0x5c;
-  }
+  for (i = 0; i < key_len; i++)
+    {
+      k_ipad[i] = key[i] ^ 0x36;
+      ctx->k_opad[i] = key[i] ^ 0x5c;
+    }
   /* remaining pad bytes are '\0' XOR'd with ipad and opad values */
-  for ( ; i < blocksize; i++) {
-    k_ipad[i] = 0x36;
-    ctx->k_opad[i] = 0x5c;
-  }
+  for (; i < blocksize; i++)
+    {
+      k_ipad[i] = 0x36;
+      ctx->k_opad[i] = 0x5c;
+    }
 
   /* perform inner hash */
   /* init context for 1st pass */
-  return USHAReset(&ctx->shaContext, whichSha) ||
-         /* and start with inner pad */
-         USHAInput(&ctx->shaContext, k_ipad, blocksize);
+  return USHAReset (&ctx->shaContext, whichSha) ||
+    /* and start with inner pad */
+    USHAInput (&ctx->shaContext, k_ipad, blocksize);
 }
 
 /*
@@ -148,12 +152,13 @@ int hmacReset(HMACContext *ctx, enum SHAversion whichSha,
  *      sha Error Code.
  *
  */
-int hmacInput(HMACContext *ctx, const unsigned char *text,
-    int text_len)
+int
+hmacInput (HMACContext * ctx, const unsigned char *text, int text_len)
 {
-  if (!ctx) return shaNull;
+  if (!ctx)
+    return shaNull;
   /* then text of datagram */
-  return USHAInput(&ctx->shaContext, text, text_len);
+  return USHAInput (&ctx->shaContext, text, text_len);
 }
 
 /*
@@ -175,13 +180,13 @@ int hmacInput(HMACContext *ctx, const unsigned char *text,
  * Returns:
  *   sha Error Code.
  */
-int hmacFinalBits(HMACContext *ctx,
-    const uint8_t bits,
-    unsigned int bitcount)
+int
+hmacFinalBits (HMACContext * ctx, const uint8_t bits, unsigned int bitcount)
 {
-  if (!ctx) return shaNull;
+  if (!ctx)
+    return shaNull;
   /* then final bits of datagram */
-  return USHAFinalBits(&ctx->shaContext, bits, bitcount);
+  return USHAFinalBits (&ctx->shaContext, bits, bitcount);
 }
 
 /*
@@ -205,28 +210,22 @@ int hmacFinalBits(HMACContext *ctx,
  *   sha Error Code.
  *
  */
-int hmacResult(HMACContext *ctx, uint8_t *digest)
+int
+hmacResult (HMACContext * ctx, uint8_t * digest)
 {
-  if (!ctx) return shaNull;
+  if (!ctx)
+    return shaNull;
 
   /* finish up 1st pass */
   /* (Use digest here as a temporary buffer.) */
-  return USHAResult(&ctx->shaContext, digest) ||
-
-         /* perform outer SHA */
-         /* init context for 2nd pass */
-         USHAReset(&ctx->shaContext, ctx->whichSha) ||
-
-         /* start with outer pad */
-         USHAInput(&ctx->shaContext, ctx->k_opad, ctx->blockSize) ||
-
-         /* then results of 1st hash */
-         USHAInput(&ctx->shaContext, digest, ctx->hashSize) ||
-
-         /* finish up 2nd pass */
-         USHAResult(&ctx->shaContext, digest);
+  return USHAResult (&ctx->shaContext, digest) ||
+    /* perform outer SHA */
+    /* init context for 2nd pass */
+    USHAReset (&ctx->shaContext, ctx->whichSha) ||
+    /* start with outer pad */
+    USHAInput (&ctx->shaContext, ctx->k_opad, ctx->blockSize) ||
+    /* then results of 1st hash */
+    USHAInput (&ctx->shaContext, digest, ctx->hashSize) ||
+    /* finish up 2nd pass */
+    USHAResult (&ctx->shaContext, digest);
 }
-
-
-
-

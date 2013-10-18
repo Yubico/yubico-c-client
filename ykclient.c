@@ -317,11 +317,11 @@ ykclient_handle_init (ykclient_t * ykc, ykclient_handle_t ** ykh)
       if (ykc->ca_path)
 	{
 	  curl_easy_setopt (easy, CURLOPT_CAPATH, ykc->ca_path);
-        }
+	}
 
       if (ykc->ca_info)
-        {
-          curl_easy_setopt (easy, CURLOPT_CAINFO, ykc->ca_info);
+	{
+	  curl_easy_setopt (easy, CURLOPT_CAINFO, ykc->ca_info);
 	}
 
       curl_easy_setopt (easy, CURLOPT_WRITEDATA, (void *) data);
@@ -595,8 +595,9 @@ ykclient_rc
 ykclient_set_url_templates (ykclient_t * ykc, size_t num_templates,
 			    const char **url_templates)
 {
-  ykclient_rc ret = ykclient_set_url_bases(ykc, num_templates, url_templates);
-  if(ret == YKCLIENT_OK)
+  ykclient_rc ret =
+    ykclient_set_url_bases (ykc, num_templates, url_templates);
+  if (ret == YKCLIENT_OK)
     {
       ykc->template_format = TEMPLATE_FORMAT_OLD;
     }
@@ -605,7 +606,7 @@ ykclient_set_url_templates (ykclient_t * ykc, size_t num_templates,
 
 ykclient_rc
 ykclient_set_url_bases (ykclient_t * ykc, size_t num_templates,
-			    const char **url_templates)
+			const char **url_templates)
 {
   size_t i;
   if (num_templates > MAX_TEMPLATES)
@@ -834,40 +835,44 @@ ykclient_generate_nonce (ykclient_t * ykc, char **nonce)
   return YKCLIENT_OK;
 }
 
-static ykclient_rc ykclient_expand_new_url(const char *template,
-    const char *encoded_otp, const char *nonce, int client_id,
-    char **url_exp)
+static ykclient_rc
+ykclient_expand_new_url (const char *template,
+			 const char *encoded_otp, const char *nonce,
+			 int client_id, char **url_exp)
 {
-  size_t len = strlen(template) + strlen(encoded_otp) + strlen(ADD_OTP) + strlen(ADD_ID) + 1;
-  len += snprintf(NULL, 0, "%d", client_id);
+  size_t len =
+    strlen (template) + strlen (encoded_otp) + strlen (ADD_OTP) +
+    strlen (ADD_ID) + 1;
+  len += snprintf (NULL, 0, "%d", client_id);
 
-  if(nonce)
+  if (nonce)
     {
-      len += strlen(nonce) + strlen(ADD_NONCE);
+      len += strlen (nonce) + strlen (ADD_NONCE);
     }
 
-  *url_exp = malloc(len);
-  if(!*url_exp)
+  *url_exp = malloc (len);
+  if (!*url_exp)
     {
       return YKCLIENT_OUT_OF_MEMORY;
     }
 
-  if(nonce)
+  if (nonce)
     {
-      snprintf(*url_exp, len, "%s" ADD_ID "%d" ADD_NONCE "%s" ADD_OTP "%s",
-	  template, client_id, nonce, encoded_otp);
+      snprintf (*url_exp, len, "%s" ADD_ID "%d" ADD_NONCE "%s" ADD_OTP "%s",
+		template, client_id, nonce, encoded_otp);
     }
   else
     {
-      snprintf(*url_exp, len, "%s" ADD_ID "%d" ADD_OTP "%s", template,
-	  client_id, encoded_otp);
+      snprintf (*url_exp, len, "%s" ADD_ID "%d" ADD_OTP "%s", template,
+		client_id, encoded_otp);
     }
   return YKCLIENT_OK;
 }
 
-static ykclient_rc ykclient_expand_old_url(const char *template,
-    const char *encoded_otp, const char *nonce, int client_id,
-    char **url_exp)
+static ykclient_rc
+ykclient_expand_old_url (const char *template,
+			 const char *encoded_otp, const char *nonce,
+			 int client_id, char **url_exp)
 {
   {
     size_t len;
@@ -877,14 +882,13 @@ static ykclient_rc ykclient_expand_old_url(const char *template,
     *url_exp = malloc (len);
     if (!*url_exp)
       {
-        return YKCLIENT_OUT_OF_MEMORY;
+	return YKCLIENT_OUT_OF_MEMORY;
       }
 
-    wrote = snprintf (*url_exp, len, template,
-        client_id, encoded_otp);
+    wrote = snprintf (*url_exp, len, template, client_id, encoded_otp);
     if (wrote < 0 || (size_t) wrote > len)
       {
-        return YKCLIENT_FORMAT_ERROR;
+	return YKCLIENT_FORMAT_ERROR;
       }
   }
 
@@ -895,14 +899,12 @@ static ykclient_rc ykclient_expand_old_url(const char *template,
       size_t len;
       ssize_t wrote;
 
-      len =
-        strlen (*url_exp) + strlen (ADD_NONCE) + strlen (nonce) +
-        1;
+      len = strlen (*url_exp) + strlen (ADD_NONCE) + strlen (nonce) + 1;
       nonce_url = malloc (len + 4);	/* avoid valgrind complaint */
       if (!nonce_url)
-        {
-          return YKCLIENT_OUT_OF_MEMORY;
-        }
+	{
+	  return YKCLIENT_OUT_OF_MEMORY;
+	}
 
       /* Find the &otp= in url and insert ?nonce= before otp. Must get
        *  sorted headers since we calculate HMAC on the result.
@@ -915,26 +917,26 @@ static ykclient_rc ykclient_expand_old_url(const char *template,
        */
       otp_offset = strstr (*url_exp, ADD_OTP);
       if (otp_offset == NULL)
-        {
-          /* point at \0 at end of url in case there is no otp */
-          otp_offset = *url_exp + len;
-        }
+	{
+	  /* point at \0 at end of url in case there is no otp */
+	  otp_offset = *url_exp + len;
+	}
 
       /* break up ykc->url where we want to insert nonce */
       *otp_offset = 0;
 
       wrote = snprintf (nonce_url, len, "%s" ADD_NONCE "%s&%s", *url_exp,
-          nonce, otp_offset + 1);
+			nonce, otp_offset + 1);
       if (wrote < 0 || (size_t) wrote + 1 != len)
-        {
-          free (nonce_url);
-          return YKCLIENT_FORMAT_ERROR;
-        }
+	{
+	  free (nonce_url);
+	  return YKCLIENT_FORMAT_ERROR;
+	}
 
       free (*url_exp);
       *url_exp = nonce_url;
     }
-    return YKCLIENT_OK;
+  return YKCLIENT_OK;
 }
 
 /** Expand URL templates specified with set_url_templates
@@ -975,21 +977,23 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
   for (i = 0; i < ykc->num_templates; i++)
     {
       ykclient_rc ret;
-      if(ykc->template_format == TEMPLATE_FORMAT_OLD)
-        {
-	  ret = ykclient_expand_old_url(ykc->url_templates[i],
-	      encoded_otp, nonce, ykc->client_id, &ykh->url_exp[i]);
-        }
+      if (ykc->template_format == TEMPLATE_FORMAT_OLD)
+	{
+	  ret = ykclient_expand_old_url (ykc->url_templates[i],
+					 encoded_otp, nonce, ykc->client_id,
+					 &ykh->url_exp[i]);
+	}
       else
 	{
-	  ret = ykclient_expand_new_url(ykc->url_templates[i],
-	      encoded_otp, nonce, ykc->client_id, &ykh->url_exp[i]);
+	  ret = ykclient_expand_new_url (ykc->url_templates[i],
+					 encoded_otp, nonce, ykc->client_id,
+					 &ykh->url_exp[i]);
 	}
-      if(ret != YKCLIENT_OK)
-        {
-          out = ret;
-          goto finish;
-        }
+      if (ret != YKCLIENT_OK)
+	{
+	  out = ret;
+	  goto finish;
+	}
       if (ykc->key && ykc->keylen)
 	{
 	  if (!signature)
@@ -1460,7 +1464,7 @@ ykclient_verify_otp_v2 (ykclient_t * ykc_in,
 
   if (urlcount != 0 && *urls != 0)
     {
-      if(strstr(urls[0], ADD_OTP "%s"))
+      if (strstr (urls[0], ADD_OTP "%s"))
 	{
 	  ykclient_set_url_templates (ykc, urlcount, urls);
 	}

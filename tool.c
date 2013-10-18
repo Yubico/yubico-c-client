@@ -73,8 +73,8 @@ static struct option long_options[] = {
 /* Parse command line parameters. */
 static void
 parse_args (int argc, char *argv[],
-       unsigned int *client_id, char **token, char **url, char **ca, char **cai,
-	    char **api_key, int *debug)
+	    unsigned int *client_id, char **token, char **url, char **ca,
+	    char **cai, char **api_key, int *debug)
 {
   while (1)
     {
@@ -121,15 +121,15 @@ parse_args (int argc, char *argv[],
 	  *ca = optarg;
 	  break;
 
-   case 'i':
-     if (strlen (optarg) < 1)
-       {
-         fprintf (stderr,
-              "error: must give a valid filename with one or more certificates");
-         exit (EXIT_FAILURE);
-       }
-     *cai = optarg;
-     break;
+	case 'i':
+	  if (strlen (optarg) < 1)
+	    {
+	      fprintf (stderr,
+		       "error: must give a valid filename with one or more certificates");
+	      exit (EXIT_FAILURE);
+	    }
+	  *cai = optarg;
+	  break;
 
 	case 'h':
 	  printf ("%s", usage);
@@ -177,7 +177,8 @@ main (int argc, char *argv[])
   ykclient_rc ret;
   ykclient_t *ykc = NULL;
 
-  parse_args (argc, argv, &client_id, &token, &url, &ca, &cai, &api_key, &debug);
+  parse_args (argc, argv, &client_id, &token, &url, &ca, &cai, &api_key,
+	      &debug);
 
   if (ca || cai)
     {
@@ -204,7 +205,7 @@ main (int argc, char *argv[])
       if (ca)
 	fprintf (stderr, "  CA Path: %s\n", ca);
       if (cai)
-   fprintf (stderr, "  CA Info: %s\n", cai);
+	fprintf (stderr, "  CA Info: %s\n", cai);
       fprintf (stderr, "  client id: %d\n", client_id);
       fprintf (stderr, "  token: %s\n", token);
       if (api_key != NULL)

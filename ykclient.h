@@ -89,8 +89,8 @@ extern "C"
 						 const char **url_templates);
 
   extern ykclient_rc ykclient_set_url_bases (ykclient_t * ykc,
-						 size_t num_templates,
-						 const char **url_templates);
+					     size_t num_templates,
+					     const char **url_templates);
 
 /* By default the signature returned by the server is verified (modify
    this choice by calling ykclient_set_verify_signature()). */
