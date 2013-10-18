@@ -15,6 +15,8 @@ ykclient_set_url_templates is hereby deprecated.
 
 ** Added shared library versioning script.
 
+** Valgrind is used for selftests.
+
 * Version 2.11 (released 2013-07-24)
 
 ** Fix breakage with latest automake.
