@@ -225,14 +225,14 @@ ykclient_done (ykclient_t ** ykc)
 	  free ((*ykc)->url_templates);
 	}
 
-      free ((*ykc)->key_buf);
-      free (*ykc);
-
 #ifdef _WIN32
       if((*ykc)->cryptProv) {
 	CryptReleaseContext((*ykc)->cryptProv, 0);
       }
 #endif
+
+      free ((*ykc)->key_buf);
+      free (*ykc);
     }
 
   if (ykc)
