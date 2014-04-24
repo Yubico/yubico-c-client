@@ -41,6 +41,11 @@
 
 #include <curl/curl.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <wincrypt.h>
+#endif
+
 #include "sha.h"
 #include "cencode.h"
 #include "cdecode.h"
@@ -71,6 +76,9 @@ struct ykclient_st
   char nonce_supplied;
   int verify_signature;
   const char *user_agent;
+#ifdef _WIN32
+  HCRYPTPROV cryptProv;
+#endif
 };
 
 struct curl_data
@@ -166,8 +174,6 @@ ykclient_init (ykclient_t ** ykc)
    */
   p->verify_signature = 0;
 
-  *ykc = p;
-
   /*
    * Set the User-Agent string that will be used by the CURL
    * handles.
@@ -180,6 +186,19 @@ ykclient_init (ykclient_t ** ykc)
   ykclient_set_url_bases (p,
 			  sizeof (default_url_templates) /
 			  sizeof (char *), default_url_templates);
+
+#ifdef _WIN32
+  /*
+   * Initialize the windows crypto context
+   */
+  if (!CryptAcquireContext(&(p->cryptProv), 0, 0, PROV_RSA_FULL, 0)) {
+    if (!CryptAcquireContext(&(p->cryptProv), 0, 0, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
+      p->cryptProv = 0;
+    }
+  }
+#endif
+
+  *ykc = p;
 
   return YKCLIENT_OK;
 }
@@ -208,6 +227,12 @@ ykclient_done (ykclient_t ** ykc)
 
       free ((*ykc)->key_buf);
       free (*ykc);
+
+#ifdef _WIN32
+      if((*ykc)->cryptProv) {
+	CryptReleaseContext((*ykc)->cryptProv, 0);
+      }
+#endif
     }
 
   if (ykc)
@@ -809,24 +834,35 @@ ykclient_generate_nonce (ykclient_t * ykc, char **nonce)
    */
   else
     {
-      struct timeval tv;
+      unsigned char *p;
       size_t i;
-      char *p;
-
       p = malloc (NONCE_LEN + 1);
       if (!p)
 	{
 	  return YKCLIENT_OUT_OF_MEMORY;
 	}
 
-      gettimeofday (&tv, 0);
-      srandom (tv.tv_sec * tv.tv_usec);
+#ifdef _WIN32
+      {
+	CryptGenRandom (ykc->cryptProv, NONCE_LEN, p);
+	for (i = 0; i < NONCE_LEN; ++i)
+	  {
+	    p[i] = (p[i] % 26) + 'a';
+	  }
+      }
+#else
+      {
+	struct timeval tv;
 
-      for (i = 0; i < NONCE_LEN; ++i)
-	{
-	  p[i] = (random () % 26) + 'a';
-	}
+	gettimeofday (&tv, 0);
+	srandom (tv.tv_sec * tv.tv_usec);
 
+	for (i = 0; i < NONCE_LEN; ++i)
+	  {
+	    p[i] = (random () % 26) + 'a';
+	  }
+      }
+#endif
       p[NONCE_LEN] = 0;
 
       *nonce = p;
