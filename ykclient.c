@@ -1248,6 +1248,22 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	      continue;
 	    }
 
+	  // msg->msg must == CURLMSG_DONE so data.result contains important information
+	  switch (msg->data.result) {
+	    case CURLE_OK:
+	      break;
+	    case CURLE_COULDNT_CONNECT: //eg connection refused
+	      //We MUST set out here or validation will suceed when all validation servers are shutdown.
+	      out=YKCLIENT_CURL_PERFORM_ERROR;
+	      continue;
+	    case CURLE_COULDNT_RESOLVE_HOST:
+	      out=YKCLIENT_CURL_PERFORM_ERROR;
+	      continue;
+	    default:
+	      fprintf (stderr, "data.result = %d\n",msg->data.result);
+	      break;
+	  }
+
 	  curl_easy = msg->easy_handle;
 
 	  curl_easy_getinfo (curl_easy, CURLINFO_PRIVATE, (char **) &data);
