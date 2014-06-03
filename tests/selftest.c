@@ -442,6 +442,25 @@ main (void)
   printf ("Test SKIPPED\n");
 #endif
 
+  TEST(("Set a mix of bad and good URLs"));
+  const char *bad_bases[] = {
+    "http://api.example.com/wsapi/2.0/verify",
+    "http://api2.example.com/wsapi/2.0/verify",
+    "http://api3.example.com/wsapi/2.0/verify",
+    "http://api4.example.com/wsapi/2.0/verify",
+    "http://api5.yubico.com/wsapi/2.0/verify",
+  };
+  ykclient_set_url_bases(ykc, 5, bad_bases);
+  ykclient_set_client (ykc, client_id, 20, client_key);
+#ifndef TEST_WITHOUT_INTERNET
+  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
+  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
+  printf ("used url: %s\n", ykclient_get_last_url (ykc));
+  assert (ret == YKCLIENT_REPLAYED_OTP);
+#else
+  printf ("Test SKIPPED\n");
+#endif
+
   ykclient_done (&ykc);
 
   TEST(("strerror 0"));
