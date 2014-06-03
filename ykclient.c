@@ -1248,6 +1248,13 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	      continue;
 	    }
 
+	  /* if we get anything other than CURLE_OK we throw away this result */
+	  if (msg->data.result != CURLE_OK)
+	    {
+	      out = YKCLIENT_CURL_PERFORM_ERROR;
+	      continue;
+	    }
+
 	  curl_easy = msg->easy_handle;
 
 	  curl_easy_getinfo (curl_easy, CURLINFO_PRIVATE, (char **) &data);
