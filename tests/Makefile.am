@@ -29,7 +29,7 @@
 # Self tests.
 
 AM_LDFLAGS = -no-install
-AM_CFLAGS=-I$(srcdir)/..
+AM_CFLAGS=-I$(srcdir)/.. $(WARN_CFLAGS)
 LDADD = ../libykclient.la
 selftest_SOURCES = selftest.c
 
