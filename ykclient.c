@@ -1283,6 +1283,21 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	      goto finish;
 	    }
 
+	  status = ykclient_server_response_get (srv_response, "status");
+	  if (!status)
+	    {
+	      out = YKCLIENT_PARSE_ERROR;
+	      goto finish;
+	    }
+
+	  if (ykclient_parse_srv_error (status) == YKCLIENT_BACKEND_ERROR)
+	    {
+	      /* This validation server is broken, but responses from
+ 	       * working servers might still be available. */
+	      out = YKCLIENT_BACKEND_ERROR;
+	      continue;
+	    }
+ 
 	  if (ykc->verify_signature != 0 &&
 	      ykclient_server_response_verify_signature (srv_response,
 							 ykc->key,
@@ -1292,12 +1307,6 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	      goto finish;
 	    }
 
-	  status = ykclient_server_response_get (srv_response, "status");
-	  if (!status)
-	    {
-	      out = YKCLIENT_PARSE_ERROR;
-	      goto finish;
-	    }
 
 	  out = ykclient_parse_srv_error (status);
 	  if (out == YKCLIENT_OK)
