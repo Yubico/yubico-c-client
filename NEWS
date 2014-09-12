@@ -2,11 +2,9 @@ Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
 * Version 2.13 (unreleased)
 
-** ykclient: Added -i to specify CA Info filename.
-
 ** libykclient: Skip responses where the curl status isn't CURLE_OK.
 
-** libykclient: Add ykclient_set_ca_info.
+** libykclient: Add forgotten prototype for ykclient_set_ca_info.
 
 * Version 2.12 (released 2013-10-18)
 
