@@ -1,5 +1,5 @@
 # Written by Simon Josefsson <simon@josefsson.org>.
-# Copyright (c) 2008-2013 Yubico AB
+# Copyright (c) 2008-2014 Yubico AB
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -94,9 +94,9 @@ release:
 		echo "  make release KEYID=2117364A"; \
 		exit 1; \
 	fi
-	@if test ! -d "$(YUBICO_GITHUB_REPO)"; then \
-		echo "yubico.github.com repo not found!"; \
-		echo "Make sure that YUBICO_GITHUB_REPO is set"; \
+	@if test ! -d "$(YUBICO_WWW_REPO)"; then \
+		echo "WWW repo not found!"; \
+		echo "Make sure that YUBICO_WWW_REPO is set"; \
 		exit 1; \
 	fi
 	@head -3 $(srcdir)/NEWS | grep -q "Version $(VERSION) .released `date -I`" || \
@@ -108,4 +108,4 @@ release:
 	cd $(srcdir) && git push
 	cd $(srcdir) && git tag -u $(KEYID) -m $(VERSION) $(PACKAGE)-$(VERSION)
 	cd $(srcdir) && git push --tags
-	$(YUBICO_GITHUB_REPO)/publish $(PROJECT) $(VERSION) $(PACKAGE)-$(VERSION).tar.gz*
+	$(YUBICO_WWW_REPO)/publish $(PROJECT) $(VERSION) $(PACKAGE)-$(VERSION).tar.gz*
