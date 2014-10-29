@@ -1,20 +1,18 @@
-YubiKey C Client Library: libykclient
-=====================================
+== YubiKey C Client Library: libykclient ==
 
 YubiKey C Client Library (libykclient) is a C library used to validate
-an Yubikey OTP against Yubico's servers.  See https://www.yubico.com/
+an Yubikey OTP against Yubico's servers.  See
+https://www.yubico.com[the Yubico website]
 for more information about Yubico and the YubiKey.
 
-License
--------
+=== License ===
 
 The project is licensed under a BSD license.  See the file COPYING for
 exact wording.  For any copyright year range specified as YYYY-ZZZZ in
 this package note that the range specifies every single year in that
 closed interval.
 
-Building
---------
+=== Building ===
 
 After downloading and unpacking the package tarball, you build it as
 follows.
@@ -23,8 +21,7 @@ follows.
   make check
   sudo make install
 
-Building from version controlled sources
-----------------------------------------
+=== Building from version controlled sources ===
 
 Warning!  This is only for developers and if you don't understand what
 you are doing, you should download the release files instead.
@@ -47,12 +44,11 @@ Generate the build system using:
 
 Then refer to the user sections above regarding building.
 
-Command-line tools
-------------------
+=== Command-line tools ===
 
 There is one command line tool, ykclient, to validate a particular
-OTP.  It needs a client id, which you can generate on Yubico's web
-site: https://upgrade.yubico.com/getapikey/
+OTP.  It needs a client id, which you can generate 
+https://upgrade.yubico.com/getapikey[here].
 
 Example usage:
 
