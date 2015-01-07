@@ -971,12 +971,16 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
       return YKCLIENT_HANDLE_NOT_REINIT;
     }
 
-  /* URL-encode the OTP */
-  encoded_otp = curl_easy_escape (ykh->multi, yubikey, 0);
-
   for (i = 0; i < ykc->num_templates; i++)
     {
       ykclient_rc ret;
+
+      if (!encoded_otp)
+	{
+         /* URL-encode the OTP */
+          encoded_otp = curl_easy_escape (ykh->easy[i], yubikey, 0);
+	}
+
       if (ykc->template_format == TEMPLATE_FORMAT_OLD)
 	{
 	  ret = ykclient_expand_old_url (ykc->url_templates[i],
@@ -1031,7 +1035,7 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
 	      res2 = base64_encode_blockend (&b64dig[res], &b64);
 	      b64dig[res + res2 - 1] = '\0';
 
-	      signature = curl_easy_escape (ykh->multi, b64dig, 0);
+	      signature = curl_easy_escape (ykh->easy[i], b64dig, 0);
 	    }
 
 	  /* Create new URL with signature ( h= ) appended to it . */
