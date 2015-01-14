@@ -89,11 +89,11 @@ struct ykclient_handle_st
 };
 
 const char *default_url_templates[] = {
-  "http://api.yubico.com/wsapi/2.0/verify",
-  "http://api2.yubico.com/wsapi/2.0/verify",
-  "http://api3.yubico.com/wsapi/2.0/verify",
-  "http://api4.yubico.com/wsapi/2.0/verify",
-  "http://api5.yubico.com/wsapi/2.0/verify",
+  "https://api.yubico.com/wsapi/2.0/verify",
+  "https://api2.yubico.com/wsapi/2.0/verify",
+  "https://api3.yubico.com/wsapi/2.0/verify",
+  "https://api4.yubico.com/wsapi/2.0/verify",
+  "https://api5.yubico.com/wsapi/2.0/verify",
 };
 
 /** Initialise the global context for the library
