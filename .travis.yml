@@ -4,5 +4,9 @@ compiler:
   - clang
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq -y help2man
-script: autoreconf -i && ./configure && make check
+  - sudo apt-get install -qq -y help2man $EXTRA
+script: ./build-and-test.sh
+matrix:
+  include:
+    - compiler: gcc
+      env: COVERAGE="--enable-coverage" EXTRA="lcov"

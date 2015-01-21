@@ -42,3 +42,16 @@ ykclient-*.tar.gz
 ykclient-*.tar.gz.sig
 ykclient.1
 ykclient_version.h
+cdecode.gcno
+cencode.gcno
+coverage/
+hmac.gcno
+sha1.gcno
+sha224-256.gcno
+sha384-512.gcno
+tool.gcda
+tool.gcno
+usha.gcno
+ykclient.gcno
+ykclient_server_response.gcno
+ykclient_version.gcno
