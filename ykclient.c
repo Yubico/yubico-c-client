@@ -977,8 +977,8 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
 
       if (!encoded_otp)
 	{
-         /* URL-encode the OTP */
-          encoded_otp = curl_easy_escape (ykh->easy[i], yubikey, 0);
+	  /* URL-encode the OTP */
+	  encoded_otp = curl_easy_escape (ykh->easy[i], yubikey, 0);
 	}
 
       if (ykc->template_format == TEMPLATE_FORMAT_OLD)
