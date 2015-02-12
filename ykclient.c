@@ -50,6 +50,7 @@
 
 #define ADD_NONCE "&nonce="
 #define ADD_OTP "&otp="
+#define ADD_HASH "&h="
 #define ADD_ID "?id="
 
 #define TEMPLATE_FORMAT_OLD 1
@@ -70,7 +71,6 @@ struct ykclient_st
   char *nonce;
   char nonce_supplied;
   int verify_signature;
-  const char *user_agent;
 };
 
 struct curl_data
@@ -88,13 +88,15 @@ struct ykclient_handle_st
   char **url_exp;
 };
 
-const char *default_url_templates[] = {
+static const char *default_url_templates[] = {
   "https://api.yubico.com/wsapi/2.0/verify",
   "https://api2.yubico.com/wsapi/2.0/verify",
   "https://api3.yubico.com/wsapi/2.0/verify",
   "https://api4.yubico.com/wsapi/2.0/verify",
   "https://api5.yubico.com/wsapi/2.0/verify",
 };
+
+static const char *user_agent = PACKAGE "/" PACKAGE_VERSION;
 
 /** Initialise the global context for the library
  *
@@ -166,20 +168,14 @@ ykclient_init (ykclient_t ** ykc)
    */
   p->verify_signature = 0;
 
-  *ykc = p;
-
-  /*
-   * Set the User-Agent string that will be used by the CURL
-   * handles.
-   */
-  p->user_agent = PACKAGE "/" PACKAGE_VERSION;
-
   /*
    * Set the default URLs (these can be overridden later)
    */
   ykclient_set_url_bases (p,
 			  sizeof (default_url_templates) /
 			  sizeof (char *), default_url_templates);
+
+  *ykc = p;
 
   return YKCLIENT_OK;
 }
@@ -327,7 +323,7 @@ ykclient_handle_init (ykclient_t * ykc, ykclient_handle_t ** ykh)
       curl_easy_setopt (easy, CURLOPT_WRITEDATA, (void *) data);
       curl_easy_setopt (easy, CURLOPT_PRIVATE, (void *) data);
       curl_easy_setopt (easy, CURLOPT_WRITEFUNCTION, curl_callback);
-      curl_easy_setopt (easy, CURLOPT_USERAGENT, ykc->user_agent);
+      curl_easy_setopt (easy, CURLOPT_USERAGENT, user_agent);
 
       curl_multi_add_handle (p->multi, easy);
       p->easy[p->num_easy] = easy;
@@ -1044,7 +1040,6 @@ ykclient_expand_urls (ykclient_t * ykc, ykclient_handle_t * ykh,
 	    size_t len;
 	    ssize_t wrote;
 
-#define ADD_HASH "&h="
 	    len =
 	      strlen (ykh->url_exp[i]) + strlen (ADD_HASH) +
 	      strlen (signature) + 1;
