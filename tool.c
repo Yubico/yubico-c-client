@@ -206,7 +206,7 @@ main (int argc, char *argv[])
 	fprintf (stderr, "  CA Path: %s\n", ca);
       if (cai)
 	fprintf (stderr, "  CA Info: %s\n", cai);
-      fprintf (stderr, "  client id: %d\n", client_id);
+      fprintf (stderr, "  client id: %u\n", client_id);
       fprintf (stderr, "  token: %s\n", token);
       if (api_key != NULL)
 	fprintf (stderr, "  api key: %s\n", api_key);
