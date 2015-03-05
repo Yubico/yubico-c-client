@@ -1,6 +1,10 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
-* Version 2.14 (unreleased)
+* Version 2.14 (released 2015-03-05)
+
+** Switch default templates to https.
+
+** Fixup call to curl_easy_escape() to use a easy handle.
 
 * Version 2.13 (released 2014-09-12)
 
