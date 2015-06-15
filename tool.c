@@ -53,6 +53,8 @@ const char *usage =
   "                   \"http://api.yubico.com/wsapi/verify\"\n"
   "    --ca CADIR     Path to directory containing Certificate Authoritity,\n"
   "                   e.g., \"/usr/local/etc/CERTS\"\n"
+  "    --cai CAFILE   Path to a file holding one or more certificated to\n"
+  "                   verify the peer with\n"
   "    --apikey Key   API key for HMAC validation of request/response\n"
   "\n"
   "Exit status is 0 on success, 1 if there is a hard failure, 2 if the\n"
