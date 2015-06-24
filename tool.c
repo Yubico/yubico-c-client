@@ -182,12 +182,9 @@ main (int argc, char *argv[])
   parse_args (argc, argv, &client_id, &token, &url, &ca, &cai, &api_key,
 	      &debug);
 
-  if (ca || cai)
-    {
-      ret = ykclient_init (&ykc);
-      if (ret != YKCLIENT_OK)
-	return EXIT_FAILURE;
-    }
+  ret = ykclient_init (&ykc);
+  if (ret != YKCLIENT_OK)
+    return EXIT_FAILURE;
 
   if (ca)
     {
@@ -218,7 +215,21 @@ main (int argc, char *argv[])
 				(const char **) &url, api_key);
 
   if (debug)
-    printf ("Verification output (%d): %s\n", ret, ykclient_strerror (ret));
+    {
+      const ykclient_server_response_t *srv_response = ykclient_get_server_response (ykc);
+      printf ("Response from: %s\n", ykclient_get_last_url (ykc));
+      printf ("Verification output (%d): %s\n", ret, ykclient_strerror (ret));
+      printf ("  otp: %s\n", ykclient_server_response_get (srv_response, "otp"));
+      printf ("  nonce: %s\n", ykclient_server_response_get (srv_response, "nonce"));
+      printf ("  t: %s\n", ykclient_server_response_get (srv_response, "t"));
+      printf ("  timestamp: %s\n", ykclient_server_response_get (srv_response, "timestamp"));
+      printf ("  sessioncounter: %s\n", ykclient_server_response_get (srv_response, "sessioncounter"));
+      printf ("  sessionuse: %s\n", ykclient_server_response_get (srv_response, "sessionuse"));
+      printf ("  sl: %s\n", ykclient_server_response_get (srv_response, "sl"));
+      printf ("  status: %s\n", ykclient_server_response_get (srv_response, "status"));
+    }
+
+  ykclient_done(&ykc);
 
   if (ret == YKCLIENT_REPLAYED_OTP)
     return 2;
