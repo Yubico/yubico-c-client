@@ -72,6 +72,7 @@ struct ykclient_st
   char *nonce;
   char nonce_supplied;
   int verify_signature;
+  ykclient_server_response_t *srv_response;
 };
 
 struct curl_data
@@ -163,6 +164,8 @@ ykclient_init (ykclient_t ** ykc)
   p->nonce = NULL;
   p->nonce_supplied = 0;
 
+  p->srv_response = NULL;
+
   /* 
    * Verification of server signature can only be done if there is
    * an API key provided 
@@ -201,6 +204,11 @@ ykclient_done (ykclient_t ** ykc)
 	      free ((*ykc)->url_templates[i]);
 	    }
 	  free ((*ykc)->url_templates);
+	}
+
+      if ((*ykc)->srv_response)
+	{
+	  ykclient_server_response_free((*ykc)->srv_response);
 	}
 
       free ((*ykc)->key_buf);
@@ -1163,7 +1171,6 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 {
   ykclient_rc out = YKCLIENT_OK;
   int requests;
-  ykclient_server_response_t *srv_response = NULL;
 
   if (!ykc->num_templates)
     {
@@ -1269,22 +1276,27 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	  curl_easy_getinfo (curl_easy, CURLINFO_EFFECTIVE_URL, &url_used);
 	  strncpy (ykc->last_url, url_used, sizeof (ykc->last_url));
 
-	  srv_response = ykclient_server_response_init ();
-	  if (srv_response == NULL)
+	  if(ykc->srv_response)
+	    {
+	      ykclient_server_response_free (ykc->srv_response);
+	    }
+
+	  ykc->srv_response = ykclient_server_response_init ();
+	  if (ykc->srv_response == NULL)
 	    {
 	      out = YKCLIENT_PARSE_ERROR;
 	      goto finish;
 	    }
 
 	  out = ykclient_server_response_parse (data->curl_chunk,
-						srv_response);
+						ykc->srv_response);
 	  if (out != YKCLIENT_OK)
 	    {
 	      goto finish;
 	    }
 
 	  if (ykc->verify_signature != 0 &&
-	      ykclient_server_response_verify_signature (srv_response,
+	      ykclient_server_response_verify_signature (ykc->srv_response,
 							 ykc->key,
 							 ykc->keylen))
 	    {
@@ -1292,7 +1304,7 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	      goto finish;
 	    }
 
-	  status = ykclient_server_response_get (srv_response, "status");
+	  status = ykclient_server_response_get (ykc->srv_response, "status");
 	  if (!status)
 	    {
 	      out = YKCLIENT_PARSE_ERROR;
@@ -1315,7 +1327,7 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	      if (nonce)
 		{
 		  char *server_nonce =
-		    ykclient_server_response_get (srv_response,
+		    ykclient_server_response_get (ykc->srv_response,
 						  "nonce");
 		  if (server_nonce == NULL || strcmp (nonce, server_nonce))
 		    {
@@ -1324,7 +1336,7 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 		    }
 		}
 
-	      server_otp = ykclient_server_response_get (srv_response, "otp");
+	      server_otp = ykclient_server_response_get (ykc->srv_response, "otp");
 	      if (server_otp == NULL || strcmp (yubikey, server_otp))
 		{
 		  out = YKCLIENT_HMAC_ERROR;
@@ -1338,17 +1350,12 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	      goto finish;
 	    }
 
-	  ykclient_server_response_free (srv_response);
-	  srv_response = NULL;
+	  ykclient_server_response_free (ykc->srv_response);
+	  ykc->srv_response = NULL;
 	}
     }
   while (requests);
 finish:
-  if (srv_response)
-    {
-      ykclient_server_response_free (srv_response);
-    }
-
   return out;
 }
 
@@ -1506,4 +1513,12 @@ ykclient_verify_otp (const char *yubikey_otp,
   return ykclient_verify_otp_v2 (NULL,
 				 yubikey_otp,
 				 client_id, hexkey, 0, NULL, NULL);
+}
+
+/**
+ * Fetch out server response of last query
+ */
+const ykclient_server_response_t *
+ykclient_get_server_response(ykclient_t *ykc) {
+  return ykc->srv_response;
 }

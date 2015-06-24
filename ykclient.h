@@ -38,6 +38,7 @@
 
 #include <ykclient_errors.h>
 #include <ykclient_version.h>
+#include <ykclient_server_response.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -129,6 +130,8 @@ extern "C"
 					     const char **urls,
 					     const char *api_key);
 
+/* Fetch out the server response form the last query */
+  extern const ykclient_server_response_t *ykclient_get_server_response(ykclient_t *ykc);
 #ifdef __cplusplus
 }
 #endif
