@@ -52,6 +52,7 @@
 #define ADD_OTP "&otp="
 #define ADD_HASH "&h="
 #define ADD_ID "?id="
+#define ADD_TS "&timestamp=1"
 
 #define TEMPLATE_FORMAT_OLD 1
 #define TEMPLATE_FORMAT_NEW 2
@@ -838,7 +839,7 @@ ykclient_expand_new_url (const char *template,
 {
   size_t len =
     strlen (template) + strlen (encoded_otp) + strlen (ADD_OTP) +
-    strlen (ADD_ID) + 1;
+    strlen (ADD_ID) + strlen(ADD_TS) + 1;
   len += snprintf (NULL, 0, "%d", client_id);
 
   if (nonce)
@@ -854,12 +855,12 @@ ykclient_expand_new_url (const char *template,
 
   if (nonce)
     {
-      snprintf (*url_exp, len, "%s" ADD_ID "%d" ADD_NONCE "%s" ADD_OTP "%s",
+      snprintf (*url_exp, len, "%s" ADD_ID "%d" ADD_NONCE "%s" ADD_OTP "%s" ADD_TS,
 		template, client_id, nonce, encoded_otp);
     }
   else
     {
-      snprintf (*url_exp, len, "%s" ADD_ID "%d" ADD_OTP "%s", template,
+      snprintf (*url_exp, len, "%s" ADD_ID "%d" ADD_OTP "%s" ADD_TS, template,
 		client_id, encoded_otp);
     }
   return YKCLIENT_OK;
