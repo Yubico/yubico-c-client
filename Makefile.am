@@ -134,3 +134,5 @@ release:
 	cd $(srcdir) && git tag -u $(KEYID) -m $(VERSION) $(PACKAGE)-$(VERSION)
 	cd $(srcdir) && git push --tags
 	$(YUBICO_WWW_REPO)/publish $(PROJECT) $(VERSION) $(PACKAGE)-$(VERSION).tar.gz*
+	$(HELP2ADOC) -e ./ykclient -n "YubiCloud One-Time-Password Validation Client" > ykclient.1.txt
+	$(YUBICO_WWW_REPO)/save-mans $(PROJECT) ykclient.1.txt

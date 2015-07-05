@@ -45,6 +45,7 @@ AC_PROG_CC
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 AM_MISSING_PROG(HELP2MAN, help2man, $missing_dir)
+AM_MISSING_PROG(HELP2ADOC, help2adoc, $missing_dir)
 AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
