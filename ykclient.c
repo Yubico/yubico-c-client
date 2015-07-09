@@ -338,6 +338,11 @@ ykclient_handle_init (ykclient_t * ykc, ykclient_handle_t ** ykh)
       p->easy[p->num_easy] = easy;
     }
 
+  if(p->num_easy == 0) {
+    ykclient_handle_done (&p);
+    return YKCLIENT_BAD_INPUT;
+  }
+
   /* Take this opportunity to allocate the array for expanded URLs */
   p->url_exp = malloc (sizeof (char *) * p->num_easy);
   if (!p->url_exp)
