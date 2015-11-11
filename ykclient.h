@@ -97,6 +97,8 @@ extern "C"
 
   extern void ykclient_set_ca_info (ykclient_t * ykc, const char *ca_info);
 
+  extern void ykclient_set_proxy (ykclient_t * ykc, const char *proxy);
+
 /*
  * Set the nonce. A default nonce is generated in ykclient_init(), but
  * if you either want to specify your own nonce, or want to remove the
