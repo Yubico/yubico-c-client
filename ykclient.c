@@ -61,6 +61,7 @@ struct ykclient_st
 {
   const char *ca_path;
   const char *ca_info;
+  const char *proxy;
   size_t num_templates;
   char **url_templates;
   int template_format;
@@ -154,6 +155,7 @@ ykclient_init (ykclient_t ** ykc)
 
   p->ca_path = NULL;
   p->ca_info = NULL;
+  p->proxy = NULL;
 
   p->key = NULL;
   p->keylen = 0;
@@ -327,6 +329,17 @@ ykclient_handle_init (ykclient_t * ykc, ykclient_handle_t ** ykh)
       if (ykc->ca_info)
 	{
 	  curl_easy_setopt (easy, CURLOPT_CAINFO, ykc->ca_info);
+	}
+
+      if (ykc->proxy)
+	{
+	  /*
+	   *  The proxy string may be prefixed with [scheme]://ip:port to specify which kind of proxy is used.
+	   *  Valid choices are: socks4://, socks4a://, socks5:// or socks5h://
+	   *  Use socks5h to ask the proxy to do the dns resolving.
+	   *  If no scheme or port is specified HTTP proxy port 1080 will be used.
+	   */
+	  curl_easy_setopt (easy, CURLOPT_PROXY, ykc->proxy);
 	}
 
       curl_easy_setopt (easy, CURLOPT_WRITEDATA, (void *) data);
@@ -575,6 +588,17 @@ ykclient_set_ca_info (ykclient_t * ykc, const char *ca_info)
 {
   ykc->ca_info = ca_info;
 }
+
+/** Set the proxy
+ *
+ * Must be called before creating handles.
+ */
+void
+ykclient_set_proxy (ykclient_t * ykc, const char *proxy)
+{
+  ykc->proxy = proxy;
+}
+
 
 /** Set a single URL template
  *
