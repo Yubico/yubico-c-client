@@ -1,5 +1,7 @@
 Yubikey-c-client NEWS -- History of user-visible changes.      -*- outline -*-
 
+* Version 2.16 (unreleased)
+
 * Version 2.15 (released 2015-11-12)
 
 ** Add ykclient_get_server_response() to the library.
