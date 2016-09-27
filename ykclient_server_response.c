@@ -212,7 +212,7 @@ parse_next_parameter (char **s, ykclient_parameter_t * param)
   if (s == NULL || *s == NULL || param == NULL)
     return YKCLIENT_PARSE_ERROR;
   char *pos = *s;
-  int index = 0;
+  size_t index = 0;
 
   /* key parsing */
   while (*(pos + index) != '\0' && *(pos + index) != '=')
@@ -267,7 +267,7 @@ ykclient_server_response_parse (char *response,
       if (param == NULL)
 	return YKCLIENT_OUT_OF_MEMORY;
       memset (param, 0, (sizeof (ykclient_parameter_t)));
-      int ret = parse_next_parameter (&response, param);
+      ykclient_rc ret = parse_next_parameter (&response, param);
       if (ret)
 	return ret;
 
