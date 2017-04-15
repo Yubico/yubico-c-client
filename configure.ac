@@ -38,9 +38,9 @@ AC_SUBST(LT_CURRENT, 9)
 AC_SUBST(LT_REVISION, 1)
 AC_SUBST(LT_AGE, 6)
 
-AM_INIT_AUTOMAKE([1.11 -Wall -Werror])
+AM_INIT_AUTOMAKE([1.11 -Wall -Werror subdir-objects])
 AM_SILENT_RULES([yes])
-AC_PROG_CC
+AM_PROG_CC_C_O
 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
