@@ -10,6 +10,7 @@ for more information about Yubico and the YubiKey.
 After downloading and unpacking the package tarball, you build it as
 follows.
 
+  autoreconf -i
   ./configure
   make check
   sudo make install
