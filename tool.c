@@ -75,11 +75,14 @@ static struct option long_options[] = {
   {0, 0, 0, 0}
 };
 
+#define MAX_URLS 10
+
 /* Parse command line parameters. */
 static void
 parse_args (int argc, char *argv[],
-	    unsigned int *client_id, char **token, char **url, char **ca,
-	    char **cai, char **api_key, char **proxy, int *debug)
+	    unsigned int *client_id, char **token, const char **urls,
+	    int *n_urls, char **ca, char **cai, char **api_key, char **proxy,
+	    int *debug)
 {
   while (1)
     {
@@ -113,7 +116,15 @@ parse_args (int argc, char *argv[],
 	      fprintf (stderr, "error: validation url must be http or https");
 	      exit (EXIT_FAILURE);
 	    }
-	  *url = optarg;
+	  if (*n_urls >= MAX_URLS)
+	    {
+	      fprintf (stderr,
+		       "error: maximum %d urls can be processed on commandline",
+		       MAX_URLS);
+	      exit (EXIT_FAILURE);
+	    }
+	  urls[*n_urls] = optarg;
+	  *n_urls += 1;
 	  break;
 
 	case 'c':
@@ -186,13 +197,15 @@ int
 main (int argc, char *argv[])
 {
   unsigned int client_id;
-  char *token, *url = NULL, *ca = NULL, *api_key = NULL, *cai = NULL, *proxy = NULL;
+  char *token, *ca = NULL, *api_key = NULL, *cai = NULL, *proxy = NULL;
+  const char *urls[MAX_URLS];
+  int n_urls = 0;
   int debug = 0;
   ykclient_rc ret;
   ykclient_t *ykc = NULL;
 
-  parse_args (argc, argv, &client_id, &token, &url, &ca, &cai, &api_key, &proxy,
-	      &debug);
+  parse_args (argc, argv, &client_id, &token, urls, &n_urls, &ca, &cai,
+	      &api_key, &proxy, &debug);
 
   ret = ykclient_init (&ykc);
   if (ret != YKCLIENT_OK)
@@ -215,8 +228,14 @@ main (int argc, char *argv[])
   if (debug)
     {
       fprintf (stderr, "Input:\n");
-      if (url)
-	fprintf (stderr, "  validation URL: %s\n", url);
+      if (n_urls)
+	{
+	  int i;
+	  for (i = 0; i < n_urls; i++)
+	    {
+	      fprintf (stderr, "  validation URL %d: %s\n", i + 1, urls[i]);
+	    }
+	}
       if (ca)
 	fprintf (stderr, "  CA Path: %s\n", ca);
       if (cai)
@@ -229,8 +248,8 @@ main (int argc, char *argv[])
 	fprintf (stderr, "Using proxy: %s\n", proxy);
     }
 
-  ret = ykclient_verify_otp_v2 (ykc, token, client_id, NULL, 1,
-				(const char **) &url, api_key);
+  ret = ykclient_verify_otp_v2 (ykc, token, client_id, NULL, n_urls,
+				urls, api_key);
 
   if (debug)
     {
