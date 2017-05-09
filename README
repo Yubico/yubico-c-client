@@ -39,6 +39,12 @@ Then refer to the user sections above regarding building.
 
 === Command-line tools ===
 
+[CAUTION]
+The ykclient command line tool is for testing/debugging purposes only.
+Secret data, such as the client secret, should generally not be passed
+as a command line argument in production. Doing so may expose the
+value to other parts of the system.
+
 There is one command line tool, ykclient, to validate a particular
 OTP.  It needs a client id, which you can generate 
 https://upgrade.yubico.com/getapikey[here].
