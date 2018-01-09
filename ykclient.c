@@ -872,12 +872,12 @@ ykclient_generate_nonce (ykclient_t * ykc, char **nonce)
 static ykclient_rc
 ykclient_expand_new_url (const char *template,
 			 const char *encoded_otp, const char *nonce,
-			 int client_id, char **url_exp)
+			 unsigned int client_id, char **url_exp)
 {
   size_t len =
     strlen (template) + strlen (encoded_otp) + strlen (ADD_OTP) +
     strlen (ADD_ID) + strlen(ADD_TS) + 1;
-  len += snprintf (NULL, 0, "%d", client_id);
+  len += snprintf (NULL, 0, "%u", client_id);
 
   if (nonce)
     {
@@ -892,12 +892,12 @@ ykclient_expand_new_url (const char *template,
 
   if (nonce)
     {
-      snprintf (*url_exp, len, "%s" ADD_ID "%d" ADD_NONCE "%s" ADD_OTP "%s" ADD_TS,
+      snprintf (*url_exp, len, "%s" ADD_ID "%u" ADD_NONCE "%s" ADD_OTP "%s" ADD_TS,
 		template, client_id, nonce, encoded_otp);
     }
   else
     {
-      snprintf (*url_exp, len, "%s" ADD_ID "%d" ADD_OTP "%s" ADD_TS, template,
+      snprintf (*url_exp, len, "%s" ADD_ID "%u" ADD_OTP "%s" ADD_TS, template,
 		client_id, encoded_otp);
     }
   return YKCLIENT_OK;
@@ -906,7 +906,7 @@ ykclient_expand_new_url (const char *template,
 static ykclient_rc
 ykclient_expand_old_url (const char *template,
 			 const char *encoded_otp, const char *nonce,
-			 int client_id, char **url_exp)
+			 unsigned int client_id, char **url_exp)
 {
   {
     size_t len;
