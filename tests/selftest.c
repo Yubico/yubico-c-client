@@ -39,52 +39,6 @@
   printf xX; \
   printf ("\n")
 
-void
-test_v1_validation(int client_id, char *client_b64key)
-{
-  ykclient_t *ykc;
-  int ret;
-
-  TEST(("init self"));
-  ret = ykclient_init (&ykc);
-  printf ("ykclient_init (%d): %s\n", ret, ykclient_strerror (ret));
-  assert(ret == YKCLIENT_OK);
-
-  ykclient_set_url_template
-    (ykc, "http://api.yubico.com/wsapi/verify?id=%d&otp=%s");
-
-  TEST(("null client_id, expect REPLAYED_OTP"));
-  ykclient_set_verify_signature(ykc, 0);
-  ykclient_set_client (ykc, client_id, 0, NULL);
-
-#ifndef TEST_WITHOUT_INTERNET
-  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
-  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
-  printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  assert(ret == YKCLIENT_REPLAYED_OTP);
-#else
-  printf ("Test SKIPPED\n");
-#endif
-
-  /* Test signed request. When signing requests to a v1 service, we must clear the nonce first. */
-
-  TEST(("signed request, expect REPLAYED_OTP"));
-  ykclient_set_verify_signature(ykc, 1);
-  ykclient_set_client_b64 (ykc, client_id, client_b64key);
-  ykclient_set_nonce(ykc, NULL);
-
-#ifndef TEST_WITHOUT_INTERNET
-  ret = ykclient_request (ykc, "ccccccbchvthlivuitriujjifivbvtrjkjfirllluurj");
-  printf ("ykclient_request (%d): %s\n", ret, ykclient_strerror (ret));
-  printf ("used url: %s\n", ykclient_get_last_url (ykc));
-  assert(ret == YKCLIENT_REPLAYED_OTP);
-#else
-  printf ("Test SKIPPED\n");
-#endif
-
-  ykclient_done (&ykc);
-}
-
 #if 0
 void
 test_base64 (void)
@@ -366,7 +320,7 @@ main (void)
   TEST(("set WS 2.0 URL template"));
   /* Set one URL and run tests with that. */
   ykclient_set_url_template
-    (ykc, "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s");
+    (ykc, "https://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s");
 
 #ifndef TEST_WITHOUT_INTERNET
   TEST(("validation request, expect REPLAYED_OTP"));
@@ -406,11 +360,11 @@ main (void)
 
   TEST(("Set and use several OLD V2.0 URLs"));
   const char *templates[] = {
-    "http://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
-    "http://api2.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
-    "http://api3.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
-    "http://api4.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
-    "http://api5.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+    "https://api.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+    "https://api2.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+    "https://api3.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+    "https://api4.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
+    "https://api5.yubico.com/wsapi/2.0/verify?id=%d&otp=%s",
   };
   ykclient_set_url_templates(ykc, 5, templates);
   ykclient_set_client (ykc, client_id, 20, client_key);
@@ -425,11 +379,11 @@ main (void)
 
   TEST(("Set and use several NEW V2.0 URLs"));
   const char *bases[] = {
-    "http://api.yubico.com/wsapi/2.0/verify",
-    "http://api2.yubico.com/wsapi/2.0/verify",
-    "http://api3.yubico.com/wsapi/2.0/verify",
-    "http://api4.yubico.com/wsapi/2.0/verify",
-    "http://api5.yubico.com/wsapi/2.0/verify",
+    "https://api.yubico.com/wsapi/2.0/verify",
+    "https://api2.yubico.com/wsapi/2.0/verify",
+    "https://api3.yubico.com/wsapi/2.0/verify",
+    "https://api4.yubico.com/wsapi/2.0/verify",
+    "https://api5.yubico.com/wsapi/2.0/verify",
   };
   ykclient_set_url_bases(ykc, 5, bases);
   ykclient_set_client (ykc, client_id, 20, client_key);
@@ -444,11 +398,11 @@ main (void)
 
   TEST(("Set a mix of bad and good URLs"));
   const char *bad_bases[] = {
-    "http://api.example.com/wsapi/2.0/verify",
-    "http://api2.example.com/wsapi/2.0/verify",
-    "http://api3.example.com/wsapi/2.0/verify",
-    "http://api4.example.com/wsapi/2.0/verify",
-    "http://api5.yubico.com/wsapi/2.0/verify",
+    "https://api.example.com/wsapi/2.0/verify",
+    "https://api2.example.com/wsapi/2.0/verify",
+    "https://api3.example.com/wsapi/2.0/verify",
+    "https://api4.example.com/wsapi/2.0/verify",
+    "https://api5.yubico.com/wsapi/2.0/verify",
   };
   ykclient_set_url_bases(ykc, 5, bad_bases);
   ykclient_set_client (ykc, client_id, 20, client_key);
@@ -470,8 +424,6 @@ main (void)
   TEST(("strerror BAD_OTP"));
   printf ("strerror(BAD_OTP): %s\n", ykclient_strerror (YKCLIENT_BAD_OTP));
   ret = strcmp(ykclient_strerror (YKCLIENT_BAD_OTP), "Yubikey OTP was bad (BAD_OTP)"); assert (ret == 0);
-
-  test_v1_validation(client_id, client_b64key);
 
 #if 0
   test_base64();
