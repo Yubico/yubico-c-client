@@ -299,6 +299,11 @@ ykclient_handle_init (ykclient_t * ykc, ykclient_handle_t ** ykh)
     }
 
   p->easy = malloc (sizeof (CURL *) * ykc->num_templates);
+  if (!p->easy)
+    {
+      ykclient_handle_done (&p);
+      return YKCLIENT_OUT_OF_MEMORY;
+    }
   for (p->num_easy = 0; p->num_easy < ykc->num_templates; p->num_easy++)
     {
       CURL *easy;
@@ -975,7 +980,7 @@ ykclient_expand_old_url (const char *template,
 
 /** Expand URL templates specified with set_url_templates
  *
- * Expands placeholderss or inserts additional parameters for nonce,
+ * Expands placeholders or inserts additional parameters for nonce,
  * OTP, and signing values into duplicates of URL templates.
  *
  * The memory allocated for these duplicates must be freed 
