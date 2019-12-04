@@ -54,6 +54,15 @@ gl_VALGRIND_TESTS
 
 PKG_CHECK_MODULES([LIBCURL], [libcurl])
 
+# --disable-documentation
+AC_ARG_ENABLE([documentation],
+	      [AS_HELP_STRING([--disable-documentation],
+			     [do not build documentation])],
+			     [enable_doc="${enableval}" ],
+			     [enable_doc="yes"])
+AM_CONDITIONAL(ENABLE_DOC, test "$enable_doc" != "no")
+
+# --enable-coverage
 AC_ARG_ENABLE([coverage],
               [AS_HELP_STRING([--enable-coverage],
                               [use Gcov to test the test suite])],
