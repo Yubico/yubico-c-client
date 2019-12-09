@@ -65,7 +65,7 @@ ykclient_SOURCES = tool.c
 ykclient_LDADD = ./libykclient.la
 
 # Man page
-
+if ENABLE_DOC
 dist_man_MANS = ykclient.1
 DISTCLEANFILES = $(dist_man_MANS)
 
@@ -74,6 +74,7 @@ ykclient.1: $(ykclient_SOURCES) $(srcdir)/configure.ac | $(builddir)/ykclient$(E
 		--output=$@ $(builddir)/ykclient$(EXEEXT) \
 		--name="YubiCloud One-Time-Password Validation Client" \
 		--no-info
+endif
 
 if ENABLE_COV
 AM_CFLAGS += --coverage
