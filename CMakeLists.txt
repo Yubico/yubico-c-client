@@ -56,7 +56,7 @@ endif()
 
 target_compile_definitions(ykclient PRIVATE PACKAGE="yubico-c-client" PACKAGE_VERSION="${VERSION}")
 target_include_directories(ykclient PUBLIC
-	$<INSTALL_INTERFACE:include>
+	$<INSTALL_INTERFACE:include/ykclient>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 	$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
 )
