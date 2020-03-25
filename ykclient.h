@@ -40,6 +40,8 @@
 #include <ykclient_version.h>
 #include <ykclient_server_response.h>
 
+#define DEFAULT_MAX_RETRIES 3
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -107,6 +109,7 @@ extern "C"
  */
   extern void ykclient_set_nonce (ykclient_t * ykc, char *nonce);
 
+  extern void ykclient_set_max_retries (ykclient_t * ykc, int retries);
 
 
   extern const char *ykclient_get_last_url (ykclient_t * ykc);

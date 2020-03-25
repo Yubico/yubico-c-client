@@ -72,6 +72,8 @@ struct ykclient_st
   char *key_buf;
   char *nonce;
   char nonce_supplied;
+  int retry;
+  int max_retries;
   int verify_signature;
   ykclient_server_response_t *srv_response;
 };
@@ -93,10 +95,6 @@ struct ykclient_handle_st
 
 static const char *default_url_templates[] = {
   "https://api.yubico.com/wsapi/2.0/verify",
-  "https://api2.yubico.com/wsapi/2.0/verify",
-  "https://api3.yubico.com/wsapi/2.0/verify",
-  "https://api4.yubico.com/wsapi/2.0/verify",
-  "https://api5.yubico.com/wsapi/2.0/verify",
 };
 
 static const char *user_agent = PACKAGE "/" PACKAGE_VERSION;
@@ -165,6 +163,9 @@ ykclient_init (ykclient_t ** ykc)
 
   p->nonce = NULL;
   p->nonce_supplied = 0;
+
+  p->retry = 0;
+  p->max_retries = DEFAULT_MAX_RETRIES;
 
   p->srv_response = NULL;
 
@@ -602,6 +603,12 @@ void
 ykclient_set_proxy (ykclient_t * ykc, const char *proxy)
 {
   ykc->proxy = proxy;
+}
+
+void
+ykclient_set_max_retries (ykclient_t *ykc, const int retries)
+{
+  ykc->max_retries = retries;
 }
 
 
@@ -1282,6 +1289,7 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	  char *url_used;
 	  char *status;
 	  CURLMsg *msg;
+          long http_code;
 
 	  msg = curl_multi_info_read (ykh->multi, &msgs);
 	  if (!msg || msg->msg != CURLMSG_DONE)
@@ -1299,6 +1307,17 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	  curl_easy = msg->easy_handle;
 
 	  curl_easy_getinfo (curl_easy, CURLINFO_PRIVATE, (char **) &data);
+
+          /* If we receive an http error, mark for retry, but allow other
+           * connections a chance to complete.
+           *
+           * This is to try to avoid failing an OTP due to transient errors.
+           */
+          curl_easy_getinfo(curl_easy, CURLINFO_RESPONSE_CODE, &http_code);
+          if (http_code == 400 || (http_code >= 500 && http_code < 600))
+            {
+              ykc->retry = 1;
+            }
 
 	  if (data == 0 || data->curl_chunk_size == 0 ||
 	      data->curl_chunk == NULL)
@@ -1335,6 +1354,7 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 							 ykc->keylen))
 	    {
 	      out = YKCLIENT_BAD_SERVER_SIGNATURE;
+              ykc->retry = 0;
 	      goto finish;
 	    }
 
@@ -1349,6 +1369,7 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	  if (out == YKCLIENT_OK)
 	    {
 	      char *server_otp;
+              ykc->retry = 0;
 
 	      /* Verify that the OTP and nonce we put in our request is echoed 
 	       * in the response.
@@ -1381,6 +1402,7 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	  else if ((out != YKCLIENT_PARSE_ERROR) &&
 		   (out != YKCLIENT_REPLAYED_REQUEST))
 	    {
+              ykc->retry = 0;
 	      goto finish;
 	    }
 
@@ -1419,6 +1441,7 @@ ykclient_request_process (ykclient_t * ykc, ykclient_handle_t * ykh,
 {
   ykclient_rc out;
   char *nonce = NULL;
+  int retries = 0;
 
   /* Generate nonce value */
   out = ykclient_generate_nonce (ykc, &nonce);
@@ -1436,6 +1459,17 @@ ykclient_request_process (ykclient_t * ykc, ykclient_handle_t * ykh,
 
   /* Send the request to the validation server */
   out = ykclient_request_send (ykc, ykh, yubikey, nonce);
+
+  /* If all we received was an http error, retry. */
+  if (ykc->retry)
+    {
+      while (ykc->retry && (retries < ykc->max_retries))
+        {
+          ykclient_handle_cleanup (ykh);
+          out = ykclient_request_send (ykc, ykh, yubikey, nonce);
+          retries++;
+        }
+    }
 
 finish:
   free (nonce);

@@ -38,6 +38,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <getopt.h>
+#include <limits.h>
 
 const char *usage =
   "Usage: ykclient [OPTION]... CLIENTID YUBIKEYOTP\n"
@@ -58,6 +59,8 @@ const char *usage =
   "    --apikey Key   API key for HMAC validation of request/response\n"
   "    --proxy ip:port  Connect to validation service through a proxy,\n"
   "                     e.g., \"socks5h://user:pass@127.0.0.1:1080\"\n"
+  "    --retries MaxRetries   Max number of retries in event of transient\n"
+  "                           network error\n"
   "\n"
   "Exit status is 0 on success, 1 if there is a hard failure, 2 if the\n"
   "OTP was replayed, 3 for other soft OTP-related failures.\n"
@@ -69,6 +72,7 @@ static struct option long_options[] = {
   {"cai", 1, 0, 'i'},
   {"apikey", 1, 0, 'a'},
   {"proxy", 1, 0, 'p'},
+  {"retries", 1, 0, 'r'},
   {"debug", 0, 0, 'd'},
   {"help", 0, 0, 'h'},
   {"version", 0, 0, 'V'},
@@ -82,7 +86,7 @@ static void
 parse_args (int argc, char *argv[],
 	    unsigned int *client_id, char **token, const char **urls,
 	    int *n_urls, char **ca, char **cai, char **api_key, char **proxy,
-	    int *debug)
+	    int *max_retries, int *debug)
 {
   while (1)
     {
@@ -156,6 +160,25 @@ parse_args (int argc, char *argv[],
 	  *proxy = optarg;
 	  break;
 
+        case 'r':
+          if (strlen (optarg) < 1)
+            {
+              fprintf (stderr,
+                       "error: must give number of retries");
+              exit (EXIT_FAILURE);
+            }
+          char *tmp;
+          long input;
+          input = strtol (optarg, &tmp, 10);
+          if (tmp == optarg || *tmp != '\0' || input > INT_MAX)
+            {
+              fprintf (stderr,
+                       "error: number of retries must be integer between 0 and %d", INT_MAX);
+              exit (EXIT_FAILURE);
+            }
+          *max_retries = input;
+          break;
+
 	case 'h':
 	  printf ("%s", usage);
 	  exit (EXIT_SUCCESS);
@@ -200,12 +223,13 @@ main (int argc, char *argv[])
   char *token, *ca = NULL, *api_key = NULL, *cai = NULL, *proxy = NULL;
   const char *urls[MAX_URLS];
   int n_urls = 0;
+  int max_retries = DEFAULT_MAX_RETRIES;
   int debug = 0;
   ykclient_rc ret;
   ykclient_t *ykc = NULL;
 
   parse_args (argc, argv, &client_id, &token, urls, &n_urls, &ca, &cai,
-	      &api_key, &proxy, &debug);
+	      &api_key, &proxy, &max_retries, &debug);
 
   ret = ykclient_init (&ykc);
   if (ret != YKCLIENT_OK)
@@ -223,6 +247,10 @@ main (int argc, char *argv[])
   if (proxy)
     {
       ykclient_set_proxy (ykc, proxy);
+    }
+  if (max_retries != DEFAULT_MAX_RETRIES)
+    {
+      ykclient_set_max_retries (ykc, max_retries);
     }
 
   if (debug)
