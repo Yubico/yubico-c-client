@@ -71,3 +71,8 @@ YKCLIENT_2.15 {
     ykclient_get_server_response;
     ykclient_set_proxy;
 } YKCLIENT_2.12;
+
+YKCLIENT_2.16 {
+  global:
+    ykclient_set_max_retries;
+} YKCLIENT_2.15;

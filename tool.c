@@ -88,6 +88,9 @@ parse_args (int argc, char *argv[],
 	    int *n_urls, char **ca, char **cai, char **api_key, char **proxy,
 	    int *max_retries, int *debug)
 {
+  char *endptr;
+  unsigned long input;
+
   while (1)
     {
       int option_index = 0;
@@ -151,7 +154,7 @@ parse_args (int argc, char *argv[],
 	  *cai = optarg;
 	  break;
 
-    case 'p':
+        case 'p':
 	  if (strlen(optarg) < 1)
 	    {
 	      fprintf (stderr, "error: must give a valid proxy [scheme]://ip:port");
@@ -167,13 +170,11 @@ parse_args (int argc, char *argv[],
                        "error: must give number of retries");
               exit (EXIT_FAILURE);
             }
-          char *tmp;
-          long input;
-          input = strtol (optarg, &tmp, 10);
-          if (tmp == optarg || *tmp != '\0' || input > INT_MAX)
+          input = strtoul (optarg, &endptr, 10);
+          if (endptr == optarg || *endptr != '\0' || input > INT_MAX)
             {
               fprintf (stderr,
-                       "error: number of retries must be integer between 0 and %d", INT_MAX);
+                       "error: number of retries must be an integer between 0 and %d.", INT_MAX);
               exit (EXIT_FAILURE);
             }
           *max_retries = input;
@@ -198,13 +199,14 @@ parse_args (int argc, char *argv[],
     }
 
   /* Now get mandatory numeric client_id */
-  *client_id = strtoul (argv[optind++], NULL, 10);
-
-  if (*client_id <= 0)
+  input = strtol (argv[optind++], &endptr, 10);
+  if (endptr == optarg || *endptr != '\0' || input > INT_MAX || input == 0)
     {
       fprintf (stderr, "error: client identity must be a non-zero integer.");
       exit (EXIT_FAILURE);
     }
+
+  *client_id = input;
 
   /* Likewise mandatory OTP token */
   *token = argv[optind++];

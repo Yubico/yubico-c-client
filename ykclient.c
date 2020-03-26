@@ -1313,7 +1313,7 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
            *
            * This is to try to avoid failing an OTP due to transient errors.
            */
-          curl_easy_getinfo(curl_easy, CURLINFO_RESPONSE_CODE, &http_code);
+          curl_easy_getinfo (curl_easy, CURLINFO_RESPONSE_CODE, &http_code);
           if (http_code == 400 || (http_code >= 500 && http_code < 600))
             {
               ykc->retry = 1;

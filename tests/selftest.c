@@ -390,11 +390,11 @@ main (void)
 
   TEST(("Set a mix of bad and good URLs"));
   const char *bad_bases[] = {
-    "https://api.yubico.com/wsapi/2.0/verify",
     "https://api2.example.com/wsapi/2.0/verify",
     "https://api3.example.com/wsapi/2.0/verify",
     "https://api4.example.com/wsapi/2.0/verify",
     "https://api5.example.com/wsapi/2.0/verify",
+    "https://api.yubico.com/wsapi/2.0/verify",
   };
   ykclient_set_url_bases(ykc, 5, bad_bases);
   ykclient_set_client (ykc, client_id, 20, client_key);
