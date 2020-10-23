@@ -1,0 +1,31 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04]
+        cc: [clang-10]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Dependencies
+      env:
+        CC: ${{ matrix.cc }}
+      run: |
+        sudo apt -q update
+        sudo apt install -q -y autoconf automake libtool pkg-config \
+          libcurl4-openssl-dev
+        sudo apt install -q -y ${CC%-*}-tools-${CC#clang-}
+    - name: Build & Run tests
+      env:
+        CC: ${{ matrix.cc }}
+      run: |
+        autoreconf --install
+        ./configure CC=${CC} CFLAGS="-fsanitize=address,leak,undefined" \
+          --disable-documentation
+        make
+        cd tests && make selftest && ./selftest

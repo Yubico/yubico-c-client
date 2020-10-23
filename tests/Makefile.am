@@ -28,10 +28,13 @@
 
 # Self tests.
 
+AUTOMAKE_OPTIONS = subdir-objects
 AM_LDFLAGS = -no-install
 AM_CFLAGS=-I$(srcdir)/.. $(WARN_CFLAGS)
 LDADD = ../libykclient.la
 selftest_SOURCES = selftest.c
+selftest_SOURCES+= ../hmac.c ../cencode.c ../cdecode.c ../usha.c \
+		   ../sha384-512.c ../sha224-256.c ../sha1.c
 
 check_PROGRAMS = selftest
 TESTS = $(check_PROGRAMS)
