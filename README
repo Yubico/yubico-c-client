@@ -1,5 +1,7 @@
 == YubiKey C Client Library: libykclient ==
 
+NOTE: This project is deprecated and is no longer being maintained. For more information and guidance on how to implement Yubico OTP support in applications, see https://status.yubico.com/2021/04/15/one-api-yubico-com-one-http-get/.
+
 YubiKey C Client Library (libykclient) is a C library used to validate
 an Yubikey OTP against Yubico's servers.  See
 https://www.yubico.com[the Yubico website]
