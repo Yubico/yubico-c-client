@@ -6,6 +6,8 @@
 .*~
 .deps/
 .libs/
+build/
+.vscode/
 ChangeLog
 INSTALL
 Makefile

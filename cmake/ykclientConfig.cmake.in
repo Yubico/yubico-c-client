@@ -1,0 +1,11 @@
+get_filename_component(YKCLIENT_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+include(CMakeFindDependencyMacro)
+
+find_dependency(CURL)
+find_dependency(ZLIB)
+
+if(NOT TARGET ykclient::ykclient)
+    include("${YKCLIENT_CMAKE_DIR}/ykclientTargets.cmake")
+endif()
+
+set(YKCLIENT_lIBRARIES ykclient::ykclient)
