@@ -40,8 +40,6 @@ add_library(
 add_library(ykclient::ykclient ALIAS ykclient)
 
 if(MINGW)
-	# For statically linking zlib
-	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 	# For statically linking curl
 	target_compile_definitions(ykclient PRIVATE CURL_STATICLIB)
 	# Missing stuff in MinGW headers
@@ -49,7 +47,7 @@ if(MINGW)
 endif()
 find_package(CURL REQUIRED)
 find_package(ZLIB REQUIRED)
-target_link_libraries(ykclient PUBLIC CURL::libcurl ${ZLIB_LIBRARIES})
+target_link_libraries(ykclient PUBLIC CURL::libcurl ZLIB::ZLIB)
 if(MINGW)
   target_link_libraries(ykclient PUBLIC wsock32 ws2_32 crypt32 wldap32)
 endif()
