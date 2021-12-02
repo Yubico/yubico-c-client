@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
-
+#include <sys/time.h>
 #include <curl/curl.h>
 
 #include "sha.h"
@@ -169,9 +169,9 @@ ykclient_init (ykclient_t ** ykc)
 
   p->srv_response = NULL;
 
-  /* 
+  /*
    * Verification of server signature can only be done if there is
-   * an API key provided 
+   * an API key provided
    */
   p->verify_signature = 0;
 
@@ -270,7 +270,7 @@ curl_callback (void *ptr, size_t size, size_t nmemb, void *data)
  * If new template URLs have been set all handles must be destroyed
  * with ykclient_handle_close and recreated with this function.
  *
- * Handles must be cleaned with ykclient_handle_cleanup between 
+ * Handles must be cleaned with ykclient_handle_cleanup between
  * requests, and closed with ykclient_handle_close when they are no
  * longer needed.
  *
@@ -391,14 +391,14 @@ ykclient_handle_cleanup (ykclient_handle_t * ykh)
   int requests = 0;
 
   /*
-   *  Curl will not allow a connection to be re-used unless the 
+   *  Curl will not allow a connection to be re-used unless the
    *  request finished, call curl_multi_perform one last time
-   *  to give libcurl an opportunity to mark the request as 
+   *  to give libcurl an opportunity to mark the request as
    *  complete.
    *
-   *  If the delay between yk_request_send and 
+   *  If the delay between yk_request_send and
    *  ykclient_handle_cleanup is sufficient to allow the request
-   *  to complete, the connection can be re-used, else it will 
+   *  to complete, the connection can be re-used, else it will
    *  be re-established on next yk_request_send.
    */
   (void) curl_multi_perform (ykh->multi, &requests);
@@ -575,7 +575,7 @@ ykclient_set_client_b64 (ykclient_t * ykc,
   return YKCLIENT_OK;
 }
 
-/** Set the CA path 
+/** Set the CA path
  *
  * Must be called before creating handles.
  */
@@ -626,8 +626,8 @@ ykclient_set_url_template (ykclient_t * ykc, const char *url_template)
 
 /** Set the URLs of the YK validation servers
  *
- * The URL strings will be copied to the new buffers, so the 
- * caller may free the original URL strings if they are no 
+ * The URL strings will be copied to the new buffers, so the
+ * caller may free the original URL strings if they are no
  * longer needed.
  *
  * @note This function MUST be called before calling ykclient_handle_init
@@ -819,15 +819,15 @@ ykclient_strerror (ykclient_rc ret)
 
 /** Generates or duplicates an existing nonce value
  *
- * If a nonce value was set with ykclient_set_nonce, it will be duplicated 
+ * If a nonce value was set with ykclient_set_nonce, it will be duplicated
  * and a pointer to the memory returned in nonce.
  *
- * If a nonce value has not been set a new buffer will be allocated and a 
+ * If a nonce value has not been set a new buffer will be allocated and a
  * random string of NONCE_LEN will be written to it.
  *
- * Memory pointed to by nonce must be freed by the called when it is no 
+ * Memory pointed to by nonce must be freed by the called when it is no
  * longer requiest.
- * 
+ *
  * @param ykc Yubikey client configuration.
  * @param[out] nonce where to write the pointer to the nonce value.
  * @return one of the YKCLIENT_* values or YKCLIENT_OK on success.
@@ -837,7 +837,7 @@ ykclient_generate_nonce (ykclient_t * ykc, char **nonce)
 {
   *nonce = NULL;
 
-  /* 
+  /*
    * If we were supplied with a static value just strdup,
    * makes memory management easier.
    */
@@ -990,10 +990,10 @@ ykclient_expand_old_url (const char *template,
  * Expands placeholders or inserts additional parameters for nonce,
  * OTP, and signing values into duplicates of URL templates.
  *
- * The memory allocated for these duplicates must be freed 
+ * The memory allocated for these duplicates must be freed
  * by calling either ykclient_handle_done or ykclient_handle_cleanup
  * after they are no longer needed.
- * 
+ *
  * @param ykc Yubikey client configuration.
  * @param ykh Yubikey client handle.
  * @param yubikey OTP string passed to the client.
@@ -1371,12 +1371,12 @@ ykclient_request_send (ykclient_t * ykc, ykclient_handle_t * ykh,
 	      char *server_otp;
               ykc->retry = 0;
 
-	      /* Verify that the OTP and nonce we put in our request is echoed 
+	      /* Verify that the OTP and nonce we put in our request is echoed
 	       * in the response.
 	       *
-	       * This is to protect us from a man in the middle sending us a 
-	       * previously seen genuine response again (such as an status=OK 
-	       * response even though the real server will respond 
+	       * This is to protect us from a man in the middle sending us a
+	       * previously seen genuine response again (such as an status=OK
+	       * response even though the real server will respond
 	       * status=REPLAYED_OTP in a few milliseconds.
 	       */
 	      if (nonce)
@@ -1510,10 +1510,10 @@ ykclient_request (ykclient_t * ykc, const char *yubikey)
   return out;
 }
 
-/** Extended API to validate an OTP (hexkey) 
- * 
+/** Extended API to validate an OTP (hexkey)
+ *
  * Will default to YubiCloud validation service, but may be used
- * with any service, if non-NULL ykc_in pointer is passed, and 
+ * with any service, if non-NULL ykc_in pointer is passed, and
  * ykclient_set_url_templates is used to configure template URLs.
  *
  */
